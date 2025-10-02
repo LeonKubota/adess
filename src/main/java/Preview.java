@@ -10,8 +10,8 @@ public class Preview {
 
         for (int i = 0; i < samples.length; i++) {
             short value = (short) (samples[i] * Short.MAX_VALUE); // Converting -1 to 1 to -32768 to 32767 (16-bit short)
-            audioData[i * 2] = (byte) (value & 0xFF);
-            audioData[i * 2 + 1] = (byte) ((value >> 8) & 0xFF);
+            audioData[i * 2] = (byte) (value);
+            audioData[i * 2 + 1] = (byte) ((value >> 8));
         }
 
         AudioFormat format = new AudioFormat(sampleRate, 16, 1, true, false); // AudioFormat(sampleRate, bits, channels, signed, little/big endian)
