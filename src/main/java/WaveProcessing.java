@@ -13,6 +13,7 @@ public class WaveProcessing {
             float frequency = wave[i] * freqSpeedMult;
             phase = (TAU * frequency * i) / sampleRate;
             wave[i] += (float) (Math.sin(phase) * strength);
+            System.out.println(wave[i]);
         }
 
         return wave;

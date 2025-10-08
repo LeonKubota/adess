@@ -1,9 +1,18 @@
+import ui.*;
+
 import javax.swing.*;
 import java.awt.*;
 
+
 class Main {
     public static void main(String[] args) {
-        // SwingUtilities.invokeLater(() -> new UI());
+
+        // Creating the UI
+        MainFrame frame = new MainFrame();
+        frame.setVisible(true);
+
+        // time (for performance measuring)
+        long startTime = System.nanoTime();
 
         Frequencies fq = new Frequencies();
         Render rd = new Render();
@@ -12,11 +21,11 @@ class Main {
         WaveProcessing wp = new WaveProcessing();
 
         float sampleRate = 44100.0f;
-        int length = (int) (sampleRate * 4);
+        int length = (int) (sampleRate * 10);
 
         float[] frequencies = fq.testFrequency(length, 70.0f, 70.0f); 
-        frequencies = wp.addVibration(sampleRate, frequencies, 0.1f, 0.7f);
-        frequencies = wp.addNoise(frequencies, 0.01f);
+        // frequencies = wp.addVibration(sampleRate, frequencies, 0.1f, 0.7f);
+        // frequencies = wp.addNoise(frequencies, 0.01f);
         System.out.println("Frequencies generation complete");
 
         // Make the wave
@@ -29,17 +38,20 @@ class Main {
 
         sine = wp.normalize(sine);
 
+        // Protect user and hardware from extreme amplitudes
         if (!wp.isNormalized(sine)) {
             System.out.println("Wave is not normalized, aborting...");
             System.exit(0);
         }
 
+        // Save the wave
+        ep.exportWaveform(sampleRate, sine, "sineWave.wav");
+
+        long endTime = System.nanoTime();
+        System.out.println("Execution time: " + ((endTime - startTime) / 1_000_000) + " ms");
         // Play the wave 
         pr.playAudio(sampleRate, sine);
         System.out.println("Audio playback complete");
-
-        // Save the wave
-        ep.exportWaveform(sampleRate, sine, "sineWave.wav");
 
         // Dump wave to text file
         ep.dumpInText(sine, "test.txt");
