@@ -1,19 +1,14 @@
-import ui.*;
-
-import javax.swing.*;
-import java.awt.*;
-
+import analysis.*; import commands.*; import config.*; import data.*; import generation.*; import rendering.*;
 
 class Main {
     public static void main(String[] args) {
-
-        // Creating the UI
-        MainFrame frame = new MainFrame();
-        frame.setVisible(true);
-
         // time (for performance measuring)
         long startTime = System.nanoTime();
 
+        System.out.println(System.getProperty("user.dir"));
+        CreateProject cp = new CreateProject();
+        /*
+        // These will later be read from some file
         Frequencies fq = new Frequencies();
         Render rd = new Render();
         Preview pr = new Preview();
@@ -55,5 +50,6 @@ class Main {
 
         // Dump wave to text file
         ep.dumpInText(sine, "test.txt");
+        */
     }
 }
