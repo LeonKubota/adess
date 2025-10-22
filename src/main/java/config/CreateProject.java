@@ -5,70 +5,42 @@ import java.io.IOException;
 
 public class CreateProject {
 	private String projectName;
-	private String directoryPath;
+	private String projectDirectory;
 
 	public CreateProject(String projectName) {
 		this.projectName = projectName;
-		
-		createProjectDirectory(projectName);
-		createConfigFile(projectName);
+		this.projectDirectory = System.getProperty("user.dir");
+
+		createProjectDirectory(projectName, projectDirectory);
+		createConfigFile(projectName, projectDirectory);
 	}
 
-	public CreateProject(String projectName, String directoryPath) {
+	public CreateProject(String projectName, String projectDirectory) {
 		this.projectName = projectName;
-		this.directoryPath = directoryPath;
+		this.projectDirectory = projectDirectory;
 
-		createProjectDirectory(projectName, directoryPath);
-		createConfigFile(projectName, directoryPath);
+		createProjectDirectory(projectName, projectDirectory);
+		createConfigFile(projectName, projectDirectory);
 	}
 
-	public void createProjectDirectory(String projectName) {
-		String currentDirectory = System.getProperty("user.dir");
-		File directory = new File(currentDirectory + File.separator + projectName);
+	public void createProjectDirectory(String projectName, String projectDirectory) {
+		File directory = new File(projectDirectory + File.separator + projectName);
 		boolean directoryCreated = directory.mkdir();
 
 		if (directoryCreated) {
-			System.out.println("Main directory created successfully at: " + currentDirectory + File.separator + projectName);
+			System.out.println("Main directory created successfully at: " + projectDirectory + File.separator + projectName);
 		} else {
 			System.out.println("Failed to create project directory, directory may already exist"); 
 		}
 	}
 
-	public void createProjectDirectory(String projectName, String directoryPath) {
-		File directory = new File(directoryPath + File.separator + projectName);
-		boolean directoryCreated = directory.mkdir();
-
-		if (directoryCreated) {
-			System.out.println("Main directory created successfully at: " + directoryPath + File.separator + projectName);
-		} else {
-			System.out.println("Failed to create project directory, directory may already exist"); 
-		}
-	}
-
-	public void createConfigFile(String projectName) {
-		String currentDirectory = System.getProperty("user.dir");
+	public void createConfigFile(String projectName, String projectDirectory) {
 		try {
-			File file = new File(currentDirectory + File.separator + projectName + File.separator + "config.adess");
+			File file = new File(projectDirectory + File.separator + projectName + File.separator + "config.adess");
 			boolean fileCreated = file.createNewFile();
 
 			if (fileCreated) {
-				System.out.println("Config file created successfully at: " + currentDirectory + File.separator + projectName + File.separator + "config.adess");
-			} else {
-				System.out.println("Failed to create config file, file may already exist");
-			}
-		} catch (IOException e) {
-			System.out.println("An error occured during creation of config file");
-			e.printStackTrace();
-		}
-	}
-
-	public void createConfigFile(String projectName, String directoryPath) {
-		try {
-			File file = new File(directoryPath + File.separator + projectName + File.separator + "config.adess");
-			boolean fileCreated = file.createNewFile();
-
-			if (fileCreated) {
-				System.out.println("Config file created successfully at: " + directoryPath + File.separator + projectName + File.separator + "config.adess");
+				System.out.println("Config file created successfully at: " + projectDirectory + File.separator + projectName + File.separator + "config.adess");
 			} else {
 				System.out.println("Failed to create config file, file may already exist");
 			}

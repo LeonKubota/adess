@@ -10,7 +10,9 @@ class Main {
         // time (for performance measuring)
         long startTime = System.nanoTime();
 
-        CreateProject cp = new CreateProject("AdessTestProject", "/..");
+        CommandParser cp = new CommandParser();
+        cp.parse(args).execute();
+
         /*
         // These will later be read from some file
         Frequencies fq = new Frequencies();
