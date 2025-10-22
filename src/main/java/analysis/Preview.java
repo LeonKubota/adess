@@ -1,3 +1,5 @@
+package analysis;
+
 import javax.sound.sampled.*;
 import java.util.ArrayList;
 import java.util.List;

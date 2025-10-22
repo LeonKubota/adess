@@ -1,12 +1,16 @@
-import analysis.*; import commands.*; import config.*; import data.*; import generation.*; import rendering.*;
+// import analysis.*;
+// import commands.*;
+import config.*;
+// import data.*;
+// import generation.*;
+// import rendering.*;
 
 class Main {
     public static void main(String[] args) {
         // time (for performance measuring)
         long startTime = System.nanoTime();
 
-        System.out.println(System.getProperty("user.dir"));
-        CreateProject cp = new CreateProject();
+        CreateProject cp = new CreateProject("AdessTestProject", "/..");
         /*
         // These will later be read from some file
         Frequencies fq = new Frequencies();
