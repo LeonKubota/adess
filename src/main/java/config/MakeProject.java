@@ -3,27 +3,27 @@ package config;
 import java.io.File;
 import java.io.IOException;
 
-public class CreateProject {
+public class MakeProject {
 	private String projectName;
 	private String projectDirectory;
 
-	public CreateProject(String projectName) {
+	public MakeProject(String projectName) {
 		this.projectName = projectName;
 		this.projectDirectory = System.getProperty("user.dir");
 
-		createProjectDirectory(projectName, projectDirectory);
-		createConfigFile(projectName, projectDirectory);
+		makeProjectDirectory(projectName, projectDirectory);
+		makeConfigFile(projectName, projectDirectory);
 	}
 
-	public CreateProject(String projectName, String projectDirectory) {
+	public MakeProject(String projectName, String projectDirectory) {
 		this.projectName = projectName;
 		this.projectDirectory = projectDirectory;
 
-		createProjectDirectory(projectName, projectDirectory);
-		createConfigFile(projectName, projectDirectory);
+		makeProjectDirectory(projectName, projectDirectory);
+		makeConfigFile(projectName, projectDirectory);
 	}
 
-	public void createProjectDirectory(String projectName, String projectDirectory) {
+	public void makeProjectDirectory(String projectName, String projectDirectory) {
 		File directory = new File(projectDirectory + File.separator + projectName);
 		boolean directoryCreated = directory.mkdir();
 
@@ -34,7 +34,7 @@ public class CreateProject {
 		}
 	}
 
-	public void createConfigFile(String projectName, String projectDirectory) {
+	public void makeConfigFile(String projectName, String projectDirectory) {
 		try {
 			File file = new File(projectDirectory + File.separator + projectName + File.separator + "config.adess");
 			boolean fileCreated = file.createNewFile();

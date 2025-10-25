@@ -1,5 +1,5 @@
 // import analysis.*;
-// import commands.*;
+import commands.*;
 import config.*;
 // import data.*;
 // import generation.*;
@@ -10,8 +10,100 @@ class Main {
         // time (for performance measuring)
         long startTime = System.nanoTime();
 
-        CommandParser cp = new CommandParser();
-        cp.parse(args).execute();
+	// Turn on for debugging
+	final boolean DEBUG = false;
+
+	// If no command given
+	if (args.length == 0) {
+		new HelpCommand();
+		System.exit(0);
+	}
+
+	if (DEBUG) {
+		for (int i = 0; i < args.length; i++) {
+			System.out.print("[DEBUG]\t");
+			System.out.println("args[" + i + "]: " + args[i]);
+		}
+	}
+
+	// Parse first command (action)
+	switch (args[0]) {
+		case "mk":
+		case "make":
+			if (DEBUG) {System.out.println("[DEBUG]\tMakeCommand");}
+			if (args.length > 1) {
+				switch (args[1]) {
+					case "project":
+						if (DEBUG) {System.out.println("[DEBUG]\tMakeCommand project");}
+						if (args.length > 2) {
+							new MakeProjectCommand(args[2]);
+						} else {
+							new MakeProjectCommand();
+						}
+						break;
+					case "engine":
+						if (DEBUG) {System.out.println("[DEBUG]\tMakeCommand engine");}
+						if (args.length > 2) {
+							// new MakeEngineCommand(args[2]);
+						} else {
+							// new MakeEngineCommand();
+						}
+						break;
+					case "scene":
+						if (DEBUG) {System.out.println("[DEBUG]\tMakeCommand scene");}
+						if (args.length > 2) {
+							// new MakeSceneCommand(args[2]);
+						} else {
+							// new MakeSceneCommand();
+						}
+						break;
+					case "key":
+						if (DEBUG) {System.out.println("[DEBUG]\tMakeCommand key");}
+						if (args.length > 2) {
+							// new MakeKeyCommand(args[2]);
+						} else {
+							// new MakeKeyCommand();
+						}
+						break;
+					default:
+						if (DEBUG) {System.out.println("[DEBUG]\tMakeCommand invalid component");}
+						System.err.println("fatal: '" + args[1] + "' is not a valid component");
+				}
+			} else {
+				if (DEBUG) {System.out.println("[DEBUG]\tMakeCommand no component");}
+				System.out.println("fatal: no component specified");
+				// new HelpCommand(args[0]);
+			}
+			break;
+		case "ed":
+		case "edit":
+			if (DEBUG) {System.out.println("[DEBUG]\tEditCommand");}
+			break;
+
+		case "sh":
+		case "show":
+			if (DEBUG) {System.out.println("[DEBUG]\tShowCommand");}
+			break;
+
+		case "rm":
+		case "remove":
+			if (DEBUG) {System.out.println("[DEBUG]\tRemoveCommand");}
+			break;
+
+		case "-h":
+		case "--help":
+			if (DEBUG) {System.out.println("[DEBUG]\tHelpCommand");}
+			new HelpCommand();
+			break;
+
+		case "help":
+			if (DEBUG) {System.out.println("[DEBUG]\tHelpCommand");}
+			new HelpCommand();
+			break;
+		default:
+			new UnknownCommand(args[0]);
+	}
+
 
         /*
         // These will later be read from some file
