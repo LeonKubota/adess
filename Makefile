@@ -1,32 +1,40 @@
-# Compiler
-CC = gcc
+CC := gcc
 
-# Compiler flags
-CFLAGS = -std=c99 -Wall -g -Werror -O3 -Iinclude
+# I might want to use -O3 (or something similar) to optimize the compiled code
+CFLAGS := -std=c99 -Wall -g -Werror -Iinclude
+LDLIBS :=
 
-# Source files
-SRC = src/main.c src/parse.c src/commands/command.c src/commands/help.c src/commands/make.c
+# macOS
+ifeq ($(shell uname), Darwin)
+	# might need to add "-framework CoreFoundation
+	LDLIBS += 
+endif
 
-# Object files (made from source files)
-OBJ = $(SRC:.c=.o)
+# Linux
+ifeq ($(shell uname), Linux)
+	# might need to add "-lm"
+	LDLIBS += 
+endif
+
+# SRC := src/main.c src/parse.c src/commands/command.c src/commands/help.c src/commands/make.c
+SRC := $(wildcard src/*.c) $(wildcard src/commands/*.c)
+OBJ := $(SRC:.c=.o)
 
 # Ouput
-TARGET = build/adess
+TARGET := build/adess
 
 # Default target
 all: $(TARGET)
 
-# Rule to build the target
 $(TARGET): $(OBJ)
-	@mkdir -p build # Create directory if it doesn't exist
-	$(CC) $(CFLAGS) -o $@ $^
+	@mkdir -p build
+	$(CC) -o $@ $^ $(LDLIBS)
 
-# Rule to compile source files into object files
 build/%.o: src/%.c
-	@mkdir -p build # Create directory if it doesn't exist
+	@mkdir -p build
 	$(CC) $(CFLAGS) -c $< -o $@
 
-.PHONY: all clean
-# Clean rule to remove object files and executable
 clean:
 	rm -f build/*.o build/adess
+
+.PHONY: all clean
