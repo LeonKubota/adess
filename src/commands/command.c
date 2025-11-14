@@ -34,6 +34,9 @@ void d_showInput(char *name, char *arg, bool *opts) {
 			d_listOptions(opts);
 			printf("\n");
 		}
+
+		// Print values
+		if (
 	}
 }
 

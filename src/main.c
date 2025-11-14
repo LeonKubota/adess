@@ -9,7 +9,7 @@
 // Commands
 #include "commands/help.h"
 
-bool g_debug = 1;
+bool g_debug = 0;
 char *g_options = "hn:o"; // If over 8 long, edit MAX_OPT_COUNT in parse.c, technically should be ordered by usage frequency
 
 /*

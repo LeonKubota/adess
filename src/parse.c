@@ -12,17 +12,21 @@
 
 #define MAX_OPT_COUNT 8
 #define MAX_VAL_COUNT 64
-#define MAX_VAL_LENGTH 32
 
 extern char g_debug;
 extern char *g_options;
+
+struct Value {
+	int index;
+	char **value;
+};
 
 int parseCommand(int argc, char **argv) {
 	int argscount = countArgs(argc, argv) - 1;
 
 	bool options[MAX_OPT_COUNT] = {false};
 
-    char *values[MAX_VAL_COUNT];
+	// Set up values
 
     // Initialize values array
     for (int i = 0; i < MAX_VAL_COUNT; i++) {
@@ -43,17 +47,17 @@ int parseCommand(int argc, char **argv) {
 	if (strcmp(argv[1], "help") == 0) {
 		return execute(help, argc, argv, options, values, argscount, "", arg);
 	}
-	// make (mk)
-	else if (((strcmp(argv[1], "make")) == 0) || ((strcmp(argv[1], "mk")) == 0)) {
-		return execute(make, argc, argv, options, values, argscount, "n", arg);
+	// make
+	else if ((strcmp(argv[1], "make")) == 0) {
+		return execute(make, argc, argv, options, values, argscount, "no", arg);
 	}
-	// edit (ed)
-	else if (((strcmp(argv[1], "edit")) == 0) || ((strcmp(argv[1], "ed")) == 0)) {
+	// edit
+	else if ((strcmp(argv[1], "edit")) == 0) {
 		printf("Edit command\n");
 		return execute(make, argc, argv, options, values, argscount, "n", arg);
 	}
-	// view (vw)	
-	else if (((strcmp(argv[1], "view")) == 0) || ((strcmp(argv[1], "vw")) == 0)) {
+	// view
+	else if ((strcmp(argv[1], "view")) == 0) {
 		printf("View command\n");
 		return execute(make, argc, argv, options, values, argscount, "n", arg);
 	}
@@ -73,13 +77,10 @@ int parseCommand(int argc, char **argv) {
 int parseOptions(bool *options, char **values, char **argv) {
     // Can start with 1 (skip over first argument / '-')
     int i = 1;
-    int n = 1;
     bool valexpected = false;
 
     // For each argument (each string in input)
     while (!(argv[i] == NULL)) {
-        n = 1;
-
         // Detect options
         if (argv[i][0] == '-') {
             // Long options (eg. "--input")
@@ -88,6 +89,8 @@ int parseOptions(bool *options, char **values, char **argv) {
                 return 0;
             }
             // Short options (eg. "-i")
+    		int n = 1;
+			printf("Short option detected\n");
             while ((argv[i][n])) {
                 // If the option is valid (also check for ':', which is used to signify an option that requires a value
                 if (simpleIsValid(argv[i][n]) && argv[i][n] != ':') {
@@ -109,20 +112,13 @@ int parseOptions(bool *options, char **values, char **argv) {
         }
 
         // Detect values
-        printf("valexpected(vals): %d\n", valexpected);
         if (valexpected) {
-            printf("trying to add to values\n");
-            sprintf(values[0], "%d", optIndex(argv[i][n]));
-            valexpected = false;
-        } else {
-            printf("fatal: unexpected value '%s' for option '%s'\n", "value", "option (TODO, last option in option stack)");
-            return 1;
+			valexpected = 0;
         }
 
-        // Check if there are undefined values
+        // Check if there are undefined values at the end of parsing options
         if (valexpected) {
-            printf("end check\n");
-            printf("fatal: value expected for option '%s'\n", "option (TODO, last option in the option stack)");
+            printf("fatal: value expected for option '%s'\n", "test");
             return 1;
         }
         i++;
@@ -155,6 +151,7 @@ bool valExpected(char opt) {
     return 0;
 }
 
+// returns index if there is an option, returns -1 if no option
 int optIndex(char opt) {
     int i = 0;
     while(!(g_options[i] == 0)) {

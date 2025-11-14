@@ -5,7 +5,7 @@
 #include "commands/command.h"
 #include "commands/help.h"
 
-int help(char *arg, bool *opts) {
+int help(char *arg, bool *opts, char **vals) {
 	d_showInput("help", arg, opts);
 
 	// If there is an argument, print argument specific help

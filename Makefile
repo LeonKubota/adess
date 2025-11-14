@@ -35,6 +35,6 @@ build/%.o: src/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f build/*.o build/adess
+	rm -f build/*.o src/*.o src/commands/*.o build/adess
 
 .PHONY: all clean
