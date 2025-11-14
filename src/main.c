@@ -2,20 +2,21 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdarg.h>
 
+#define COLOR_BOLD  "\e[1m"
+#define COLOR_RESET "\e[m"
+
+// Include
+#include "utils.h"
 #include "parse.h"
-#include "commands/command.h"
-
-// Commands
 #include "commands/help.h"
+
+// Self
+#include "main.h"
 
 bool g_debug = 0;
 char *g_options = "hn:o"; // If over 8 long, edit MAX_OPT_COUNT in parse.c, technically should be ordered by usage frequency
-
-/*
--h, --help = help with a command
--n, --name = name (use with make command)
-*/
 
 int main(int argc, char **argv) {
 	// If there is no argument (the input is nothing or a flag)
@@ -33,7 +34,7 @@ int main(int argc, char **argv) {
 		}
 		// default (unknown option)	
 		 else {
-			printf("adess: unknown option\n");
+             e_fatal("unknown option '%s'\n", argv[1]);
 			return 1;
 		}
 	}
@@ -44,7 +45,8 @@ int main(int argc, char **argv) {
 		case 3:
 			return parseCommand(argc, argv);
 		default:
-			printf("fatal: too many arguments\n");
+            e_fatal("too many arguments\n");
 			return 1;
 	}
 }	
+

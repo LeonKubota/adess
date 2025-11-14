@@ -36,7 +36,7 @@ void d_showInput(char *name, char *arg, bool *opts) {
 		}
 
 		// Print values
-		if (
+		//if (
 	}
 }
 

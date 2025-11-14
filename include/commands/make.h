@@ -1,8 +1,8 @@
 #include <stdbool.h>
 
 #ifndef MAKE_H
-#define HELP_H
+#define MAKE_H 
 
-int make(char *arg, bool *opts, char **vals);
+int make(char *arg, bool *opts, Values *vals);
 
 #endif

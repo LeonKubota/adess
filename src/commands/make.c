@@ -6,26 +6,26 @@
 #include "commands/command.h"
 #include "commands/make.h"
 
-int make(char *arg, bool *opts, char **vals) {
+int make(char *arg, bool *opts, struct Values *vals) {
 	d_showInput("make", arg, opts);
 	
 	// If there is an argument
 	if (arg) {
 		// project
-		if (strcmp(arg, "project\n") == 0) {
-			printf("project");
+		if (strcmp(arg, "project") == 0) {
+			printf("project\n");
 		}
 		// engine
-		else if (strcmp(arg, "engine\n") == 0) {
-			printf("engine");
+		else if (strcmp(arg, "engine") == 0) {
+			printf("engine\n");
 		}
 		// scene
-		else if (strcmp(arg, "scene\n") == 0) {
-			printf("scene");
+		else if (strcmp(arg, "scene") == 0) {
+			printf("scene\n");
 		}
 		// key
-		else if (strcmp(arg, "key\n") == 0) {
-			printf("key");
+		else if (strcmp(arg, "key") == 0) {
+			printf("key\n");
 		}
 		// default (error)
 		else {

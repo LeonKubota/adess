@@ -3,23 +3,21 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "parse.h"
+// Structs
+#include "struct_value.h"
 
 // Commands
-#include "commands/command.h"
 #include "commands/help.h"
 #include "commands/make.h"
 
-#define MAX_OPT_COUNT 8
-#define MAX_VAL_COUNT 64
+// Self
+#include "parse.h"
+
+#define MAX_OPT_COUNT 8 // Optimized
+#define MAX_VAL_COUNT 64 // Unoptimized, might be too large
 
 extern char g_debug;
 extern char *g_options;
-
-struct Value {
-	int index;
-	char **value;
-};
 
 int parseCommand(int argc, char **argv) {
 	int argscount = countArgs(argc, argv) - 1;
@@ -27,11 +25,10 @@ int parseCommand(int argc, char **argv) {
 	bool options[MAX_OPT_COUNT] = {false};
 
 	// Set up values
-
-    // Initialize values array
-    for (int i = 0; i < MAX_VAL_COUNT; i++) {
-        values[i] = 0;
-    }
+    // THING
+    // READ
+    // I will have to send a pointer to the parse option (and thus the execute function), so that it can be edited directly.
+    Values values;
 
 	// Check if first argument is a real argument or option
 	char *arg = NULL;
@@ -74,7 +71,7 @@ int parseCommand(int argc, char **argv) {
 	return 1;
 }
 
-int parseOptions(bool *options, char **values, char **argv) {
+int parseOptions(bool *options, Values values, char **argv) {
     // Can start with 1 (skip over first argument / '-')
     int i = 1;
     bool valexpected = false;
@@ -95,7 +92,7 @@ int parseOptions(bool *options, char **values, char **argv) {
                 // If the option is valid (also check for ':', which is used to signify an option that requires a value
                 if (simpleIsValid(argv[i][n]) && argv[i][n] != ':') {
                     if (valexpected) {
-                        printf("fatal: value expected for option '%s'\n", "option (TODO, last option in stack)");
+                        e_fatal("value expected for options '%s'\n", "option (TODO)");
                         return 1;
                     }
                     valexpected = valExpected(argv[i][n]);
@@ -163,14 +160,15 @@ int optIndex(char opt) {
     return -1;
 }
 
-int execute(int (*command)(char *arg, bool *opts, char **values), int argc, char **argv, bool *options, char **values, int argscount, char *accepted, char *arg) {
+int execute(int (*command)(char *arg, bool *opts, Values *vals), int argc, char **argv, bool *options, Values *values, int argscount, char *accepted, char *arg) {
 	if (parseOptions(options, values, argv + argscount) == 0) {
         // print values
-        int i = 0;
+        /*
         while (!(values[i] == 0)) {
             printf("%s, %s", values[i], values[i]);
             i++;
         }
+        */
 
 		if ((unacceptedOptions(options, accepted)) == -1) {
 			command(arg, options, values);
