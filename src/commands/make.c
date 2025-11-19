@@ -3,11 +3,15 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "utils.h"
 #include "commands/command.h"
 #include "commands/make.h"
 
-int make(char *arg, bool *opts, struct Values *vals) {
-	d_showInput("make", arg, opts);
+bool g_opts[MAX_OPT_COUNT];
+char *g_vals[MAX_OPT_COUNT][MAX_VAL_COUNT];
+
+int make(char *arg) {
+	d_showInput("make", arg);
 	
 	// If there is an argument
 	if (arg) {
@@ -29,11 +33,11 @@ int make(char *arg, bool *opts, struct Values *vals) {
 		}
 		// default (error)
 		else {
-			printf("fatal: unknown component '%s'\n", arg);
+			e_fatal("incorrect component '%s'\n", arg);
 			return 1;
 		}
 	} else {
-		printf("fatal: no component provided\n");
+		e_fatal("no component provided\n");
 		return 1;
 	}
 	return 0;

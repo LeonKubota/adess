@@ -5,8 +5,11 @@
 #include "commands/command.h"
 #include "commands/help.h"
 
-int help(char *arg, bool *opts, struct Values *vals) {
-	d_showInput("help", arg, opts);
+bool g_opts[MAX_OPT_COUNT];
+char *g_vals[MAX_OPT_COUNT][MAX_VAL_COUNT];
+
+int help(char *arg) {
+	d_showInput("help", arg);
 
 	// If there is an argument, print argument specific help
 	if (arg) {

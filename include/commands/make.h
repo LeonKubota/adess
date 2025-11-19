@@ -3,6 +3,8 @@
 #ifndef MAKE_H
 #define MAKE_H 
 
-int make(char *arg, bool *opts, Values *vals);
+#include "main.h"
+
+int make(char *arg);
 
 #endif

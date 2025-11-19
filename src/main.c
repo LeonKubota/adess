@@ -7,46 +7,38 @@
 #define COLOR_BOLD  "\e[1m"
 #define COLOR_RESET "\e[m"
 
+#define MAX_OPT_COUNT 16 // Maximum number of values, must be larger than length of g_opts
+#define MAX_VAL_COUNT 2 // Maximum number of values
+
 // Include
-#include "utils.h"
 #include "parse.h"
-#include "commands/help.h"
 
 // Self
 #include "main.h"
 
-bool g_debug = 0;
-char *g_options = "hn:o"; // If over 8 long, edit MAX_OPT_COUNT in parse.c, technically should be ordered by usage frequency
+// Global variables
+bool g_debug = 1; // 0 for normal, 1 for debug
+char *g_optslist = "hn:o"; // Options ':' mean that option requires a value, otherwise values are errors
+
+int g_maxoptcount = MAX_OPT_COUNT;
+int g_maxvalcount = MAX_VAL_COUNT;
+
+bool g_opts[MAX_OPT_COUNT]; // Array of if values are on
+char *g_vals[MAX_OPT_COUNT][MAX_VAL_COUNT]; // Holds values (first index corresponds to option index)
 
 int main(int argc, char **argv) {
-	// If there is no argument (the input is nothing or a flag)
-	if (countArgs(argc, argv) == 1) {
-		// --help (-h)
-		if (!argv[1] || (strcmp(argv[1], "--help") == 0) || (strcmp(argv[1], "-h") == 0)) {
-			help(NULL, NULL, NULL);
-			return 0;
-		}
 
-		// --version (-v)
-		else if ((strcmp(argv[1], "--version") == 0) || (strcmp(argv[1], "-v") == 0)) {
-			printf("Version: HAS TO BE MADE\n");
-			return 0;
-		}
-		// default (unknown option)	
-		 else {
-             e_fatal("unknown option '%s'\n", argv[1]);
-			return 1;
-		}
+	// Initilize options (won't work otherwise)
+	for (int i = 0; i < g_maxoptcount; i++) {
+		g_opts[i] = false;
 	}
 	
-	// Check how many arguments are given and decide what to do next
-	switch (countArgs(argc, argv)) {
-		case 2:
-		case 3:
-			return parseCommand(argc, argv);
-		default:
-            e_fatal("too many arguments\n");
-			return 1;
+	// Initilize values
+	for (int x = 0; x < g_maxoptcount; x++) {
+		for (int y = 0; y < g_maxvalcount; y++) {
+			g_vals[x][y] = "";
+		}
 	}
-}	
 
+	parse(argc, argv);
+}	

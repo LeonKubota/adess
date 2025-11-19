@@ -1,34 +1,59 @@
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
 #include <stdbool.h>
 
-// Structs
-#include "struct_value.h"
+// Utils
+#include "utils.h"
+
+// Self
+#include "parse.h"
 
 // Commands
 #include "commands/help.h"
 #include "commands/make.h"
 
-// Self
-#include "parse.h"
+bool g_debug;
+char *g_optslist;
 
-#define MAX_OPT_COUNT 8 // Optimized
-#define MAX_VAL_COUNT 64 // Unoptimized, might be too large
+int g_maxoptcount;
+int g_maxvalcount;
 
-extern char g_debug;
-extern char *g_options;
+bool g_opts[MAX_OPT_COUNT];
+char *g_vals[MAX_OPT_COUNT][MAX_VAL_COUNT];
+
+int parse(int argc, char **argv) {
+	// If there is no argument (the input is nothing or a flag)
+	if (countArgs(argc, argv) == 1) {
+		// --help (-h)
+		if (!argv[1] || (strcmp(argv[1], "--help") == 0) || (strcmp(argv[1], "-h") == 0)) {
+			help(NULL);
+			return 0;
+		}
+		// --version (-v)
+		else if ((strcmp(argv[1], "--version") == 0) || (strcmp(argv[1], "-v") == 0)) {
+			printf("Version: HAS TO BE MADE\n");
+			return 0;
+		}
+		// default (unknown option)	
+		 else {
+        	e_fatal("unknown option '%s'\n", argv[1]);
+			return 1;
+		}
+	}
+	
+	// Check how many arguments are given and decide what to do next
+	switch (countArgs(argc, argv)) {
+		case 2:
+		case 3:
+			return parseCommand(argc, argv);
+		default:
+            e_fatal("too many arguments\n");
+			return 1;
+	}
+}
 
 int parseCommand(int argc, char **argv) {
 	int argscount = countArgs(argc, argv) - 1;
-
-	bool options[MAX_OPT_COUNT] = {false};
-
-	// Set up values
-    // THING
-    // READ
-    // I will have to send a pointer to the parse option (and thus the execute function), so that it can be edited directly.
-    Values values;
 
 	// Check if first argument is a real argument or option
 	char *arg = NULL;
@@ -38,30 +63,25 @@ int parseCommand(int argc, char **argv) {
 		}
 	}
 	
-	// Arguments for the execute function pointer to function, int argc, char **argv, bool *options, int argscount, char *accepted, char *arg
-
 	// help
 	if (strcmp(argv[1], "help") == 0) {
-		return execute(help, argc, argv, options, values, argscount, "", arg);
+		return execute(help, argc, argv, argscount, "", arg);
 	}
 	// make
 	else if ((strcmp(argv[1], "make")) == 0) {
-		return execute(make, argc, argv, options, values, argscount, "no", arg);
+		return execute(make, argc, argv, argscount, "no", arg);
 	}
 	// edit
 	else if ((strcmp(argv[1], "edit")) == 0) {
 		printf("Edit command\n");
-		return execute(make, argc, argv, options, values, argscount, "n", arg);
 	}
 	// view
 	else if ((strcmp(argv[1], "view")) == 0) {
 		printf("View command\n");
-		return execute(make, argc, argv, options, values, argscount, "n", arg);
 	}
 	// remove (rm)
 	else if (((strcmp(argv[1], "remove")) == 0) || ((strcmp(argv[1], "rm")) == 0)) {
 		printf("Remove command\n");
-		return execute(make, argc, argv, options, values, argscount, "n", arg);
 	}
 	// default (unknown command)
 	else {
@@ -71,51 +91,61 @@ int parseCommand(int argc, char **argv) {
 	return 1;
 }
 
-int parseOptions(bool *options, Values values, char **argv) {
+int parseOptions(char **argv) {
     // Can start with 1 (skip over first argument / '-')
     int i = 1;
+    int n = 1;
     bool valexpected = false;
 
     // For each argument (each string in input)
-    while (!(argv[i] == NULL)) {
-        // Detect options
-        if (argv[i][0] == '-') {
-            // Long options (eg. "--input")
+	while (!(argv[i] == NULL)) {
+		// Detect options
+		if (argv[i][0] == '-') {
+
+			// Long options (eg. "--input") TODO
             if (argv[i][1] == '-') {
-                printf("Long option\n");
+				printf("Long option\n");
                 return 0;
             }
+
+			n = 1;
             // Short options (eg. "-i")
-    		int n = 1;
-			printf("Short option detected\n");
-            while ((argv[i][n])) {
-                // If the option is valid (also check for ':', which is used to signify an option that requires a value
+            while (argv[i][n]) {
+            	// If the option is valid and not ':'
                 if (simpleIsValid(argv[i][n]) && argv[i][n] != ':') {
-                    if (valexpected) {
-                        e_fatal("value expected for options '%s'\n", "option (TODO)");
+					// If valexpected is set to 'true' (when previous opt requires val (':'))
+               		if (valexpected) {
+                    	e_fatal("value expected for options '%s'\n", "option (TODO)");
                         return 1;
                     }
+					// Set valexpected to true if value is expected
                     valexpected = valExpected(argv[i][n]);
-                    options[optIndex(argv[i][n])] = 1;
+                	g_opts[optIndex(argv[i][n])] = 1;
                 }
                 // If invalid option
                 else {
-                    printf("fatal: unknown option '%c'\n", argv[i][n]);
-                    d_printFail(strcat(argv[i], " is not a valid option"));
+					printf("test!");
+					e_fatal("unknown option '%c'\n", argv[i][n]);
                     return 1;
-                }
-                n++;
-            }
-        }
+           		}
+				n++;
+       		}
+		}
 
         // Detect values
         if (valexpected) {
+			// Iterate through arguemnts after last argument until option or NULL
+			n = i;
+			while (argv[n][1] != '-' && argv[n] != NULL) {
+				printf("value #%i: %s\n", n, argv[n]);
+				n++;
+			}
 			valexpected = 0;
         }
 
         // Check if there are undefined values at the end of parsing options
         if (valexpected) {
-            printf("fatal: value expected for option '%s'\n", "test");
+			e_fatal("value expected for option '%s'\n", "test valexpected");
             return 1;
         }
         i++;
@@ -125,9 +155,9 @@ int parseOptions(bool *options, Values values, char **argv) {
 
 bool simpleIsValid(char opt) {
     int i = 0;
-    // Look through all g_options and return true if opt is found
-    while(!(g_options[i] == 0)) {
-        if (g_options[i] == opt) {
+    // Look through the g_optslist and return true if opt is found
+    while(!(g_optslist[i] == 0)) {
+        if (g_optslist[i] == opt) {
             return 1;
         }
         i++;
@@ -137,9 +167,9 @@ bool simpleIsValid(char opt) {
 
 bool valExpected(char opt) {
     int i = 0;
-    while(!(g_options[i] == 0)) {
-        if (g_options[i] == opt) {
-            if (g_options[i + 1] == ':') {
+    while(!(g_optslist[i] == 0)) {
+        if (g_optslist[i] == opt) {
+            if (g_optslist[i + 1] == ':') {
                 return 1;
             }
         }
@@ -151,8 +181,8 @@ bool valExpected(char opt) {
 // returns index if there is an option, returns -1 if no option
 int optIndex(char opt) {
     int i = 0;
-    while(!(g_options[i] == 0)) {
-        if (g_options[i] == opt) {
+    while(!(g_optslist[i] == 0)) {
+        if (g_optslist[i] == opt) {
             return i;
         }
         i++;
@@ -160,40 +190,30 @@ int optIndex(char opt) {
     return -1;
 }
 
-int execute(int (*command)(char *arg, bool *opts, Values *vals), int argc, char **argv, bool *options, Values *values, int argscount, char *accepted, char *arg) {
-	if (parseOptions(options, values, argv + argscount) == 0) {
-        // print values
-        /*
-        while (!(values[i] == 0)) {
-            printf("%s, %s", values[i], values[i]);
-            i++;
-        }
-        */
-
-		if ((unacceptedOptions(options, accepted)) == -1) {
-			command(arg, options, values);
+int execute(int (*command)(char *arg), int argc, char **argv, int argscount, char *accepted, char *arg) {
+	if (parseOptions(argv + argscount) == 0) {
+		if ((unacceptedOptions(accepted)) == -1) {
+			command(arg);
 			return 0;
 		} else {
-			printf("fatal: unknown option '%c'\n", g_options[unacceptedOptions(options, accepted)]);
-			help(argv[1], NULL, values);
-			d_printFail(strcat(argv[1], " value not accepted (unacceptedOptions)"));
+			e_fatal("unknown option '%c'\n", g_optslist[unacceptedOptions(accepted)]);
+			help(argv[1]);
 			return 1;
 		}
 	} else {
-		d_printFail(strcat(argv[1], " (parseCommand)"));
 		return 1;
 	} 
 }
 
-// Returns unknown options index in *g_options or -1 if successful
-int unacceptedOptions(bool *options, char *accepted) {
+// Returns unknown options index in *g_optslist or -1 if successful
+int unacceptedOptions(char *accepted) {
 	int i = 0;
-	while (!(g_options[i] == 0)) {
+	while (!(g_optslist[i] == 0)) {
         // If the option is on
-		if (options[i] == 1) {
+		if (g_opts[i] == 1) {
 			int n = 0;
 			while (true) {
-                if (g_options[i] == accepted[n] || g_options[i] == 'h') {
+                if (g_optslist[i] == accepted[n] || g_optslist[i] == 'h') {
                     break;
                 }
 				// If iterated through entire accepted array and didn't find it
@@ -216,10 +236,4 @@ int countArgs(int argc, char **argv) {
 		}
 	}
 	return argc;
-}
-
-void d_printFail(char *msg) {
-	if (g_debug) {
-		printf("\x1b[34m""[DEBUG]""\x1b[0m""\tfailed: %s\n", msg);
-	}
 }
