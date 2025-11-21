@@ -12,15 +12,6 @@
 #include "commands/help.h"
 #include "commands/make.h"
 
-bool g_debug;
-char *g_optslist;
-
-int g_maxoptcount;
-int g_maxvalcount;
-
-bool g_opts[MAX_OPT_COUNT];
-char *g_vals[MAX_OPT_COUNT][MAX_VAL_COUNT];
-
 int parse(int argc, char **argv) {
 	// If there is no argument (the input is nothing or a flag)
 	if (countArgs(argc, argv) == 1) {

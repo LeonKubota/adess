@@ -5,9 +5,6 @@
 #include "commands/command.h"
 #include "commands/help.h"
 
-bool g_opts[MAX_OPT_COUNT];
-char *g_vals[MAX_OPT_COUNT][MAX_VAL_COUNT];
-
 int help(char *arg) {
 	d_showInput("help", arg);
 

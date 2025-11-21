@@ -45,19 +45,3 @@ int main(int argc, char **argv) {
 
 	parse(argc, argv);
 }
-
-/*
-void printValues() {
-    for (int i = 0; i < MAX_OPT_COUNT; i++) {
-		printf("%c\t", g_optslist[i]);
-        for (int j = 0; j < MAX_VAL_COUNT; j++) {
-            // Check if the string is not NULL to avoid printing garbage
-            if (g_vals[i][j] != NULL) {
-				printf("single value"
-                printf("y[%i]\t'%s'\t", j, g_vals[i][j]);
-            }
-        }
-        printf("\n");  // New line after each row
-    }
-}
-*/

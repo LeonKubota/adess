@@ -7,9 +7,6 @@
 #include "commands/command.h"
 #include "commands/make.h"
 
-bool g_opts[MAX_OPT_COUNT];
-char *g_vals[MAX_OPT_COUNT][MAX_VAL_COUNT];
-
 int make(char *arg) {
 	d_showInput("make", arg);
 	

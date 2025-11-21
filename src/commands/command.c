@@ -2,13 +2,10 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define DCOL "\x1b[34m"
+#define DCOL "\x1b[1;35m"
 #define RCOL "\x1b[0m"
 
 #include "commands/command.h"
-
-bool g_opts[MAX_OPT_COUNT];
-char *g_vals[MAX_OPT_COUNT][MAX_VAL_COUNT];
 
 void d_showInput(char *name, char *arg) {
 	if (g_debug) {
