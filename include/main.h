@@ -3,7 +3,7 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#define MAX_OPT_COUNT 16
+#define MAX_OPT_COUNT 8
 #define MAX_VAL_COUNT 2
 
 extern bool g_debug;

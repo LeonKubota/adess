@@ -56,29 +56,19 @@ void d_listOptions() {
 	}
 }
 
-// TODO
 void d_listValues() {
 	bool empty = true;
-	//int i = 0;
-
-	/*
-	while (vals[i][0] != NULL) {
-		// Only for non-empty values
-		if (strcmp(vals[i], "") != 0) {
-			//printf("i, %s; ", vals[i]);
-
-			int n = 0; // Is not defined at start because there may be no values
-			while (vals[i][n] != '\0') {
-				//print a single character
-				printf("%c", vals[i][n]);
-				n++;
+	for (int opt = 0; g_optslist[opt] != '\0'; opt++) {
+		// Option
+		for (int val = 0; val < MAX_VAL_COUNT; val++) {
+			// Value
+			if (strcmp(g_vals[opt][val], "") != 0) {
+				printf("%c: '%s', ", g_optslist[opt], g_vals[opt][val]);
+				empty = false;
 			}
-			//printf("n: %i", n);
-			empty = false;
 		}
-		i++;
 	}
-	*/
+	// Print '(null)' if vals are empty
 	if (empty) {
 		printf("(null)");
 	}

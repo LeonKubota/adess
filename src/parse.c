@@ -69,7 +69,7 @@ int parseCommand(int argc, char **argv) {
 	}
 	// make
 	else if ((strcmp(argv[1], "make")) == 0) {
-		return execute(make, argc, argv, argscount, "no", arg);
+		return execute(make, argc, argv, argscount, "nod", arg);
 	}
 	// edit
 	else if ((strcmp(argv[1], "edit")) == 0) {
@@ -96,6 +96,7 @@ int parseOptions(char **argv) {
     int i = 1;
     int n = 1;
     bool valexpected = false;
+	int curoptindex = -1;
 
     // For each argument (each string in input)
 	while (!(argv[i] == NULL)) {
@@ -120,7 +121,12 @@ int parseOptions(char **argv) {
                     }
 					// Set valexpected to true if value is expected
                     valexpected = valExpected(argv[i][n]);
-                	g_opts[optIndex(argv[i][n])] = 1;
+	
+					// Save current options index for values
+					curoptindex = optIndex(argv[i][n]);
+
+					// Set the index in g_opts that corresponds to the options index to 1
+                	g_opts[curoptindex] = 1;
                 }
                 // If invalid option
                 else {
@@ -135,9 +141,14 @@ int parseOptions(char **argv) {
         // Detect values
         if (valexpected) {
 			// Iterate through arguemnts after last argument until option or NULL
-			n = i;
-			while (argv[n][1] != '-' && argv[n] != NULL) {
-				printf("value #%i: %s\n", n, argv[n]);
+			n = 0;
+			while (argv[n + i + 1] != NULL) {
+				if (argv[n + i + 1][0] == '-') {
+					break;
+				}
+
+				// Save value
+				g_vals[curoptindex][n] = argv[n + i + 1];
 				n++;
 			}
 			valexpected = 0;
@@ -148,6 +159,9 @@ int parseOptions(char **argv) {
 			e_fatal("value expected for option '%s'\n", "test valexpected");
             return 1;
         }
+
+		// Check for values that shouldn't be there
+		
         i++;
     }
 	return 0;
@@ -165,6 +179,7 @@ bool simpleIsValid(char opt) {
     return 0;
 }
 
+// FIXME
 bool valExpected(char opt) {
     int i = 0;
     while(!(g_optslist[i] == 0)) {

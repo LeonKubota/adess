@@ -7,9 +7,6 @@
 #define COLOR_BOLD  "\e[1m"
 #define COLOR_RESET "\e[m"
 
-#define MAX_OPT_COUNT 16 // Maximum number of values, must be larger than length of g_opts
-#define MAX_VAL_COUNT 2 // Maximum number of values
-
 // Include
 #include "parse.h"
 
@@ -17,8 +14,14 @@
 #include "main.h"
 
 // Global variables
-bool g_debug = 1; // 0 for normal, 1 for debug
-char *g_optslist = "hn:o"; // Options ':' mean that option requires a value, otherwise values are errors
+bool g_debug = true; // 'false' for normal, 'true' for debug
+char *g_optslist = "hn:d:"; // Options ':' mean that option requires a value, otherwise values are errors
+
+/*
+0	h	help
+1	n	name
+3	d	directory
+*/
 
 int g_maxoptcount = MAX_OPT_COUNT;
 int g_maxvalcount = MAX_VAL_COUNT;
@@ -41,4 +44,20 @@ int main(int argc, char **argv) {
 	}
 
 	parse(argc, argv);
-}	
+}
+
+/*
+void printValues() {
+    for (int i = 0; i < MAX_OPT_COUNT; i++) {
+		printf("%c\t", g_optslist[i]);
+        for (int j = 0; j < MAX_VAL_COUNT; j++) {
+            // Check if the string is not NULL to avoid printing garbage
+            if (g_vals[i][j] != NULL) {
+				printf("single value"
+                printf("y[%i]\t'%s'\t", j, g_vals[i][j]);
+            }
+        }
+        printf("\n");  // New line after each row
+    }
+}
+*/
