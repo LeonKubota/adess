@@ -15,9 +15,11 @@
 
 // Global variables
 bool g_debug = true; // 'false' for normal, 'true' for debug
-char *g_optslist = "hn:d:"; // Options ':' mean that option requires a value, otherwise values are errors
+char *g_optslist = "hn.d:"; // Options
 
 /*
+	.	single value expected
+	:	multiple values expected
 0	h	help
 1	n	name
 3	d	directory

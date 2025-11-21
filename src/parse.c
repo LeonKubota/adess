@@ -76,7 +76,7 @@ int parseCommand(int argc, char **argv) {
 	}
 	// default (unknown command)
 	else {
-		printf("adess: '%s' is not an adess command. See 'adess --help'\n", argv[1]);
+		e_fatal("'%s' is not an adess command. See 'adess --help'\n", argv[1]);
 		return 1;
 	}
 	return 1;
@@ -86,7 +86,7 @@ int parseOptions(char **argv) {
     // Can start with 1 (skip over first argument / '-')
     int i = 1;
     int n = 1;
-    bool valexpected = false;
+    int valexpected = 0; // 0 - no value expected; 1 - single value; 2 - multiple values
 	int curoptindex = -1;
 
     // For each argument (each string in input)
@@ -103,8 +103,8 @@ int parseOptions(char **argv) {
 			n = 1;
             // Short options (eg. "-i")
             while (argv[i][n]) {
-            	// If the option is valid and not ':'
-                if (simpleIsValid(argv[i][n]) && argv[i][n] != ':') {
+            	// If the option is valid and not ':' or '.'
+                if (simpleIsValid(argv[i][n]) && (argv[i][n] != ':' || argv[i][n] != '.')) {
 					// If valexpected is set to 'true' (when previous opt requires val (':'))
                		if (valexpected) {
                     	e_fatal("value expected for options '%s'\n", "option (TODO)");
@@ -117,11 +117,10 @@ int parseOptions(char **argv) {
 					curoptindex = optIndex(argv[i][n]);
 
 					// Set the index in g_opts that corresponds to the options index to 1
-                	g_opts[curoptindex] = 1;
+                	g_opts[curoptindex] = true;
                 }
                 // If invalid option
                 else {
-					printf("test!");
 					e_fatal("unknown option '%c'\n", argv[i][n]);
                     return 1;
            		}
@@ -129,8 +128,8 @@ int parseOptions(char **argv) {
        		}
 		}
 
-        // Detect values
-        if (valexpected) {
+        // Detect multiple values
+        if (valexpected == 2) {
 			// Iterate through arguemnts after last argument until option or NULL
 			n = 0;
 			while (argv[n + i + 1] != NULL) {
@@ -145,8 +144,34 @@ int parseOptions(char **argv) {
 			valexpected = 0;
         }
 
+		// Single values
+		if (valexpected == 1) {
+			// Check if there is a value
+			if (argv[i + 1] != NULL) {
+				// Check if trying to use option as a value
+				if (argv[i + 1][0] == '-') {
+					e_fatal("option '%s' cannot be used as value for option '%s'\n", argv[i + 1], argv[i]);
+					return 1;
+				}
+				if (argv[i + 2] != NULL) {
+					if (argv[i + 2][0] != '-') {
+						e_fatal("only one value can be used with option '%s'\n", argv[i]);
+						return 1;
+					}
+				}
+
+				printf("val accepted: %s\n", argv[i + 1]);
+				g_vals[curoptindex][0] = argv[i + 1];
+			} else {
+				e_fatal("value expected for option '%s'\n", argv[i]);
+				return 1;
+			}
+
+			valexpected = 0;
+		}
+
         // Check if there are undefined values at the end of parsing options
-        if (valexpected) {
+        if (valexpected != 0) {
 			e_fatal("value expected for option '%s'\n", "test valexpected");
             return 1;
         }
@@ -170,14 +195,18 @@ bool simpleIsValid(char opt) {
     return 0;
 }
 
-// FIXME
-bool valExpected(char opt) {
+int valExpected(char opt) {
     int i = 0;
     while(!(g_optslist[i] == 0)) {
         if (g_optslist[i] == opt) {
+			// Multiple values
             if (g_optslist[i + 1] == ':') {
-                return 1;
+                return 2;
             }
+			// Single value
+			if (g_optslist[i + 1] == '.') {
+				return 1;
+			}
         }
         i++;
     }

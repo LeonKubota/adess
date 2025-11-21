@@ -9,7 +9,7 @@ int parse(int argc, char **argv);
 int parseCommand(int argc, char **argv);
 int parseOptions(char **argv);
 bool simpleIsValid(char opt);
-bool valExpected(char opt);
+int valExpected(char opt);
 int optIndex(char opt);
 int execute(int (*command)(char *arg), int argc, char **argv, int argscount, char *accepted, char *arg);
 int unacceptedOptions(char *accepted);
