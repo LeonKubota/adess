@@ -22,7 +22,7 @@ int parse(int argc, char **argv) {
 		}
 		// --version (-v)
 		else if ((strcmp(argv[1], "--version") == 0) || (strcmp(argv[1], "-v") == 0)) {
-			printf("Version: HAS TO BE MADE\n");
+			version("0.0.0");
 			return 0;
 		}
 		// default (unknown option)	
@@ -271,4 +271,43 @@ int countArgs(int argc, char **argv) {
 		}
 	}
 	return argc;
+}
+
+void version(char *version) {
+	char *operatingsystem = "unknown";
+	char *architecture = "unknown";
+
+	// Get current architecture
+	#if defined(__x86_64__) || defined(_M_X64)
+        architecture = "x86_64";
+    #elif defined(__i386__) || defined(_M_IX86)
+        architecture = "x86";
+    #elif defined(__arm__) || defined(_M_ARM)
+ 		architecture = "ARM";
+    #elif defined(__aarch64__)
+        architecture = "ARM64";
+    #elif defined(__powerpc64__)
+        architecture = "PowerPC64";
+    #elif defined(__mips__)
+        architecture = "MIPS";
+    #else
+        architecture = "unknown";
+    #endif
+
+	// Get current operating system
+	#if defined(_WIN32) || defined(_WIN64)
+		operatingsystem = "Windows";
+    #elif defined(__linux__)
+		operatingsystem = "Linux";
+    #elif defined(__APPLE__) && defined(__MACH__)
+		operatingsystem = "Apple";
+    #elif defined(__FreeBSD__)
+		operatingsystem = "FreeBSD";
+    #elif defined(__unix__) || defined(__unix)
+		operatingsystem = "unix";
+    #else
+		operatingsystem = "unknown";
+    #endif	
+	
+	printf("adess version %s (%s %s)\n", VERSION, operatingsystem, architecture);
 }

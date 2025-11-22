@@ -14,5 +14,6 @@ int optIndex(char opt);
 int execute(int (*command)(char *arg), int argc, char **argv, int argscount, char *accepted, char *arg);
 int unacceptedOptions(char *accepted);
 int countArgs(int argc, char **argv);
+void version(char *version);
 
 #endif

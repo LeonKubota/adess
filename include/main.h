@@ -3,6 +3,9 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+// TODO
+#define VERSION "0.0.1"
+
 #define MAX_OPT_COUNT 8
 #define MAX_VAL_COUNT 2
 
