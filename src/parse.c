@@ -105,16 +105,23 @@ int parseOptions(char **argv) {
             while (argv[i][n]) {
             	// If the option is valid and not ':' or '.'
                 if (simpleIsValid(argv[i][n]) && (argv[i][n] != ':' || argv[i][n] != '.')) {
+					// Save current options index for assigning values later
+					curoptindex = optIndex(argv[i][n]);
+	
+					// Fail if the option is inputed twice
+					if (g_opts[curoptindex]) {
+						e_fatal("multiple instances of option '%c' detected\n", argv[i][n]);
+						return 1;
+					}
+
 					// If valexpected is set to 'true' (when previous opt requires val (':'))
                		if (valexpected) {
                     	e_fatal("value expected for options '%s'\n", "option (TODO)");
                         return 1;
                     }
+
 					// Set valexpected to true if value is expected
                     valexpected = valExpected(argv[i][n]);
-	
-					// Save current options index for values
-					curoptindex = optIndex(argv[i][n]);
 
 					// Set the index in g_opts that corresponds to the options index to 1
                 	g_opts[curoptindex] = true;
@@ -160,7 +167,6 @@ int parseOptions(char **argv) {
 					}
 				}
 
-				printf("val accepted: %s\n", argv[i + 1]);
 				g_vals[curoptindex][0] = argv[i + 1];
 			} else {
 				e_fatal("value expected for option '%s'\n", argv[i]);
