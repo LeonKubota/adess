@@ -8,6 +8,6 @@
 void d_showInput(char *name, char *arg);
 void d_listOptions();
 void d_listValues();
-bool optsIsEmpty();
+char **getValue(char option);
 
 #endif

@@ -7,4 +7,10 @@
 
 int make(char *arg);
 
+int project();
+
+char *getCurDirectory(char *relativedirectory);
+int makeDirectory(char *directory);
+int makeFile(char *directory);
+
 #endif

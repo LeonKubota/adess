@@ -12,3 +12,11 @@ void e_fatal(const char *format, ...) {
     vprintf(format, args);
     va_end(args);
 }
+
+void n_out(const char *format, ...) {
+	va_list args;
+	va_start(args, format);
+	printf("adess: ");
+	vprintf(format, args);
+	va_end(args);
+}
