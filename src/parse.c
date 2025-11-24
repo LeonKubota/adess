@@ -60,7 +60,7 @@ int parseCommand(int argc, char **argv) {
 	}
 	// make
 	else if ((strcmp(argv[1], "make")) == 0) {
-		return execute(make, argc, argv, argscount, "nod", arg);
+		return execute(make, argc, argv, argscount, "hnde", arg);
 	}
 	// edit
 	else if ((strcmp(argv[1], "edit")) == 0) {

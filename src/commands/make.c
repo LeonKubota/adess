@@ -78,7 +78,30 @@ int project() {
 	path = strcat(path, name);
 
 	makeDirectory(path);
-	//makeFile(path);
+	
+	// Exit if option -e (empty) is enabled
+	if (g_opts[5] == true) {
+		n_print("created empty project at '%s'\n", path);
+		return 0;
+	}
+
+	// Make the project file
+	char projectFilePath[4096];
+	snprintf(projectFilePath, 4096, "%s%s%s%s", path, PATH_SEPARATOR, name, ".adess");
+	makeFile(projectFilePath);
+
+	// Make 'engines', 'scenes' and 'output' directory
+	char enginePath[4096], scenePath[4096], outputPath[4096];
+	
+	// Set correct directories
+	snprintf(enginePath, 4096, "%s%s%s", path, PATH_SEPARATOR, "engines");
+	snprintf(scenePath, 4096, "%s%s%s", path, PATH_SEPARATOR, "scenes");
+	snprintf(outputPath, 4096, "%s%s%s", path, PATH_SEPARATOR, "output");
+
+	// Make the directories
+	makeDirectory(enginePath);
+	makeDirectory(scenePath);
+	makeDirectory(outputPath);
 	
 	return 0;
 }
@@ -111,7 +134,7 @@ int makeDirectory(char *path) {
 		return 1;
 	}
 
-	n_out("directory created successfully at: '%s'\n", path);
+	d_print("directory created at '%s'\n", path);
 	
 	return 0;
 }
@@ -132,6 +155,8 @@ int makeFile(char *path) {
 	}
 	
 	fclose(file);
+
+	d_print("file created at '%s'\n", path);
 
 	return 0;
 }
