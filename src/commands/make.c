@@ -6,6 +6,7 @@
 
 // For reading files
 #ifdef _WIN32
+#include <windows.h>
 #include <direct.h> // for _getcwd
 #define PATH_SEPARATOR "\\" // Windows' weird things (idiot Bill Gates)
 #define getcwd _getcwd // so that its the same later
@@ -115,6 +116,7 @@ int makeDirectory(char *path) {
 	return 0;
 }
 
+// This is system specific
 int makeFile(char *path) {
 	// Check if the file already exists
 	if (access(path, F_OK) != -1) {
