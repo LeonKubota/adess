@@ -116,7 +116,6 @@ int makeDirectory(char *path) {
 	return 0;
 }
 
-// This is system specific
 int makeFile(char *path) {
 	// Check if the file already exists
 	if (access(path, F_OK) != -1) {

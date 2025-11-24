@@ -15,7 +15,7 @@
 
 // Global variables
 bool g_debug = true; // 'false' for normal, 'true' for debug
-char *g_optslist = "hn.d:"; // Options
+char *g_optslist = "hn.d:e"; // Options
 
 // DO NOT CHANGE THE ORDER, YOU WILL BREAK EVERYTHING (I AM STUPID)
 
@@ -25,6 +25,7 @@ char *g_optslist = "hn.d:"; // Options
 0	h	help
 1	n	name
 3	d	directory
+5	e	empty
 */
 
 int g_maxoptcount = MAX_OPT_COUNT;

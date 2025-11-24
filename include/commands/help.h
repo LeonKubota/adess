@@ -6,7 +6,11 @@
 #include "main.h"
 
 int help(char *arg);
-void showHelp(char *name, char *usage, char *desc, char **comps, char **options);
 void defaultHelp();
+
+void showUsage(char *name, bool components, char *opts);
+void showOptions();
+void showDescription(char *description);
+char *getLongOpt(char opt);
 
 #endif

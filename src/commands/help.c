@@ -10,11 +10,13 @@ int help(char *arg) {
 
 	// If there is an argument, print argument specific help
 	if (arg) {
-		// make (mk)
-		if (strcmp(arg, "make") == 0 || strcmp(arg, "mk") == 0) {
-			char *availablecomps[] = {"project", "engine", "scene", "key", NULL};
-			char *availableopts[] = {"-n, --name", "set the name", "-d, --dir", "set the directory", NULL};
-			showHelp("make", "<component> [options]", "use the 'make' command to create a component.", availablecomps, availableopts);
+		// make
+		if (strcmp(arg, "make") == 0) {
+			showUsage("make", true, "hn.d:e");
+			showDescription("the make command is for creating adess components\n");
+		} 
+		// help help
+		else if (strcmp(arg, "help") == 0) {
 		} else {
 			printf("adess: no help available for argument '%s'\n", arg);
 		}
@@ -22,6 +24,77 @@ int help(char *arg) {
 		defaultHelp();
 	}
 	return 0;
+}
+
+void showUsage(char *name, bool components, char *opts) {
+	// Print first part
+	printf("usage: adess %s ", name);	
+	
+	// Print components (if applicable)
+	if (components) {
+		printf("<component> ");
+	}
+
+	int i = 0;
+	// Print options
+	while (opts[i] != '\0') {
+		// Skip extra characters
+		if (!((opts[i] == '.') || (opts[i] == ':'))) {
+			// Single value
+			if (opts[i + 1] == '.') {
+				printf("[-%c | --%s=<vals>] ", opts[i], getLongOpt(opts[i]));
+			}
+			// Multiple values
+			else if (opts[i + 1] == ':') {
+				printf("[-%c | --%s=[<vals>]] ", opts[i], getLongOpt(opts[i]));
+			}
+			// No values
+			else {
+				printf("[-%c | --%s] ", opts[i], getLongOpt(opts[i]));
+			}
+		}
+
+		// New line every 3 lines
+		if ((i + 1)%4 == 0) {
+			printf("\n");
+		}
+		// Make equal length
+		if (i > 3) {
+			printf("       "); // length of "usage: "
+			printf("      "); // length of "adess "
+			for (int n = 0; name[n] != '\0'; n++) {
+				printf(" ");
+			}
+			printf(" "); // there is a space after the name
+			if (components) {
+				printf("            "); // length of "<component> "
+			}
+		}
+		i++;
+	}
+	printf("\n\n");
+}
+
+// TODO
+void showOptions() {
+}
+
+void showDescription(char *description) {
+	printf("description: %s", description);
+}
+
+char *getLongOpt(char opt) {
+	if (opt == 'h') {
+		return "help";
+	} else if (opt == 'n') {
+		return "name";
+	} else if (opt == 'd') {
+		return "directory";
+	} else if (opt == 'e') {
+		return "empty";
+	}
+
+	return "\n\n\ngetLongOpt in help.c failed";
 }
 
 void defaultHelp() {
@@ -47,43 +120,4 @@ void defaultHelp() {
 
 	// Ending, suggest other info
 	printf("\nSee 'adess <command> -h' or 'adess help <command>' for help with a specific command.\nTry 'adess help <component>' for help with a specific component. See 'adess help guide' for a deeper guide aboud Adess.\n"); 
-}
-
-void showHelp(char *name, char *usage, char *desc, char **comps, char **options) {
-	printf("usage: adess %s %s\n\ndescription: %s\n\n", name, usage, desc);
-
-	// Print components inline (if there are any)
-	if (comps) {
-		printf("components: ");
-
-		int i = 0;
-		while (true) {
-			if (comps[i] == NULL) {
-				break;
-			}
-			printf("%s", comps[i]);
-			// So it doesn't end like this: "component1, component2, component3, "
-			if (!(comps[i + 1] == NULL)) {
-				printf(", ");
-			}
-			i++;
-		}
-		printf("\n");
-	}
-
-	// Print options in this format:
-	// -t, -time    show execution time
-	// even index = option, odd index = description
-	if (options) {
-		printf("\n");
-	
-		int i = 0;
-		while (true) {
-			if (options[i] == NULL) {
-				break;
-			}
-			printf("\t%s\t%s\n", options[i], options[i + 1]);
-			i += 2;
-		}
-	}
 }
