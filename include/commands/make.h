@@ -5,6 +5,7 @@
 
 #include "main.h"
 #include "files/write.h"
+#include "files/check.h"
 
 int make(char *arg);
 
