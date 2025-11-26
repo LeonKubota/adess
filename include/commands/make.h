@@ -4,6 +4,7 @@
 #define MAKE_H 
 
 #include "main.h"
+#include "files/write.h"
 
 int make(char *arg);
 
