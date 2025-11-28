@@ -11,14 +11,14 @@
 - On Linux / MacOS
 	1. clone the repository:
 	```bash
-    git clone https://github.com/LeonKubota/adess.git
+	git clone https://github.com/LeonKubota/adess.git
 	```
 	2. compile:
-		```bash
-		cd build
-		cmake ..
-		make
-		```
+	```bash
+	cd build
+	cmake ..
+	make
+	```
 	I suggest adding *adess* to your `$PATH` for convenience.
 - On Windows:
 	1. ???
