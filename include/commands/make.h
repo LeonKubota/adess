@@ -10,9 +10,10 @@
 int make(char *arg);
 
 int project();
+int engine();
 
-char *getCurDirectory(char *relativedirectory);
-int makeDirectory(char *directory);
-int makeFile(char *directory);
+void appendProjectDefault(char *path);
+int makeDirectory(char *path);
+int makeFile(char *path);
 
 #endif

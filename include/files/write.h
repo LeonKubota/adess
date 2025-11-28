@@ -1,6 +1,6 @@
 #ifndef EXTRACT_H
 #define EXTRACT_H
 
-int appendLine(char *path, char *input);
+int appendLine(char *path, const char *format, ...);
 
 #endif

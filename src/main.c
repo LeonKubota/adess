@@ -15,7 +15,7 @@
 
 // Global variables
 bool g_debug = true; // 'false' for normal, 'true' for debug
-char *g_optslist = "hn.d:e"; // Options
+char *g_optslist = "hn.d.e"; // Options
 
 // DO NOT CHANGE THE ORDER, YOU WILL BREAK EVERYTHING (I AM STUPID)
 
