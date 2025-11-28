@@ -1,23 +1,26 @@
 # ADESS
 
-Adess stands for: **a**rtist **d**irected **e**ngine **s**ound **s**ynthetizer.
+*Adess* (artist directed engine sound synthetizer) is a CLI application for generating engine sounds. *Adess* doesn't generate the sound in real-time, rather using keyframes for animating the engine behaviour.
+
+## Requirements
+
+- CMake (`https://github.com/Kitware/CMake`)
+- libsndfile (`https://github.com/libsndfile/libsndfile`)
 
 ## Installation:
-
-- On Linux / MacOS:
+- On Linux / MacOS
 	1. clone the repository:
 	```bash
-		git clone https://github.com/LeonKubota/adess.git
+    git clone https://github.com/LeonKubota/adess.git
 	```
 	2. compile:
-	```bash
-		cd adess 
+		```bash
+		cd build
+		cmake ..
 		make
-	```
+		```
 	I suggest adding *adess* to your `$PATH` for convenience.
 - On Windows:
-	I have no idea, ***good luck*** ;)
-
-## How to use:
-
-You can't really do anything right now. :-(.
+	1. ???
+	2. ???
+	3. ???
