@@ -16,6 +16,14 @@ void e_fatal(const char *format, ...) {
     va_end(args);
 }
 
+void e_parse(char *path, int linenr, const char *format, ...) {
+	va_list args;
+	va_start(args, format);
+	printf(COLOR_BOLD "fatal: " COLOR_RESET "[error while parsing %s:%i] ", path, linenr);
+	vprintf(format, args);
+	va_end(args);
+}
+
 void n_print(const char *format, ...) {
 	va_list args;
 	va_start(args, format);

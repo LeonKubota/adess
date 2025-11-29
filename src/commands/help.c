@@ -11,9 +11,9 @@ int help(char *arg) {
 	// If there is an argument, print argument specific help
 	if (arg) {
 		// make
-		if (strcmp(arg, "make") == 0) {
-			showUsage("make", true, "hn.d:e");
-			showDescription("the make command is for creating adess components\n");
+		if (strcmp(arg, "make_project") == 0) {
+			showUsage("make_project", true, "hn.d:e");
+			showDescription("the make_project command is used for creating a adess project\n");
 		} 
 		// help help
 		else if (strcmp(arg, "help") == 0) {
@@ -99,25 +99,13 @@ char *getLongOpt(char opt) {
 
 void defaultHelp() {
 	// Print header
-	printf("usage: adess <command> <component> [<options>]\n\n");
+	printf("usage: adess <command> [<options>]\n\n");
 	printf("Adess - artist directed engine sound synthetizer\n\n");
 	printf("These are some Adess commands (see 'adess help <command>' for more)\n");
 
 	// Commands
-	printf("\tmake\tMake a new component\n");
-	printf("\tedit\tEdit an existing component\n");
-	printf("\tview\tView the data of a component\n");
-	printf("\tremove\tRemove a component\n");
+	printf("\tmake_project\tMake a new project\n");
 	printf("\trender\tRender a scene\n");
 	
-	// Adess components
-	printf("\nThese are the components of Adess (see 'adess help components' for more)\n");
-	
-	printf("\tproject\tProjects are directories that contain everything Adess needs.\n");
-	printf("\tengine\tEngine files contain information about an engines characteristics.\n");
-	printf("\tscene\tScenes hold keyframes and can be rendered into actual sound files.\n");
-	printf("\tkey\tKeyframes are used for animation, they belong to scenes.\n");
-
 	// Ending, suggest other info
-	printf("\nSee 'adess <command> -h' or 'adess help <command>' for help with a specific command.\nTry 'adess help <component>' for help with a specific component. See 'adess help guide' for a deeper guide aboud Adess.\n"); 
 }

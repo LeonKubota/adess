@@ -10,7 +10,8 @@
 
 // Commands
 #include "commands/help.h"
-#include "commands/make.h"
+#include "commands/make_project.h"
+#include "commands/render.h"
 
 int parse(int argc, char **argv) {
 	// If there is no argument (the input is nothing or a flag)
@@ -32,14 +33,11 @@ int parse(int argc, char **argv) {
 		}
 	}
 	
-	// Check how many arguments are given and decide what to do next
-	switch (countArgs(argc, argv)) {
-		case 2:
-		case 3:
-			return parseCommand(argc, argv);
-		default:
-            e_fatal("too many arguments\n");
-			return 1;
+	if (countArgs(argc, argv) <= 3) {
+		return parseCommand(argc, argv);
+	} else {
+		e_fatal("too many arguments\n");
+		return 1;
 	}
 }
 
@@ -58,21 +56,13 @@ int parseCommand(int argc, char **argv) {
 	if (strcmp(argv[1], "help") == 0) {
 		return execute(help, argc, argv, argscount, "", arg);
 	}
-	// make
-	else if ((strcmp(argv[1], "make")) == 0) {
-		return execute(make, argc, argv, argscount, "hnde", arg);
+	// make_project
+	else if ((strcmp(argv[1], "make_project")) == 0) {
+		return execute(make_project, argc, argv, argscount, "hnde", arg);
 	}
-	// edit
-	else if ((strcmp(argv[1], "edit")) == 0) {
-		printf("Edit command\n");
-	}
-	// view
-	else if ((strcmp(argv[1], "view")) == 0) {
-		printf("View command\n");
-	}
-	// remove (rm)
-	else if (((strcmp(argv[1], "remove")) == 0) || ((strcmp(argv[1], "rm")) == 0)) {
-		printf("Remove command\n");
+	// render
+	else if ((strcmp(argv[1], "render")) == 0) {
+		return execute(render, argc, argv, argscount, "a", arg);
 	}
 	// default (unknown command)
 	else {
@@ -84,8 +74,8 @@ int parseCommand(int argc, char **argv) {
 
 int parseOptions(char **argv) {
     // Can start with 1 (skip over first argument / '-')
-    int i = 1;
-    int n = 1;
+    int i = 0;
+    int n = 0;
     int valexpected = 0; // 0 - no value expected; 1 - single value; 2 - multiple values
 	int curoptindex = -1;
 

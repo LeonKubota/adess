@@ -14,18 +14,54 @@
 #endif
 
 #include "utils.h"
+#include "files/check.h"
 
-bool checkFileExists(char *path, char *filename) {
+bool checkFileExistsIn(char *path, char *filename) {
 	struct dirent *entry;
 	DIR *dir = opendir(path);
 
 	while ((entry = readdir(dir)) != NULL) {
-		if (strstr(entry->d_name, filename)) {
+		if (strstr(entry -> d_name, filename)) {
 			return true;
 		}
 	}
 
 	return false;
+}
+
+bool checkFileExists(char *path) {
+	FILE *file = fopen(path, "r");
+	
+	if (file != NULL) {
+		return true;
+	}
+
+	return false;
+}
+
+char *findProjectFile(char *path) {
+	// If there is no file ending in '.adess'
+	if (!checkFileExistsIn(path, ".adess")) {
+		e_fatal("project file not found in '%s'\n", path);
+		return NULL;
+	}
+
+	struct dirent *entry;
+	DIR *dir = opendir(path);
+	char *projectFilePath = NULL;
+	
+	while ((entry = readdir(dir)) != NULL) {
+		if (strstr(entry -> d_name, ".adess")) {
+			if (projectFilePath == NULL) {
+				projectFilePath = entry -> d_name;  
+			} else {
+				e_fatal("multiple projects file found in '%s'\n", path); 
+				return NULL;
+			}
+		}
+	}
+
+	return strcat(path, projectFilePath);
 }
 
 char *getCurDirectory(char *userpath) {

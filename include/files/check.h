@@ -3,7 +3,9 @@
 
 #include "utils.h"
 
-bool checkFileExists(char *path, char *filename);
+bool checkFileExistsIn(char *path, char *filename);
+bool checkFileExists(char *path);
+char *findProjectFile(char *path);
 char *getCurDirectory(char *userpath);
 
 #endif
