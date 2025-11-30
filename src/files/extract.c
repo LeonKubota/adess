@@ -6,11 +6,30 @@
 #include "files/check.h"
 #include "files/extract.h"
 
+#ifdef _WIN32
+#define LINE_END "\r\n" // Because of idiot Bill Gates
+#else
+#define LINE_END "\n"
+#endif
+
 char *parseLineValueS(char *variable, char *path) {
-	// Remove the first and last character (remove the "")
 	char *string = parseLineValue(variable, path);
-	string++;
-	string[strlen(string) - 2] = '\0';
+	
+	// Remove the first character if it's "
+	if (string[0] == '\"') {
+		string++;
+	} else {
+		e_parse(path, getVariableLineNumber(variable, path), "string expected\n");
+		return NULL;
+	}
+
+	if ((string[strlen(string) - 1]) == '\"') {
+		string[strlen(string) - 1] = '\0';
+	} else {
+		e_parse(path, getVariableLineNumber(variable, path), "string expected\n");
+		return NULL;
+	}
+	
 	return string;
 }
 
@@ -32,11 +51,31 @@ int parseLineValueI(char *variable, char *path) {
 }
 
 float parseLineValueF(char *variable, char *path) {
-	return 10.0f;
+	char *string = parseLineValue(variable, path);
+
+	if (string == NULL) {
+		return 0;
+	}
+
+	// Floats must end with 'f'
+	if (string[strlen(string) - 1] != 'f') {
+		e_parse(path, getVariableLineNumber(variable, path), "float expected\n");
+	}
+
+	return strtod(string, NULL);
 }
 
 bool parseLineValueB(char *variable, char *path) {
-	return false;
+	char *string = parseLineValue(variable, path);
+
+	if ((strcmp(string, "true") == 0) || (string[0] == '1' && string[1] == '\0')) {
+		return true;
+	} else if ((strcmp(string, "false") == 0) || (string[0] == '0' && string[1] == '\0')) {
+		return false;
+	} else {
+		e_parse(path, getVariableLineNumber(variable, path), "boolean expected\n");
+		return NULL;
+	}
 }
 
 char *parseLineValue(char *variable, char *path) {
@@ -62,6 +101,13 @@ char *parseLineValue(char *variable, char *path) {
 			output[sizeof(output) - 1] = '\0';
 		}
 	}
+
+	// Check if variable was found
+	if (strcmp(output, "") == 0) {
+		e_fatal("variable '%s' not found\n", variable);
+		return NULL;
+	}
+
 	fclose(file);
 
 	char *value = strchr(output, '='); // Skip to "="
@@ -75,11 +121,30 @@ char *parseLineValue(char *variable, char *path) {
 	while (*value == ' ' || *value == '\t') {
 		value++;
 	}
+
 	// Skip trailing whitespace
 	char *end = value + strlen(value) - 1;
-	while (end > value && (*end == '\t' || *end == ' ')) {
+	while (end > value && (*end == '\t' || *end == ' ' || *end == '\n')) {
 		*end-- = '\0';
 	}
+
+	// Delete comment
+	printf("value: '%s'\n", value);
+	char *curchar = value;
+	if (strstr(value, "//") != NULL) {
+		printf("sus ^^\n");
+		// WTF pointer things
+		// FIX '//' inside a string ("string") is recognised as a comment (incorrect behaviour)
+		int i = 0;
+		while (curchar < (value + strlen(value) - 1)) {
+			if (curchar[0] == '/' && curchar[1] == '/') {
+				value[i - 1] = '\0';
+			}
+			i++;
+			curchar++;
+		}
+	}
+	printf("value: '%s'\n", value);
 
 	return value;
 }
@@ -112,11 +177,6 @@ int getVariableLineNumber(char *variable, char *path) {
 	int i = 0;
 
 	while (fgets(line, sizeof(line), file)) {
-		// Skip the comments
-		if (line[0] == '/' && line[1] == '/') {
-			continue;
-		}
-
 		if (compare(line, variable) == true) {
 			fclose(file);
 			return i;

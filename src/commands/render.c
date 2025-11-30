@@ -27,9 +27,17 @@ int render(char *arg) {
 	// Generate the path to the project file
 	char *projectFilePath = getCurDirectory(NULL);
 	projectFilePath = findProjectFile(projectFilePath);
-	
-	printf("engine_path: %s\n", parseLineValueS("engine_path", projectFilePath));
-	printf("max_buffer_size: %i\n", parseLineValueI("max_buffer_size", projectFilePath));
+
+	if (checkValidity(projectFilePath) == false) {
+		printf("failed\n");
+		return 1;
+	}
+
+	// TEST
+	d_print("[d]\tdebug:\t\t\t%d\n", parseLineValueB("debug", projectFilePath));
+	d_print("[s]\tengine_path:\t\t%s\n", parseLineValueS("engine_path", projectFilePath));
+	d_print("[i]\tsample_rate:\t\t%i\n", parseLineValueI("sample_rate", projectFilePath));
+	d_print("[f]\tsample_rate:\t\t%f\n", parseLineValueF("sample_rate", projectFilePath));
 	
 	return 0;
 }
