@@ -182,7 +182,23 @@ bool checkValidity(char *path) {
 			return false;
 		}
 
+		char *typename;
 		// Check if the value has the correct type
+		if (checkVar(type, varname) == false) {
+			// Set typename base on type char
+			if (type == 's') {
+				typename = "string";
+			} else if (type == 'i') {
+				typename = "integer";
+			} else if (type == 'f') {
+				typename = "float";
+			} else {
+				typename = "boolean";
+			}
+
+			e_parse(path, i, "incorrent type, %s expected\n", typename);
+			return false;
+		}
 		i++;
 	}
 	
@@ -202,7 +218,7 @@ bool checkVar(char type, char *variable) {
 	// list of available variables
 	char variables[8][64] = {
 		// "<type> <name>"
-		"f sample_rate", // TEST shouldn't be f (for float)
+		"i sample_rate",
 		"i bit_depth",
 		"b debug",
 		"i max_buffer_size",

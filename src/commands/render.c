@@ -29,16 +29,9 @@ int render(char *arg) {
 	projectFilePath = findProjectFile(projectFilePath);
 
 	if (checkValidity(projectFilePath) == false) {
-		printf("failed\n");
 		return 1;
 	}
 
-	// TEST
-	d_print("[d]\tdebug:\t\t\t%d\n", parseLineValueB("debug", projectFilePath));
-	d_print("[s]\tengine_path:\t\t%s\n", parseLineValueS("engine_path", projectFilePath));
-	d_print("[i]\tsample_rate:\t\t%i\n", parseLineValueI("sample_rate", projectFilePath));
-	d_print("[f]\tsample_rate:\t\t%f\n", parseLineValueF("sample_rate", projectFilePath));
-	
 	return 0;
 }
 

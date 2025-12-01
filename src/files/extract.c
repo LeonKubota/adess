@@ -129,22 +129,24 @@ char *parseLineValue(char *variable, char *path) {
 	}
 
 	// Delete comment
-	printf("value: '%s'\n", value);
 	char *curchar = value;
 	if (strstr(value, "//") != NULL) {
-		printf("sus ^^\n");
 		// WTF pointer things
-		// FIX '//' inside a string ("string") is recognised as a comment (incorrect behaviour)
 		int i = 0;
+		bool instring = false;
 		while (curchar < (value + strlen(value) - 1)) {
-			if (curchar[0] == '/' && curchar[1] == '/') {
+			// Flip 'instring' if " detected
+			if (curchar[0] == '\"') {
+				instring = !instring;
+			}
+			
+			if (instring == false && curchar[0] == '/' && curchar[1] == '/') {
 				value[i - 1] = '\0';
 			}
 			i++;
 			curchar++;
 		}
 	}
-	printf("value: '%s'\n", value);
 
 	return value;
 }
