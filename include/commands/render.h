@@ -5,8 +5,9 @@
 #ifndef RENDER_H
 #define RENDER_H
 
-int render(char *arg);
+int render(char **args);
 
-int renderAll();
+int renderAll(char *projectFilePath);
+int renderScene(char **sceneName, char *projectFilePath);
 
 #endif

@@ -5,7 +5,7 @@
 
 #include "main.h"
 
-int help(char *arg);
+int help(char **args);
 void defaultHelp();
 
 void showUsage(char *name, bool components, char *opts);

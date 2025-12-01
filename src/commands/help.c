@@ -3,22 +3,32 @@
 #include <string.h>
 
 #include "commands/command.h"
+#include "utils.h"
 #include "commands/help.h"
 
-int help(char *arg) {
-	d_showInput("help", arg);
+int help(char **args) {
+	d_showInput("help", args);
 
+	//char *arg = args[2];
+
+	// Return an error when too many arguments are sent
+	/*
+	if (args[3] != NULL) {
+		e_fatal("too many arguments for command 'help'\n");
+	}	
+	*/
+	
 	// If there is an argument, print argument specific help
-	if (arg) {
+	if (args[2]) {
 		// make
-		if (strcmp(arg, "make_project") == 0) {
+		if (strcmp(args[2], "make_project") == 0) {
 			showUsage("make_project", true, "hn.d:e");
 			showDescription("the make_project command is used for creating a adess project\n");
 		} 
 		// help help
-		else if (strcmp(arg, "help") == 0) {
+		else if (strcmp(args[2], "help") == 0) {
 		} else {
-			printf("adess: no help available for argument '%s'\n", arg);
+			printf("adess: no help available for argument '%s'\n", args[2]);
 		}
 	} else {
 		defaultHelp();

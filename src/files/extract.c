@@ -6,12 +6,6 @@
 #include "files/check.h"
 #include "files/extract.h"
 
-#ifdef _WIN32
-#define LINE_END "\r\n" // Because of idiot Bill Gates
-#else
-#define LINE_END "\n"
-#endif
-
 char *parseLineValueS(char *variable, char *path) {
 	char *string = parseLineValue(variable, path);
 	

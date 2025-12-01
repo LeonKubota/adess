@@ -7,16 +7,16 @@
 
 #include "commands/command.h"
 
-void d_showInput(char *name, char *arg) {
+void d_showInput(char *name, char **args) {
 	if (g_debug) {
 		// Print name of command (name)
 		printf(DCOL "[DEBUG]" RCOL "\tcommand:\t%s\n", name);
 
 		// Print argument (arg)
-		if (arg) {
-			printf(DCOL "[DEBUG]" RCOL "\targument:\t%s\n", arg);
-		} else {
+		if (args == NULL) {
 			printf(DCOL "[DEBUG]" RCOL "\targument:\t(null)\n");
+		} else {
+			d_listArgs(args);
 		}
 
 		// Print options (g_opts)
@@ -30,6 +30,14 @@ void d_showInput(char *name, char *arg) {
 		printf("\n");
 	}
 }
+
+void d_listArgs(char **args) {
+	for (int i = 0; i < sizeof(args); i++) {
+		printf("[%s]; ", args[i]);
+	}
+	printf("\n");
+}
+
 
 void d_listOptions() {
 	int size = 0;

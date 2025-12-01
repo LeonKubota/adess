@@ -5,7 +5,8 @@
 
 #include "main.h"
 
-void d_showInput(char *name, char *arg);
+void d_showInput(char *name, char **args);
+void d_listArgs(char **args);
 void d_listOptions();
 void d_listValues();
 char **getValue(char option);

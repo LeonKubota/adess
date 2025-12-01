@@ -33,36 +33,34 @@ int parse(int argc, char **argv) {
 		}
 	}
 	
-	if (countArgs(argc, argv) <= 3) {
-		return parseCommand(argc, argv);
-	} else {
-		e_fatal("too many arguments\n");
-		return 1;
-	}
+	// If there are arguments
+	return parseCommand(argc, argv);
 }
 
 int parseCommand(int argc, char **argv) {
 	int argscount = countArgs(argc, argv) - 1;
 
 	// Check if first argument is a real argument or option
+	/*
 	char *arg = NULL;
 	if (argv[2]) {
 		if (!(argv[2][0] == '-')) {
-			arg = argv[2];
+			// FIXME 
 		}
 	}
+	*/
 	
 	// help
 	if (strcmp(argv[1], "help") == 0) {
-		return execute(help, argc, argv, argscount, "", arg);
+		return execute(help, argc, argv, argscount, "");
 	}
 	// make_project
 	else if ((strcmp(argv[1], "make_project")) == 0) {
-		return execute(make_project, argc, argv, argscount, "hnde", arg);
+		return execute(make_project, argc, argv, argscount, "hnde");
 	}
 	// render
 	else if ((strcmp(argv[1], "render")) == 0) {
-		return execute(render, argc, argv, argscount, "a", arg);
+		return execute(render, argc, argv, argscount, "a");
 	}
 	// default (unknown command)
 	else {
@@ -221,14 +219,14 @@ int optIndex(char opt) {
     return -1;
 }
 
-int execute(int (*command)(char *arg), int argc, char **argv, int argscount, char *accepted, char *arg) {
+int execute(int (*command)(char **args), int argc, char **argv, int argscount, char *accepted) {
 	if (parseOptions(argv + argscount) == 0) {
 		if ((unacceptedOptions(accepted)) == -1) {
-			command(arg);
+			command(argv);
 			return 0;
 		} else {
 			e_fatal("unknown option '%c'\n", g_optslist[unacceptedOptions(accepted)]);
-			help(argv[1]);
+			help(argv);
 			return 1;
 		}
 	} else {

@@ -20,11 +20,11 @@
 #include "commands/make_project.h"
 #include "utils.h"
 
-int make_project(char *arg) {
-	d_showInput("make", arg);
+int make_project(char **args) {
+	d_showInput("make", args);
 	
 	// If there if an argument
-	if (arg != NULL) {
+	if (args[2] != NULL) {
 		e_fatal("'make_project' command does not support arguments\n");
 		return 1;
 	}

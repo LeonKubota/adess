@@ -7,7 +7,7 @@
 #ifndef MAKE_PROJECT_H
 #define MAKE_PROJECT_H 
 
-int make_project(char *arg);
+int make_project(char **args);
 
 void appendProjectDefault(char *path);
 int makeDirectory(char *path);
