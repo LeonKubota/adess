@@ -39,28 +39,38 @@ int parse(int argc, char **argv) {
 
 int parseCommand(int argc, char **argv) {
 	int argscount = countArgs(argc, argv) - 1;
-
-	// Check if first argument is a real argument or option
-	/*
-	char *arg = NULL;
-	if (argv[2]) {
-		if (!(argv[2][0] == '-')) {
-			// FIXME 
-		}
-	}
-	*/
 	
+	// Add just the arguments into args
+	int i = 0;
+	char *args[MAX_ARG_COUNT];
+
+	while (argv[i] != NULL) {
+		// If too many arguments (if this is encountered often, change MAX_ARG_COUNT in include/main.h
+		if (i > MAX_VAL_COUNT) {
+			e_fatal("too many arguments, adess' global maximum is: %i\n", MAX_ARG_COUNT);
+			return 1;
+		}
+		if (argv[i][0] != '-') {
+			args[i] = argv[i];
+		} else {
+			args[i] = NULL;
+			break;
+		}
+
+		i++;
+	}
+
 	// help
 	if (strcmp(argv[1], "help") == 0) {
-		return execute(help, argc, argv, argscount, "");
+		return execute(help, argv, argc, args, argscount, "");
 	}
 	// make_project
 	else if ((strcmp(argv[1], "make_project")) == 0) {
-		return execute(make_project, argc, argv, argscount, "hnde");
+		return execute(make_project, argv, argc, args, argscount, "hnde");
 	}
 	// render
 	else if ((strcmp(argv[1], "render")) == 0) {
-		return execute(render, argc, argv, argscount, "a");
+		return execute(render, argv, argc, args, argscount, "a");
 	}
 	// default (unknown command)
 	else {
@@ -72,8 +82,8 @@ int parseCommand(int argc, char **argv) {
 
 int parseOptions(char **argv) {
     // Can start with 1 (skip over first argument / '-')
-    int i = 0;
-    int n = 0;
+    int i = 1;
+    int n = 1;
     int valexpected = 0; // 0 - no value expected; 1 - single value; 2 - multiple values
 	int curoptindex = -1;
 
@@ -219,14 +229,14 @@ int optIndex(char opt) {
     return -1;
 }
 
-int execute(int (*command)(char **args), int argc, char **argv, int argscount, char *accepted) {
+int execute(int (*command)(char **args), char **argv, int argc, char **args, int argscount, char *accepted) {
 	if (parseOptions(argv + argscount) == 0) {
 		if ((unacceptedOptions(accepted)) == -1) {
-			command(argv);
+			command(args);
 			return 0;
 		} else {
 			e_fatal("unknown option '%c'\n", g_optslist[unacceptedOptions(accepted)]);
-			help(argv);
+			help(args);
 			return 1;
 		}
 	} else {

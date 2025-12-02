@@ -6,6 +6,7 @@
 // TODO
 #define VERSION "0.0.1"
 
+#define MAX_ARG_COUNT 16 // This is based on the user
 #define MAX_OPT_COUNT 8
 #define MAX_VAL_COUNT 2
 

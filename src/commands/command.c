@@ -14,9 +14,11 @@ void d_showInput(char *name, char **args) {
 
 		// Print argument (arg)
 		if (args == NULL) {
-			printf(DCOL "[DEBUG]" RCOL "\targument:\t(null)\n");
+			printf(DCOL "[DEBUG]" RCOL "\targuments:\t(null)\n");
 		} else {
+			printf(DCOL "[DEBUG]" RCOL "\targuments:\t");
 			d_listArgs(args);
+			printf("\n");
 		}
 
 		// Print options (g_opts)
@@ -31,11 +33,18 @@ void d_showInput(char *name, char **args) {
 	}
 }
 
+// FIX this doesn't work for some very strange reason
 void d_listArgs(char **args) {
-	for (int i = 0; i < sizeof(args); i++) {
-		printf("[%s]; ", args[i]);
+	printf("\033[91;103m");
+	printf("UNDER CONSTRUCTION");
+	printf("\033[0m");
+	return;
+	int i = 0;
+	while (args[i] != NULL) {
+		printf("[%i] %s, ", i, args[i]);
+		i++;
 	}
-	printf("\n");
+	
 }
 
 

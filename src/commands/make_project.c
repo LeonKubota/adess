@@ -21,7 +21,7 @@
 #include "utils.h"
 
 int make_project(char **args) {
-	d_showInput("make", args);
+	d_showInput("make_project", args);
 	
 	// If there if an argument
 	if (args[2] != NULL) {
