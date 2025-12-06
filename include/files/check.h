@@ -3,7 +3,7 @@
 
 #include "utils.h"
 
-bool checkFileExistsIn(char *path, char *filename);
+bool checkFileExistsIn(char *path, const char *filename);
 bool checkFileExists(char *path);
 char *findProjectFile(char *path);
 char *getCurDirectory(char *userpath);

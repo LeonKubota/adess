@@ -4,8 +4,6 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
-#define COLOR_BOLD  "\e[1m"
-#define COLOR_RESET "\e[m"
 
 // Include
 #include "parse.h"

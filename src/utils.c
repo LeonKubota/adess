@@ -24,6 +24,14 @@ void e_parse(char *path, int linenr, const char *format, ...) {
 	va_end(args);
 }
 
+void b_todo(const char *format, ...) {
+	va_list args;
+	va_start(args, format);
+	printf(COLOR_BOLD "\033[91;103m" "[TODO]" COLOR_RESET "\t");
+	vprintf(format, args);
+	va_end(args);
+}
+
 void n_print(const char *format, ...) {
 	va_list args;
 	va_start(args, format);

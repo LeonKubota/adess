@@ -23,7 +23,7 @@ int parse(int argc, char **argv) {
 		}
 		// --version (-v)
 		else if ((strcmp(argv[1], "--version") == 0) || (strcmp(argv[1], "-v") == 0)) {
-			version("0.0.0");
+			version(); // Version is defined in main.h
 			return 0;
 		}
 		// default (unknown option)	
@@ -45,11 +45,6 @@ int parseCommand(int argc, char **argv) {
 	char *args[MAX_ARG_COUNT];
 
 	while (argv[i] != NULL) {
-		// If too many arguments (if this is encountered often, change MAX_ARG_COUNT in include/main.h
-		if (i > MAX_VAL_COUNT) {
-			e_fatal("too many arguments, adess' global maximum is: %i\n", MAX_ARG_COUNT);
-			return 1;
-		}
 		if (argv[i][0] != '-') {
 			args[i] = argv[i];
 		} else {
@@ -59,18 +54,19 @@ int parseCommand(int argc, char **argv) {
 
 		i++;
 	}
+	args[i] = NULL;
 
 	// help
 	if (strcmp(argv[1], "help") == 0) {
-		return execute(help, argv, argc, args, argscount, "");
+		return execute(help, argv, args, argscount, "");
 	}
 	// make_project
 	else if ((strcmp(argv[1], "make_project")) == 0) {
-		return execute(make_project, argv, argc, args, argscount, "hnde");
+		return execute(make_project, argv, args, argscount, "hnde");
 	}
 	// render
 	else if ((strcmp(argv[1], "render")) == 0) {
-		return execute(render, argv, argc, args, argscount, "a");
+		return execute(render, argv, args, argscount, "a");
 	}
 	// default (unknown command)
 	else {
@@ -229,7 +225,7 @@ int optIndex(char opt) {
     return -1;
 }
 
-int execute(int (*command)(char **args), char **argv, int argc, char **args, int argscount, char *accepted) {
+int execute(int (*command)(char **args), char **argv, char **args, int argscount, char *accepted) {
 	if (parseOptions(argv + argscount) == 0) {
 		if ((unacceptedOptions(accepted)) == -1) {
 			command(args);
@@ -277,7 +273,7 @@ int countArgs(int argc, char **argv) {
 	return argc;
 }
 
-void version(char *version) {
+void version() {
 	char *operatingsystem = "unknown";
 	char *architecture = "unknown";
 

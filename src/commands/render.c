@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "commands/command.h"
 #include "commands/render.h"
@@ -21,8 +22,8 @@ int render(char **args) {
 	}
 	
 	// Generate the path to the project file
-	char *projectFilePath = getCurDirectory(NULL);
-	projectFilePath = findProjectFile(projectFilePath);
+	char projectFilePath[4096];
+	strncpy(projectFilePath, findProjectFile(getCurDirectory(NULL)), 4096);
 
 	// Check if the adess DST file has valid syntax
 	if (checkValidity(projectFilePath) == false) {
@@ -33,35 +34,91 @@ int render(char **args) {
 	if (g_opts[6] == true) {
 		return renderAll(projectFilePath);
 	} else {
-		return renderScene(args, projectFilePath);
+		return renderScene(args[2], projectFilePath);
+	}
+}
+
+int renderScene(char *rawscenename, char *projectFilePath) {
+
+	// Get scene path
+
+	// Get the path of the requested scene
+	char *subpath = parseLineValueS("scene_path", projectFilePath);
+
+	char *scenename = rawscenename;
+	// Create the scenename variable with correct data
+	if (strcmp(rawscenename + strlen(rawscenename) - 6, ".adess") != 0) {
+		sprintf(scenename, "%s.adess", scenename);
 	}
 
+	char sceneFilePath[4096];
+	if (subpath == NULL) {
+		strncpy(sceneFilePath, getCurDirectory(NULL), 4096);
+	} else {
+		strncpy(sceneFilePath, getCurDirectory(subpath), 4096);
+	}
+
+	printf("scenename: %s\n", scenename);
+	printf("scenefile: %s\n", sceneFilePath);
+
+	// Check if scene directory exists
+	
+	// Check if scene exists
+	if (!checkFileExistsIn(sceneFilePath, scenename)) {
+		e_fatal("scene '%s' does not exist in directory '%s'\n", scenename, sceneFilePath);
+		return 1;
+	}
+
+	// Get engine path
+	sprintf(sceneFilePath, "%s%s", sceneFilePath, scenename);
+
+	// Check if scene is valid
+	if (checkValidity(sceneFilePath) == false) {
+		return 1;
+	}
+
+	// Get the path of the engine directory
+	char engineFilePath[4096];
+	strncpy(engineFilePath, getCurDirectory(NULL), 4096);
+	subpath = parseLineValueS("engine_path", projectFilePath);
+
+	// Unspecified engine directory = use current directory
+	if (subpath != NULL) {
+		strncpy(engineFilePath, getCurDirectory(subpath), 4096);
+	}
+
+	// Check if the engine directory exists
+	
+
+	// Get engine file from scene file
+	char *enginename = parseLineValueS("engine", sceneFilePath);
+
+	if (enginename == NULL) {
+		return 1;
+	}
+		
+	snprintf(enginename, strlen(enginename) + 7, "%s.adess", enginename);
+
+	printf("enginename: %s\n", enginename);
+	printf("enginefile: %s\n", engineFilePath);
+	// Check if engine directory exists
+
+	// FIX enginename is deleted after checkFileExistsIn, but it does with the scene(WTF)
+	// Check if engine exists
+	if (checkFileExistsIn(engineFilePath, enginename)) {
+		printf("enginename: %s\n", enginename);
+		e_fatal("engine '%s' does not exist in directory '%s'\n", enginename, engineFilePath);
+		return 1;
+	}
+
+	// Get the engine file
+	snprintf(engineFilePath, strlen(engineFilePath) + strlen(enginename) + 7, "%s%s.adess", engineFilePath, enginename);
+
+	n_print("scene '%s' rendered successfully into '%s'\n", scenename, "<output_dir>"); // TODO
 	return 0;
 }
 
 int renderAll(char *projectFilePath) {
-	printf("rendering all");
+	printf("rendering all, %s\n", projectFilePath);
 	return 1;
-}
-
-int renderScene(char **sceneNames, char *projectFilePath) {
-	// Get the path of the requested scene
-	//char *subpath = parseLineValueS("scene_path", projectFilePath);
-	return 0;
-
-	// Unspecified scene directory = use current directory
-	/*
-	if (subpath == NULL) {
-		if (checkFileExistsIn(projectFilePath, sceneNames[0]) {
-			
-
-	// Get the path of the requested engine file
-	char *engineFilePath = getCurDirectory(NULL);
-	subpath = parseLineValueS("engine_path", projectFilePath);
-
-	// Unspecified engine directory - use current directory
-	if (subpath == NULL) {
-		
-	}
-	*/
 }

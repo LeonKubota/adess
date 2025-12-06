@@ -13,10 +13,10 @@ bool simpleIsValid(char opt);
 int valExpected(char opt);
 int optIndex(char opt);
 
-int execute(int (*command)(char **args), char **argv, int argc, char **args, int argscount, char *accepted);
+int execute(int (*command)(char **args), char **argv, char **args, int argscount, char *accepted);
 
 int unacceptedOptions(char *accepted);
 int countArgs(int argc, char **argv);
-void version(char *version);
+void version();
 
 #endif

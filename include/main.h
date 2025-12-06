@@ -10,6 +10,16 @@
 #define MAX_OPT_COUNT 8
 #define MAX_VAL_COUNT 2
 
+#ifdef _WIN32
+#include <windows.h>
+#include <direct.h> // for _getcwd
+#define PATH_SEPARATOR "\\" // Windows' weird things (idiot Bill Gates)
+#define getcwd _getcwd // so that its the same later
+#else
+#include <unistd.h> // for gecwd
+#define PATH_SEPARATOR "/" // for sane people
+#endif
+
 extern bool g_debug;
 extern char *g_optslist;
 

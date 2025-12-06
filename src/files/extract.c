@@ -8,6 +8,11 @@
 
 char *parseLineValueS(char *variable, char *path) {
 	char *string = parseLineValue(variable, path);
+
+	// Check for empty strings
+	if (string == NULL) {
+		return NULL;
+	}
 	
 	// Remove the first character if it's "
 	if (string[0] == '\"') {
@@ -29,7 +34,7 @@ char *parseLineValueS(char *variable, char *path) {
 
 int parseLineValueI(char *variable, char *path) {
 	char *value = parseLineValue(variable, path);
-	
+
 	// atoi returns 0 if input isn't an integer string
 	if (atoi(value) == 0) {
 		// If it really is a zero
@@ -98,7 +103,7 @@ char *parseLineValue(char *variable, char *path) {
 
 	// Check if variable was found
 	if (strcmp(output, "") == 0) {
-		e_fatal("variable '%s' not found\n", variable);
+		e_fatal("variable '%s' not found in '%s'\n", variable, path);
 		return NULL;
 	}
 

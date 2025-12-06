@@ -8,6 +8,6 @@
 int render(char **args);
 
 int renderAll(char *projectFilePath);
-int renderScene(char **sceneName, char *projectFilePath);
+int renderScene(char *rawscenename, char *projectFilePath);
 
 #endif

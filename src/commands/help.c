@@ -9,13 +9,13 @@
 int help(char **args) {
 	d_showInput("help", args);
 
-	if (args == NULL) {
+	if (args == NULL || args[2] == NULL) {
 		defaultHelp();
 		return 0;
 	}
 
 	// If there is an argument, print argument specific help
-	if (args[2] && !args[3]) {
+	if (args[2]) {
 		// make
 		if (strcmp(args[2], "make_project") == 0) {
 			showUsage("make_project", true, "hn.d:e");
@@ -23,9 +23,10 @@ int help(char **args) {
 		} 
 		// help help
 		else if (strcmp(args[2], "help") == 0) {
+			
 		
 		} else {
-			n_print("adess: no help available for argument '%s'\n", args[2]);
+			e_fatal("no help available for argument '%s'\n", args[2]);
 		}
 	} else {
 		e_fatal("too many arguments for command 'help'\n");

@@ -6,6 +6,7 @@
 #define RCOL "\x1b[0m"
 
 #include "commands/command.h"
+#include "utils.h"
 
 void d_showInput(char *name, char **args) {
 	if (g_debug) {
@@ -35,11 +36,9 @@ void d_showInput(char *name, char **args) {
 
 // FIX this doesn't work for some very strange reason
 void d_listArgs(char **args) {
-	printf("\033[91;103m");
-	printf("UNDER CONSTRUCTION");
-	printf("\033[0m");
-	return;
-	int i = 0;
+	//b_todo("DOES NOT WORK YET");
+	//return;
+	int i = 1;
 	while (args[i] != NULL) {
 		printf("[%i] %s, ", i, args[i]);
 		i++;

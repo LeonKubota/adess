@@ -3,29 +3,30 @@
 #include <dirent.h> // Probably OK on Linux/MacOS, need to test for W*ndows
 #include <string.h>
 #include <ctype.h> // for 'isdigit()'
-
-#ifdef _WIN32
-#include <windows.h>
-#include <direct.h> // for _getcwd
-#define PATH_SEPARATOR "\\" // Windows' weird things (idiot Bill Gates)
-#define getcwd _getcwd // so that its the same later
-#else
-#include <unistd.h> // for gecwd
-#define PATH_SEPARATOR "/" // for sane people
-#endif
+#include <stdlib.h> // for malloc
 
 #include "utils.h"
 #include "files/check.h"
 
-bool checkFileExistsIn(char *path, char *filename) {
+bool checkFileExistsIn(char *path, const char *filename) {
+	printf("filename: %s\n", filename);
 	struct dirent *entry;
+	printf("test%s\n", filename);
 	DIR *dir = opendir(path);
+
+	printf("filename: %s\n", filename);
+	if (dir == NULL) {
+		e_fatal("directory '%s' could not be read\n", path);
+		return false;
+	}
+	printf("filename: %s\n", filename);
 
 	while ((entry = readdir(dir)) != NULL) {
 		if (strstr(entry -> d_name, filename)) {
 			return true;
 		}
 	}
+	printf("filename: %s\n", filename);
 
 	return false;
 }
@@ -66,7 +67,7 @@ char *findProjectFile(char *path) {
 }
 
 char *getCurDirectory(char *userpath) {
-	char cwd[4096]; // Should be enough (even overkill)
+	char cwd[4096];
 	
 	if (getcwd(cwd, sizeof(cwd)) != NULL) {
 		if (userpath == NULL) {
@@ -77,6 +78,7 @@ char *getCurDirectory(char *userpath) {
 	} else {
 		e_fatal("directory not found\n");
 	}
+
 	return NULL;
 }
 
@@ -216,7 +218,7 @@ bool checkVar(char type, char *variable) {
 	}
 
 	// list of available variables
-	char variables[8][64] = {
+	char variables[16][64] = {
 		// "<type> <name>"
 		"i sample_rate",
 		"i bit_depth",
@@ -225,7 +227,8 @@ bool checkVar(char type, char *variable) {
 		"b amplitude_clip",
 		"s engine_path",
 		"s scene_path",
-		"s output_path"
+		"s output_path",
+		"s engine",
 	};
 
 	int i = 0;

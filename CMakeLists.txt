@@ -10,9 +10,9 @@ else()
 endif()
 
 # Set some flags based on debug/release
-set(CMAKE_C_FLAGS_DEBUG "-std=c99 -Wall -g -Werror")
-set(CMAKE_C_FLAGS_RELEASE "-O2")
 
 add_executable(adess ${SRC_FILES})
 
 target_include_directories(adess PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+target_compile_options(adess PRIVATE -std=c99 -Wall -Wextra -Werror)
