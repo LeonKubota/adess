@@ -9,25 +9,35 @@
 #include "files/check.h"
 
 bool checkFileExistsIn(char *path, const char *filename) {
-	printf("filename: %s\n", filename);
+	printf("filename: \t%s\n", filename);
 	struct dirent *entry;
-	printf("test%s\n", filename);
-	DIR *dir = opendir(path);
+	DIR *dir = opendir(path); // WTF this erases char *filename some of the time (when it doesn't exist???
 
-	printf("filename: %s\n", filename);
 	if (dir == NULL) {
 		e_fatal("directory '%s' could not be read\n", path);
 		return false;
 	}
-	printf("filename: %s\n", filename);
+	
+	// Handle non-exact search
+	if (filename[0] == '*') {
+		filename++;
+		while ((entry = readdir(dir)) != NULL) {
+			if (strstr(entry -> d_name, filename)) {
+				closedir(dir);
+				return true;
+			}
+		}
+		return false;
+	}
 
 	while ((entry = readdir(dir)) != NULL) {
-		if (strstr(entry -> d_name, filename)) {
+		if (strcmp(entry -> d_name, filename) == 0) {
+			closedir(dir);
 			return true;
 		}
 	}
-	printf("filename: %s\n", filename);
 
+	closedir(dir);
 	return false;
 }
 
@@ -43,7 +53,7 @@ bool checkFileExists(char *path) {
 
 char *findProjectFile(char *path) {
 	// If there is no file ending in '.adess'
-	if (!checkFileExistsIn(path, ".adess")) {
+	if (!checkFileExistsIn(path, "*.adess")) {
 		e_fatal("project file not found in '%s'\n", path);
 		return NULL;
 	}

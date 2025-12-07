@@ -34,10 +34,7 @@ void d_showInput(char *name, char **args) {
 	}
 }
 
-// FIX this doesn't work for some very strange reason
 void d_listArgs(char **args) {
-	//b_todo("DOES NOT WORK YET");
-	//return;
 	int i = 1;
 	while (args[i] != NULL) {
 		printf("[%i] %s, ", i, args[i]);

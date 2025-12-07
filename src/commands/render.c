@@ -10,7 +10,7 @@ int render(char **args) {
 	d_showInput("render", args);
 	
 	// Check if inside adess project
-	if (!checkFileExistsIn(getCurDirectory(NULL), ".adess")) {
+	if (!checkFileExistsIn(getCurDirectory(NULL), "*.adess")) {
 		e_fatal("command 'render' can only be ran inside an adess project directory\n");
 		return 1;
 	}
@@ -38,6 +38,7 @@ int render(char **args) {
 	}
 }
 
+// This whole function is incredibly disgusting, unsafe and sinful
 int renderScene(char *rawscenename, char *projectFilePath) {
 
 	// Get scene path
@@ -58,10 +59,11 @@ int renderScene(char *rawscenename, char *projectFilePath) {
 		strncpy(sceneFilePath, getCurDirectory(subpath), 4096);
 	}
 
-	printf("scenename: %s\n", scenename);
-	printf("scenefile: %s\n", sceneFilePath);
-
 	// Check if scene directory exists
+	if (!checkFileExists(sceneFilePath)) {
+		e_fatal("scene directory does not exist at '%s'\n", sceneFilePath);
+		return 1;
+	}
 	
 	// Check if scene exists
 	if (!checkFileExistsIn(sceneFilePath, scenename)) {
@@ -92,21 +94,25 @@ int renderScene(char *rawscenename, char *projectFilePath) {
 
 	// Get engine file from scene file
 	char *enginename = parseLineValueS("engine", sceneFilePath);
+	printf("enginename 1: %s\n", enginename);
 
 	if (enginename == NULL) {
 		return 1;
 	}
 		
-	snprintf(enginename, strlen(enginename) + 7, "%s.adess", enginename);
+	sprintf(enginename, "%s.adess", enginename);
 
-	printf("enginename: %s\n", enginename);
-	printf("enginefile: %s\n", engineFilePath);
 	// Check if engine directory exists
+	printf("enginename 2: %s\n", enginename);
 
-	// FIX enginename is deleted after checkFileExistsIn, but it does with the scene(WTF)
+	// WTF - strange workaround because 'checkFileExistsIn' removes the enginename for some reason
+	char tempenginename[64];
+	strcpy(tempenginename, enginename);
+	printf("temp: %p\t%p\n", tempenginename, enginename);
+
 	// Check if engine exists
-	if (checkFileExistsIn(engineFilePath, enginename)) {
-		printf("enginename: %s\n", enginename);
+	if (!checkFileExistsIn(engineFilePath, tempenginename)) {
+		strcpy(enginename, tempenginename);
 		e_fatal("engine '%s' does not exist in directory '%s'\n", enginename, engineFilePath);
 		return 1;
 	}
