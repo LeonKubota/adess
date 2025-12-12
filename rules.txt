@@ -1,29 +1,29 @@
-This file contains the rules of the data storage thing (DST) (for myself to adhere to)
+// This file contains the rules of the data storage thing (DST) (for myself to adhere to)
 
-The DST holds variables and their values like this:
-variable = value
+// The DST holds variables and their values like this:
+// variable = value
 
-DST also supports comments (only single line):
+// DST also supports comments (only single line):
 // Comment
 variable = value // comment
 
-Each variable can have one of these 4 value types:
+/// Each variable can have one of these 4 value types:
 
-int
+// int
 variable = 256
 
-float
+// float
 variable = 169.29f
 
-boolean
+// boolean
 variable = true
 
-string
+// string
 variable = "string"
 
-Here are all the variables and their default value:
+// Here are all the variables and their default value:
 
-Adess-specific:
+// Adess-specific:
 engine_path =
 scene_path =
 output_path =
@@ -31,6 +31,8 @@ max_buffer_size = 1693440000 // Should be enough for roughly 20 minule of audio,
 debug = false
 amplitude_clip = true // Should prevent hardware damage
 
-Audio signal:
+// Audio signal:
 sample_rate = 44100
 bit_depth = 24
+
+// DST also has keyframes, which look like this:

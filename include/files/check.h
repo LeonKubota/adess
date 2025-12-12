@@ -9,6 +9,8 @@ char *findProjectFile(char *path);
 char *getCurDirectory(char *userpath);
 
 bool checkValidity(char *path);
-bool checkVar(char type, char *variable);
+// Return 'g' if success, otherwise return reqired type
+char checkVar(char type, char *variable);
+bool isDigit(char input);
 
 #endif

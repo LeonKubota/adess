@@ -23,7 +23,12 @@ int render(char **args) {
 	
 	// Generate the path to the project file
 	char projectFilePath[4096];
-	strncpy(projectFilePath, findProjectFile(getCurDirectory(NULL)), 4096);
+	char *tempProjFile = findProjectFile(getCurDirectory(NULL));
+	if (tempProjFile == NULL) {
+		return 1;
+	}
+
+	strncpy(projectFilePath, tempProjFile, 4096);
 
 	// Check if the adess DST file has valid syntax
 	if (checkValidity(projectFilePath) == false) {
@@ -119,6 +124,8 @@ int renderScene(char *rawscenename, char *projectFilePath) {
 
 	// Get the engine file
 	snprintf(engineFilePath, strlen(engineFilePath) + strlen(enginename) + 7, "%s%s.adess", engineFilePath, enginename);
+
+	printf("engineFilePath: %s\n", engineFilePath);
 
 	n_print("scene '%s' rendered successfully into '%s'\n", scenename, "<output_dir>"); // TODO
 	return 0;

@@ -2,14 +2,11 @@
 #include <stdbool.h>
 #include <dirent.h> // Probably OK on Linux/MacOS, need to test for W*ndows
 #include <string.h>
-#include <ctype.h> // for 'isdigit()'
-#include <stdlib.h> // for malloc
 
 #include "utils.h"
 #include "files/check.h"
 
 bool checkFileExistsIn(char *path, const char *filename) {
-	printf("filename: \t%s\n", filename);
 	struct dirent *entry;
 	DIR *dir = opendir(path); // WTF this erases char *filename some of the time (when it doesn't exist???
 
@@ -63,11 +60,17 @@ char *findProjectFile(char *path) {
 	char *projectFilePath = NULL;
 	
 	while ((entry = readdir(dir)) != NULL) {
+
 		if (strstr(entry -> d_name, ".adess")) {
+			// Ignore hidden files
+			if (entry -> d_name[0] == '.') {
+				continue;
+			}
+
 			if (projectFilePath == NULL) {
 				projectFilePath = entry -> d_name;  
 			} else {
-				e_fatal("multiple projects file found in '%s'\n", path); 
+				e_fatal("multiple project files found in '%s'\n", path); 
 				return NULL;
 			}
 		}
@@ -102,19 +105,29 @@ bool checkValidity(char *path) {
 
 	char line[1024];
 	char varname[1024] = "";
-	char type = ' '; // a = any; s = string; i = int; f = float; b = boolean; m = multi (int or bool, 0 or 1)
+	char type = ' '; // a = any; s = string; i = int; f = float; b = boolean; 
 	char *typestring;
 	int i = 0;
 	
 	while (fgets(line, sizeof(line), file)) {
+
+		// Reset 'type'
+		type = ' ';
+
 		// Skip comments
 		if (line[0] == '/' && line[1] == '/') {
 			i++;
 			continue;
 		}
 
+		// Skip empty
+		if (line[0] == '\n') {
+			i++;
+			continue;
+		}
+
 		strncpy(varname, line, sizeof(varname) - 1);
-	
+
 		if (varname[0] == '\n') {
 			i++;
 			continue;
@@ -128,60 +141,41 @@ bool checkValidity(char *path) {
 		while (typestring[0] == ' ' || typestring[0] == '\t') {
 			typestring++;
 		}
-	
+
 		// Skip trailing whitespace
 		char *end = typestring + strlen(typestring) - 1;
 		while (end > typestring &&  (*end == '\t' || *end == ' ' || *end == '\n')) {
 			*end-- = '\0';
 		}
 		
+		// Picking 'type'
 		// String
 		if (typestring[0] == '\"') {
 			type = 's';
 		// Int or float
-		} else if (isdigit(typestring[0])) {
+		} else if (isDigit(typestring[0]) == true) {
 			int n = 0;
-			while (isdigit(typestring[n])) {
+			while (typestring[n] != '\0') {
 				n++;
 			}
 			// Float
 			if (typestring[n] == 'f') {
 				type = 'f';
+			}
+			// Check if it's a validatable int
+		   	else if (!isDigit(typestring[n - 1])) {
+				type = 'u';
+			}
 			// Int
-			} else {
+		   	else {
 				type = 'i';
 			}
 		// Boolean
 		} else {
-			char *truestring = "true";
-			int p = 0;
-			// True
-			if (typestring[0] == 't') {
-				while (typestring[p] != '\0' && p <3) {
-					if (typestring[p] != truestring[p]) {
-						e_parse(path, i, "invalid type '%s'\n", varname);
-						return 1;
-					}
-					p++;
-				}
+			if (strcmp(typestring, "true") == 0 || strcmp(typestring, "false") == 0) {
 				type = 'b';
-			}
-			char *falsestring = "false";
-			// False
-			p = 0;
-			if (typestring[0] == 'f') {
-				while (typestring[p] != '\0' && p < 4) {
-					if (typestring[p] != falsestring[p]) {
-						e_parse(path, i, "invalid type '%s'\n", varname);
-						return 1;
-					}
-					p++;
-				}
-				type = 'b';
-			}
-			// If unknown
-			if (type == ' ') {
-				e_parse(path, i, "invalid type '%s'\n", varname);
+			} else {
+				type = 'u';
 			}
 		}
 
@@ -190,27 +184,29 @@ bool checkValidity(char *path) {
 
 		// 'a' is for any
 		if (checkVar('a', varname) == false) {
-			e_parse(path, i, "unknown variable '%s'\n", varname);
+			e_parse(path, i + 1, "unknown variable '%s'\n", varname);
 			return false;
 		}
 
 		char *typename;
 		// Check if the value has the correct type
-		if (checkVar(type, varname) == false) {
+		char reqiredtype = checkVar(type, varname);
+		if (reqiredtype != 'g') {
 			// Set typename base on type char
-			if (type == 's') {
+			if (reqiredtype == 's') {
 				typename = "string";
-			} else if (type == 'i') {
+			} else if (reqiredtype == 'i') {
 				typename = "integer";
-			} else if (type == 'f') {
+			} else if (reqiredtype == 'f') {
 				typename = "float";
 			} else {
 				typename = "boolean";
 			}
 
-			e_parse(path, i, "incorrent type, %s expected\n", typename);
+			e_parse(path, i + 1, "incorrent type, %s expected\n", typename);
 			return false;
 		}
+
 		i++;
 	}
 	
@@ -221,10 +217,11 @@ bool checkValidity(char *path) {
 	return true;
 }
 
-bool checkVar(char type, char *variable) {
+// Return 'g' if success, otherwise return reqired type
+char checkVar(char type, char *variable) {
 	// Ignore empty things
 	if (strcmp(variable, "\n") == 0) {
-		return true;
+		return 'g';
 	}
 
 	// list of available variables
@@ -252,14 +249,26 @@ bool checkVar(char type, char *variable) {
 		
 		if (strcmp(variable, curvar) == 0) {
 			if (type == curtype) {
-				return true;
+				return 'g';
 			} else if (type == 'a') {
-				return true;
+				return 'g';
 			}
-			return false;
+			return curtype;
 		}
 		i++;
 	}
 	
+	return curtype;
+}
+
+bool isDigit(char input) {
+	char digits[11] = "0123456789\0";
+	int i = 0;
+	while (digits[i] != '\0') {
+		if (digits[i] == input) {
+			return true;
+		}
+		i++;
+	}
 	return false;
 }
