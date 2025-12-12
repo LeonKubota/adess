@@ -9,17 +9,31 @@ variable = value // comment
 
 /// Each variable can have one of these 4 value types:
 
-// int
-variable = 256
+// [i] int
+variable = 67
 
-// float
-variable = 169.29f
+// [f] float
+variable = 420.69f
 
-// boolean
+// [b] boolean
 variable = true
 
-// string
+// [s] string
 variable = "string"
+
+// [c] curve (used for volume_curve, noise_curve ect.)
+variable = {
+	0, 0.3f;
+	1000, 0.4f;
+	2000, 0.9f;
+	6000, 1.0f;
+}
+
+// [k] keyframe (used for animation)
+// Keyframes can be defined multiple times (duh), they have a time, RPM and a load field. Keyframes must be in chronological order.
+key = 1.0f, 1000, 0.0f
+key = 1.2f, 5000, 0.1f
+key = 1.8f, 6000, 0.2f
 
 // Here are all the variables and their default value:
 
