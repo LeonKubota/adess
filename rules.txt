@@ -30,10 +30,14 @@ variable = {
 }
 
 // [k] keyframe (used for animation)
-// Keyframes can be defined multiple times (duh), they have a time, RPM and a load field. Keyframes must be in chronological order.
-key = 1.0f, 1000, 0.0f
-key = 1.2f, 5000, 0.1f
-key = 1.8f, 6000, 0.2f
+// Keyframes are used for animation, they have a time, RPM and a load field. Keyframes must be in chronological order.
+keyframes = {
+	0.2f, 3400, 0.6f;
+	0.9f, 5000, 0.7f;
+	1.3f, 6000, 0.9f;
+	1.4f, 4000, 0.2f;
+	2.0f, 1000, 0.0f;
+}
 
 // Here are all the variables and their default value:
 
