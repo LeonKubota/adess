@@ -5,25 +5,28 @@
 ## Requirements:
 
 - _CMake_ (`https://github.com/Kitware/CMake`)
+- _CPU_ and _RAM_ (expensive)
 
 ## Installation:
-- On _Linux_ / _MacOS_
-	- 1. clone the repository:
-	```bash
-	git clone https://github.com/LeonKubota/adess.git
-	```
-	- 2. compile:
-	```bash
-	cd build
-	cmake ..
-	make
-	```
-	I suggest adding *adess* to your `$PATH` for convenience.
-- On _Windows_:
-    - a) Use _WSL_
-    - b) 
-        - 1. Choose a _Linux_ distro and download it
-        - 2. Create bootable installation media
-        - 3. Boot your _Linux_ installation media
-        - 4. Install _Linux_
-        - 5. Install *adess* on _Linux_
+### On Linux/MacOS:
+1. clone the repository:
+```bash
+git clone https://github.com/LeonKubota/adess.git
+```
+2. compile using _CMake_:
+```bash
+cd build
+cmake ..
+make
+```
+I suggest adding *adess* to your `$PATH` for convenience.
+### On Windows:
+You have three installation options on Windows:
+1. Use _WSL_
+2. Do this:
+   	1. Choose a Linux distribution and download it
+	2. Create bootable installation media
+   	3. Boot your Linux installation media
+   	4. Install Linux
+   	5. Install *adess* on Linux
+4. Wait until I add Windows support (may not happen)
