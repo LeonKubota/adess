@@ -155,9 +155,11 @@ bool checkValidity(char *path) {
 		// Int or float
 		} else if (isDigit(typestring[0]) == true) {
 			int n = 0;
+			// Get the last char
 			while (typestring[n] != '\0') {
 				n++;
 			}
+			n--;
 			// Float
 			if (typestring[n] == 'f') {
 				type = 'f';
@@ -236,6 +238,7 @@ char checkVar(char type, char *variable) {
 		"s scene_path",
 		"s output_path",
 		"s engine",
+		"f length",
 	};
 
 	int i = 0;

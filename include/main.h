@@ -10,6 +10,9 @@
 #define MAX_OPT_COUNT 8
 #define MAX_VAL_COUNT 2
 
+#define FLOAT_FAIL -69420.42060f // Hopefully no user enters 69420.42069f as their float
+#define INT_FAIL -676967 // I hope noone uses this
+
 #ifdef _WIN32
 #include <windows.h>
 #include <direct.h> // for _getcwd

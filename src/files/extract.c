@@ -18,14 +18,14 @@ char *parseLineValueS(char *variable, char *path) {
 	if (string[0] == '\"') {
 		string++;
 	} else {
-		e_parse(path, getVariableLineNumber(variable, path), "string expected\n");
+		e_parse(path, getVariableLineNumber(variable, path) + 1, "string expected\n");
 		return NULL;
 	}
 
 	if ((string[strlen(string) - 1]) == '\"') {
 		string[strlen(string) - 1] = '\0';
 	} else {
-		e_parse(path, getVariableLineNumber(variable, path), "string expected\n");
+		e_parse(path, getVariableLineNumber(variable, path) + 1, "string expected\n");
 		return NULL;
 	}
 	
@@ -39,10 +39,10 @@ int parseLineValueI(char *variable, char *path) {
 	if (atoi(value) == 0) {
 		// If it really is a zero
 		if (value[0] == 0) {
-			return 0;
+			return INT_FAIL;
 		} else {
-			e_parse(path, getVariableLineNumber(variable, path), "integer expected\n");
-			return 0;
+			e_parse(path, getVariableLineNumber(variable, path) + 1, "integer expected\n");
+			return INT_FAIL;
 		}
 	}
 
@@ -56,9 +56,28 @@ float parseLineValueF(char *variable, char *path) {
 		return 0;
 	}
 
+	// Floats must have a '.'
+	unsigned long i = 0;
+	bool detected = false;
+	while (i < strlen(string)) {
+		if (string[i] == '.') {
+			if (detected == true) {
+				e_parse(path, getVariableLineNumber(variable, path) + 1, "float expected\n");
+				return FLOAT_FAIL;
+			}
+			detected = true;
+		}
+		i++;
+	}
+	if (detected == false) {
+		e_parse(path, getVariableLineNumber(variable, path) + 1, "float expected\n");
+		return FLOAT_FAIL;
+	}
+
 	// Floats must end with 'f'
 	if (string[strlen(string) - 1] != 'f') {
-		e_parse(path, getVariableLineNumber(variable, path), "float expected\n");
+		e_parse(path, getVariableLineNumber(variable, path) + 1, "float expected\n");
+		return FLOAT_FAIL;
 	}
 
 	return strtod(string, NULL);
@@ -72,7 +91,7 @@ bool parseLineValueB(char *variable, char *path) {
 	} else if ((strcmp(string, "false") == 0) || (string[0] == '0' && string[1] == '\0')) {
 		return false;
 	} else {
-		e_parse(path, getVariableLineNumber(variable, path), "boolean expected\n");
+		e_parse(path, getVariableLineNumber(variable, path) + 1, "boolean expected\n");
 		return NULL;
 	}
 }

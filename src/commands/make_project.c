@@ -101,7 +101,7 @@ void appendProjectDefault(char *path) {
 	// Define adess parameters
 	appendLine(path, "\n// General adess-specific variables\n");
 	appendLine(path, "debug = false\n");
-	appendLine(path, "max_buffer_size = 1693440000\n");
+	appendLine(path, "max_buffer_size = 105840000\n");
 	appendLine(path, "amplitude_clip = true\n");
 	appendLine(path, "engine_path = \"engines\"\n");
 	appendLine(path, "scene_path = \"scene\"\n");

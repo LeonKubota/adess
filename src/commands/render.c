@@ -99,7 +99,11 @@ int renderScene(char *rawscenename, char *projectFilePath) {
 
 	// Get engine file from scene file
 	char *enginename = parseLineValueS("engine", sceneFilePath);
-	printf("enginename 1: %s\n", enginename);
+
+	// If there is an engine
+	if (enginename == NULL) {
+		return 1;
+	}
 
 	if (enginename == NULL) {
 		return 1;
@@ -107,13 +111,9 @@ int renderScene(char *rawscenename, char *projectFilePath) {
 		
 	sprintf(enginename, "%s.adess", enginename);
 
-	// Check if engine directory exists
-	printf("enginename 2: %s\n", enginename);
-
 	// WTF - strange workaround because 'checkFileExistsIn' removes the enginename for some reason
 	char tempenginename[64];
 	strcpy(tempenginename, enginename);
-	printf("temp: %p\t%p\n", tempenginename, enginename);
 
 	// Check if engine exists
 	if (!checkFileExistsIn(engineFilePath, tempenginename)) {
@@ -125,9 +125,41 @@ int renderScene(char *rawscenename, char *projectFilePath) {
 	// Get the engine file
 	snprintf(engineFilePath, strlen(engineFilePath) + strlen(enginename) + 7, "%s%s.adess", engineFilePath, enginename);
 
-	printf("engineFilePath: %s\n", engineFilePath);
+	// Now do the actual rendering stuff 
+
+	// Create the buffer
+	
+	float lengthseconds = parseLineValueF("length", sceneFilePath);
+	if (lengthseconds == FLOAT_FAIL) {
+		return 1;
+	}
+
+	int samplerate = parseLineValueI("sample_rate", projectFilePath);
+	if (samplerate == INT_FAIL) {
+		return 1;
+	}
+
+	int buffersize = lengthseconds * samplerate;
+
+	int maxbuffersize = parseLineValueI("max_buffer_size", projectFilePath);
+	if (maxbuffersize == INT_FAIL) {
+		return 1;
+	}
+
+	if (buffersize > maxbuffersize) {
+		e_fatal("required buffer size is too big, you can override it in '%s/max_buffer_size'\n", projectFilePath);
+		return 1;
+	}
+
+	int16_t *buffer = (int16_t *)malloc(buffersize * sizeof(int16_t));
+
+	// Load in keyframes
+
+	// TEMP used so it takes a bit so I can get the amount of used memory
+	sleep(5);
 
 	n_print("scene '%s' rendered successfully into '%s'\n", scenename, "<output_dir>"); // TODO
+	free(buffer);
 	return 0;
 }
 
