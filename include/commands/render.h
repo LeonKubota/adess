@@ -10,6 +10,8 @@ int render(char **args);
 int renderAll(char *projectFilePath);
 int renderScene(char *rawscenename, char *projectFilePath);
 
-void interpolateKeys(int16_t *bufferkey, int buffersizekey, float *time, float *rpm, float *load);
+// Helper functions in execution order
+char *getScenePath(char *scenePath, char *sceneName);
+void interpolateKeys(int *bufferkey, int buffersizekey, float *time, int *rpm, float *load);
 
 #endif

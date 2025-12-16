@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h> // For Linux
 
 #include "commands/command.h"
 #include "commands/render.h"
@@ -44,40 +45,24 @@ int render(char **args) {
 }
 
 // This whole function is incredibly disgusting, unsafe and sinful
-int renderScene(char *rawscenename, char *projectFilePath) {
+// It doesn't even work now FIXME, this code is complete and utter garbage and needs a refactor ASAP
 
+// Ok I think it might be healing
+int renderScene(char *inputSceneName, char *projectFilePath) {
 	// Get scene path
+	char *scenePathInput = parseLineValueS("scene_path", projectFilePath);
+	char *scenePath = getScenePath(scenePathInput, inputSceneName);
 
-	// Get the path of the requested scene
-	char *subpath = parseLineValueS("scene_path", projectFilePath);
-
-	char *scenename = rawscenename;
-	// Create the scenename variable with correct data
-	if (strcmp(rawscenename + strlen(rawscenename) - 6, ".adess") != 0) {
-		sprintf(scenename, "%s.adess", scenename);
-	}
-
-	char sceneFilePath[4096];
-	if (subpath == NULL) {
-		strncpy(sceneFilePath, getCurDirectory(NULL), 4096);
-	} else {
-		strncpy(sceneFilePath, getCurDirectory(subpath), 4096);
-	}
-
-	// Check if scene directory exists
-	if (!checkFileExists(sceneFilePath)) {
-		e_fatal("scene directory does not exist at '%s'\n", sceneFilePath);
+	// Check if the scene path is real
+	if (scenePath == NULL) {
 		return 1;
 	}
-	
-	// Check if scene exists
-	if (!checkFileExistsIn(sceneFilePath, scenename)) {
-		e_fatal("scene '%s' does not exist in directory '%s'\n", scenename, sceneFilePath);
-		return 1;
-	}
+
+	return 1;
+	/*
 
 	// Get engine path
-	sprintf(sceneFilePath, "%s%s", sceneFilePath, scenename);
+	sceneFilePath = strcat(sceneFilePath, scenename);
 
 	// Check if scene is valid
 	if (checkValidity(sceneFilePath) == false) {
@@ -85,13 +70,13 @@ int renderScene(char *rawscenename, char *projectFilePath) {
 	}
 
 	// Get the path of the engine directory
-	char engineFilePath[4096];
-	strncpy(engineFilePath, getCurDirectory(NULL), 4096);
+	char *engineFilePath = "";
+	strcpy(engineFilePath, getCurDirectory(NULL));
 	subpath = parseLineValueS("engine_path", projectFilePath);
 
 	// Unspecified engine directory = use current directory
 	if (subpath != NULL) {
-		strncpy(engineFilePath, getCurDirectory(subpath), 4096);
+		strcpy(engineFilePath, getCurDirectory(subpath));
 	}
 
 	// Check if the engine directory exists
@@ -109,7 +94,7 @@ int renderScene(char *rawscenename, char *projectFilePath) {
 		return 1;
 	}
 		
-	sprintf(enginename, "%s.adess", enginename);
+	enginename = strcat(enginename, ".adess");
 
 	// WTF - strange workaround because 'checkFileExistsIn' removes the enginename for some reason
 	char tempenginename[64];
@@ -123,7 +108,8 @@ int renderScene(char *rawscenename, char *projectFilePath) {
 	}
 
 	// Get the engine file
-	snprintf(engineFilePath, strlen(engineFilePath) + strlen(enginename) + 7, "%s%s.adess", engineFilePath, enginename);
+	engineFilePath = strncat(engineFilePath, strcat(enginename, ".adess"), strlen(engineFilePath) + strlen(enginename));
+	//snprintf(engineFilePath, strlen(engineFilePath) + strlen(enginename) + 7, "%s%s.adess", engineFilePath, enginename);
 
 	// Now do the actual rendering stuff 
 
@@ -152,10 +138,14 @@ int renderScene(char *rawscenename, char *projectFilePath) {
 	}
 
 	// Create the buffer
-	int16_t *buffer = (int16_t *)malloc(buffersize * sizeof(int16_t));
+	int *buffer = (int *)malloc(buffersize * sizeof(int));
+
+	float time[4] = {0.15f, 0.30f, 0.60f, 1.25f};
+	int rpm[4] = {1000, 1100, 2000, 3000};
+	float load[4] = {0.0f, 0.1f, 0.1f, 0.2f};
 
 	// Load in keyframes
-	interpolateKeys(&buffer, buffersize, time, rpm, load);
+	interpolateKeys(buffer, buffersize, time, rpm, load);
 
 	int i = 0;
 	while (i < buffersize) {
@@ -169,6 +159,7 @@ int renderScene(char *rawscenename, char *projectFilePath) {
 	n_print("scene '%s' rendered successfully into '%s'\n", scenename, "<output_dir>"); // TODO
 	free(buffer);
 	return 0;
+	*/
 }
 
 int renderAll(char *projectFilePath) {
@@ -176,9 +167,42 @@ int renderAll(char *projectFilePath) {
 	return 1;
 }
 
-void interpolateKeys(int16_t *bufferkey, int buffersizekey, float *time, float *rpm, float *load) {
+// Helper functions for render function, in execution order
+char *getScenePath(char *scenePath, char *sceneName) {
+	// Prepare the sceneName
+	char *processedSceneName = strcat(sceneName, ".adess");
+
+	// Get the directory path
+	char *processedScenePath;
+	processedScenePath = getCurDirectory(scenePath);
+
+	// Check if it's a real directory or if the user is stupid
+	if (!checkFileExists(processedScenePath)) {
+		e_fatal("scene directory does not exist at '%s'\n", processedScenePath);
+		return NULL;
+	}
+
+	// Make the complete path (path + name)
+	char *completePath = (char *)malloc(strlen(processedScenePath) + strlen(processedSceneName) + 1); // +1 for terminator ("I'll be back" - Terminator)
+	strcpy(completePath, processedScenePath);
+	strcat(completePath, processedSceneName);
+
+	// Check if the scene exists in the directory
+	if (checkFileExists(completePath) == true) {
+		return completePath;
+	} else {
+		e_fatal("scene '%s' does not exist in '%s'\n", sceneName, processedScenePath);
+		return NULL;
+	}
+
+
+	free(completePath);
+	return NULL;
+}
+
+void interpolateKeys(int *bufferkey, int buffersizekey, float *time, int *rpm, float *load) {
 	printf("time: %f\n", time[0]);
-	printf("rpm: %f\n", rpm[0]);
+	printf("rpm: %i\n", rpm[0]);
 	printf("load: %f\n", load[0]);
 	int i = 0;
 	while (i <= buffersizekey) {

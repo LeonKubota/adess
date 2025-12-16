@@ -104,7 +104,7 @@ void appendProjectDefault(char *path) {
 	appendLine(path, "max_buffer_size = 105840000\n");
 	appendLine(path, "amplitude_clip = true\n");
 	appendLine(path, "engine_path = \"engines\"\n");
-	appendLine(path, "scene_path = \"scene\"\n");
+	appendLine(path, "scene_path = \"scenes\"\n");
 	appendLine(path, "output_path = \"output\"\n");
 }
 
