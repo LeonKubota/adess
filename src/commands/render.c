@@ -151,9 +151,17 @@ int renderScene(char *rawscenename, char *projectFilePath) {
 		return 1;
 	}
 
+	// Create the buffer
 	int16_t *buffer = (int16_t *)malloc(buffersize * sizeof(int16_t));
 
 	// Load in keyframes
+	interpolateKeys(&buffer, buffersize, time, rpm, load);
+
+	int i = 0;
+	while (i < buffersize) {
+		printf("%i", buffer[i]);
+		i++;
+	}
 
 	// TEMP used so it takes a bit so I can get the amount of used memory
 	sleep(5);
@@ -166,4 +174,16 @@ int renderScene(char *rawscenename, char *projectFilePath) {
 int renderAll(char *projectFilePath) {
 	printf("rendering all, %s\n", projectFilePath);
 	return 1;
+}
+
+void interpolateKeys(int16_t *bufferkey, int buffersizekey, float *time, float *rpm, float *load) {
+	printf("time: %f\n", time[0]);
+	printf("rpm: %f\n", rpm[0]);
+	printf("load: %f\n", load[0]);
+	int i = 0;
+	while (i <= buffersizekey) {
+		bufferkey[i] = 1;
+		i++;
+	}
+	return;
 }
