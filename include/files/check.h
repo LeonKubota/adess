@@ -13,4 +13,7 @@ bool checkValidity(char *path);
 char checkVar(char type, char *variable);
 bool isDigit(char input);
 
+int countKeyframes(char *scenePath);
+bool isKeyframeValid(char *scenePath);
+
 #endif

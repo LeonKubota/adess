@@ -207,3 +207,9 @@ int getVariableLineNumber(char *variable, char *path) {
 	fclose(file);
 	return -1;
 }
+
+struct Keyframe *loadKeyframes(char *scenePath) {
+	printf("%s\n", scenePath);
+	// struct Keyframe currentKey = {1.0f, 1000};
+	return NULL;
+}

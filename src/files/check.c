@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <dirent.h> // Probably OK on Linux/MacOS, need to test for W*ndows
 #include <string.h>
+#include <stdlib.h>
 
 #include "utils.h"
 #include "files/check.h"
@@ -173,11 +174,18 @@ bool checkValidity(char *path) {
 				type = 'i';
 			}
 		// Boolean
+		} else if (strcmp(typestring, "true") == 0 || strcmp(typestring, "false") == 0) {
+			type = 'b';
+		// Keyframe or curve
 		} else {
-			if (strcmp(typestring, "true") == 0 || strcmp(typestring, "false") == 0) {
-				type = 'b';
+			strtok(varname, " =");
+			if (strcmp(varname, "keyframes") == 0) {
+				if (isKeyframeValid(path) == false) {
+					return 1;
+				}
 			} else {
-				type = 'u';
+				printf("its a curve");
+				return 1;
 			}
 		}
 
@@ -192,17 +200,22 @@ bool checkValidity(char *path) {
 
 		char *typename;
 		// Check if the value has the correct type
-		char reqiredtype = checkVar(type, varname);
-		if (reqiredtype != 'g') {
+		char requiredType = checkVar(type, varname);
+		if (requiredType != 'g') {
 			// Set typename base on type char
-			if (reqiredtype == 's') {
+			if (requiredType == 's') {
 				typename = "string";
-			} else if (reqiredtype == 'i') {
+			} else if (requiredType == 'i') {
 				typename = "integer";
-			} else if (reqiredtype == 'f') {
+			} else if (requiredType == 'f') {
 				typename = "float";
-			} else {
+			} else if (requiredType == 'b') {
 				typename = "boolean";
+			} else if (requiredType == 'k') {
+				typename = "keyframe";
+			} else {
+				typename = NULL;
+				printf("Something is horribly broken (this is not your fault)\n");
 			}
 
 			e_parse(path, i + 1, "incorrent type, %s expected\n", typename);
@@ -226,7 +239,7 @@ char checkVar(char type, char *variable) {
 		return 'g';
 	}
 
-	// list of available variables
+	// list of available variables (keyframes and curve type is not included because they are special)
 	char variables[16][64] = {
 		// "<type> <name>"
 		"i sample_rate",
@@ -274,4 +287,121 @@ bool isDigit(char input) {
 		i++;
 	}
 	return false;
+}
+
+int countKeyframes(char *scenePath) {
+	printf("%s\n", scenePath);
+	return -1;
+}
+
+// Keyframes can be: valid or invalid (unended, empty, wrong data (type, ',' or ';', ect.))
+bool isKeyframeValid(char *scenePath) {
+	// Setup file read
+	FILE *fileKey = fopen(scenePath, "r"); // no error handling because we already know it exists
+	char lineKey[1024];
+	char currentValue[1024];
+	int n = 0;
+	bool found = false;
+
+	// Set n to line with keyframe
+	while (fgets(lineKey, sizeof(lineKey), fileKey)) {
+		strcpy(currentValue, lineKey);
+		strtok(currentValue, " =");
+		if (strcmp(currentValue, "keyframes") == 0) {
+			found = true;
+			break;
+		}
+		n++;
+	}
+
+	if (found == false) {
+		return false;
+	}
+
+	int offset = 0;
+
+	// Ensure that '{' is somewhere immidietly after 'keyframes'
+	if (strchr(lineKey, '{') == NULL) {
+		while (fgets(lineKey, sizeof(lineKey), fileKey)) {
+			n++;
+			// Skip leading whitespace
+			while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
+				offset++;
+			}
+
+			// Break if found a '{'
+			if (lineKey[offset] == '{') {
+				break;
+			} else if (lineKey[offset] == '\n') {
+				continue;
+			} else if (lineKey[offset] == '/' && lineKey[offset + 1] == '/') {
+				continue;
+			} else {
+				e_parse(scenePath, n + 1, "keyframe lists must begin with '{'\n");
+				return false;
+			}
+		}
+	}
+
+	bool wasDot = false;
+
+	// Read the keyframes
+	while (fgets(lineKey, sizeof(lineKey), fileKey)) {
+		n++;
+		offset = 0;
+		// Skip leading whitespace
+		while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
+			offset++;
+		}
+
+		printf("%s\n", lineKey + offset);
+
+		// Check the first part (float keytime)
+		wasDot = false;
+		while (lineKey[offset + 1] != ',' || lineKey[offset] != '\n' || lineKey[offset] != '\0') {
+			if (isDigit(lineKey[offset]) == true) {
+				printf("d");
+				offset++;
+				continue;
+			} else if (lineKey[offset] == '.') {
+				printf(".");
+				if (wasDot == true) {
+					e_parse(scenePath, n + 1, "incorrect type, float expected\n");
+					return false;
+				}
+				wasDot = true;
+				offset++;
+				continue;
+			} else if (lineKey[offset] == 'f') {
+				printf("f");
+				offset++;
+				break;
+			} else {
+				e_parse(scenePath, n + 1, "incorrect type, float expected\n");
+				return false;
+			}
+			offset++;
+		}
+
+		// Skip some more whitespace
+		while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
+			offset++;
+		}
+
+		printf("after: %s\n", lineKey + offset);
+		
+		if (lineKey[offset] != ',') {
+			e_parse(scenePath, n + 1, "incorrect values divider\n");
+			return false;
+		}
+
+		printf("\n");
+
+		// Do the second value (int rpm)
+		break;
+	}
+
+	printf("first is correct\n");
+
+	return true;
 }

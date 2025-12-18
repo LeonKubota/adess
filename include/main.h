@@ -3,7 +3,7 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-// TODO
+// TODO - change to 1 later
 #define VERSION "0.0.1"
 
 #define MAX_ARG_COUNT 16 // This is based on the user
@@ -22,6 +22,12 @@
 #include <unistd.h> // for gecwd
 #define PATH_SEPARATOR "/" // for sane people
 #endif
+
+struct Keyframe {
+	float keytime;
+	int rpm;
+	//float load;
+};
 
 extern bool g_debug;
 extern char *g_optslist;

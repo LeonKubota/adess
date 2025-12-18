@@ -11,7 +11,7 @@ int renderAll(char *projectFilePath);
 int renderScene(char *rawscenename, char *projectFilePath);
 
 // Helper functions in execution order
-char *getScenePath(char *scenePath, char *sceneName);
+char *getThingPath(char *thingPath, char *thingName, char *thingType);
 void interpolateKeys(int *bufferkey, int buffersizekey, float *time, int *rpm, float *load);
 
 #endif

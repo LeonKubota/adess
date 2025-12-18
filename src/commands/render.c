@@ -48,69 +48,62 @@ int render(char **args) {
 // It doesn't even work now FIXME, this code is complete and utter garbage and needs a refactor ASAP
 
 // Ok I think it might be healing
-int renderScene(char *inputSceneName, char *projectFilePath) {
+int renderScene(char *sceneNameInput, char *projectPath) {
 	// Get scene path
-	char *scenePathInput = parseLineValueS("scene_path", projectFilePath);
-	char *scenePath = getScenePath(scenePathInput, inputSceneName);
+	char *scenePathInput = parseLineValueS("scene_path", projectPath);
+	if (scenePathInput == NULL) {
+		return 1;
+	}
 
-	// Check if the scene path is real
+	char *scenePath = getThingPath(scenePathInput, sceneNameInput, "scene");
 	if (scenePath == NULL) {
 		return 1;
 	}
 
-	return 1;
-	/*
+	// Check validity of scene file
+	if (checkValidity(scenePath) == false) {
+		return 1;
+	}
+	printf("success\n");
+	return 0;
+
+	d_print("'scene_path' (%s) found\n", scenePath);
 
 	// Get engine path
-	sceneFilePath = strcat(sceneFilePath, scenename);
-
-	// Check if scene is valid
-	if (checkValidity(sceneFilePath) == false) {
+	char enginePathInput[4096];
+	strcpy(enginePathInput, parseLineValueS("engine_path", projectPath));
+	if (enginePathInput[0] == '\0') {
 		return 1;
 	}
 
-	// Get the path of the engine directory
-	char *engineFilePath = "";
-	strcpy(engineFilePath, getCurDirectory(NULL));
-	subpath = parseLineValueS("engine_path", projectFilePath);
-
-	// Unspecified engine directory = use current directory
-	if (subpath != NULL) {
-		strcpy(engineFilePath, getCurDirectory(subpath));
+	// Get engine name
+	// This removes enginePathInput, not anymore B-)
+	char *engineNameInput = parseLineValueS("engine", scenePath);
+	if(engineNameInput == NULL) {
+		return 1;
 	}
 
-	// Check if the engine directory exists
+	char *enginePath = getThingPath(enginePathInput, engineNameInput, "engine");
+	if (enginePath == NULL) {
+		return 1;
+	}
+
+	if (checkValidity(enginePath) == false) {
+		return 1;
+	}
+
+	d_print("'engine' (%s) found\n", enginePath);
+
+	// Load in keyframes
+
+	// Create the keyframes array
+	int keyframeCount = countKeyframes(scenePath);
+	printf("keyframeCount: %i\n", keyframeCount);
 	
+	//loadKeyframes(scenePath);
 
-	// Get engine file from scene file
-	char *enginename = parseLineValueS("engine", sceneFilePath);
-
-	// If there is an engine
-	if (enginename == NULL) {
-		return 1;
-	}
-
-	if (enginename == NULL) {
-		return 1;
-	}
-		
-	enginename = strcat(enginename, ".adess");
-
-	// WTF - strange workaround because 'checkFileExistsIn' removes the enginename for some reason
-	char tempenginename[64];
-	strcpy(tempenginename, enginename);
-
-	// Check if engine exists
-	if (!checkFileExistsIn(engineFilePath, tempenginename)) {
-		strcpy(enginename, tempenginename);
-		e_fatal("engine '%s' does not exist in directory '%s'\n", enginename, engineFilePath);
-		return 1;
-	}
-
-	// Get the engine file
-	engineFilePath = strncat(engineFilePath, strcat(enginename, ".adess"), strlen(engineFilePath) + strlen(enginename));
-	//snprintf(engineFilePath, strlen(engineFilePath) + strlen(enginename) + 7, "%s%s.adess", engineFilePath, enginename);
-
+	return 1;
+	/*
 	// Now do the actual rendering stuff 
 
 	// Create the buffer
@@ -168,33 +161,32 @@ int renderAll(char *projectFilePath) {
 }
 
 // Helper functions for render function, in execution order
-char *getScenePath(char *scenePath, char *sceneName) {
+char *getThingPath(char *thingPath, char *thingName, char *thingType) {
 	// Prepare the sceneName
-	char *processedSceneName = strcat(sceneName, ".adess");
+	char *processedName = strcat(thingName, ".adess");
 
 	// Get the directory path
-	char *processedScenePath;
-	processedScenePath = getCurDirectory(scenePath);
+	char *processedPath;
+	processedPath = getCurDirectory(thingPath);
 
 	// Check if it's a real directory or if the user is stupid
-	if (!checkFileExists(processedScenePath)) {
-		e_fatal("scene directory does not exist at '%s'\n", processedScenePath);
+	if (!checkFileExists(processedPath)) {
+		e_fatal("%s directory does not exist at '%s'\n", thingType, processedPath);
 		return NULL;
 	}
 
 	// Make the complete path (path + name)
-	char *completePath = (char *)malloc(strlen(processedScenePath) + strlen(processedSceneName) + 1); // +1 for terminator ("I'll be back" - Terminator)
-	strcpy(completePath, processedScenePath);
-	strcat(completePath, processedSceneName);
+	char *completePath = (char *)malloc(strlen(processedPath) + strlen(processedName) + 1); // +1 for terminator ("I'll be back" - Terminator)
+	strcpy(completePath, processedPath);
+	strcat(completePath, processedName);
 
 	// Check if the scene exists in the directory
 	if (checkFileExists(completePath) == true) {
 		return completePath;
 	} else {
-		e_fatal("scene '%s' does not exist in '%s'\n", sceneName, processedScenePath);
+		e_fatal("%s '%s' does not exist in '%s'\n", thingType, thingName, processedPath);
 		return NULL;
 	}
-
 
 	free(completePath);
 	return NULL;
