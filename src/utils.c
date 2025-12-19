@@ -19,7 +19,14 @@ void e_fatal(const char *format, ...) {
 void e_parse(char *path, int linenr, const char *format, ...) {
 	va_list args;
 	va_start(args, format);
-	printf(COLOR_BOLD "fatal: " COLOR_RESET "[error while parsing %s:%i] ", path, linenr);
+
+	// If 'linenr' is 0, don't print the line number
+	if (linenr == 0) {
+		printf(COLOR_BOLD "fatal: " COLOR_RESET "[error while parsing %s] ", path);
+	} else {
+		printf(COLOR_BOLD "fatal: " COLOR_RESET "[error while parsing %s:%i] ", path, linenr);
+	}
+
 	vprintf(format, args);
 	va_end(args);
 }

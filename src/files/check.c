@@ -290,8 +290,38 @@ bool isDigit(char input) {
 }
 
 int countKeyframes(char *scenePath) {
-	printf("%s\n", scenePath);
-	return -1;
+	FILE *fileKeys = fopen(scenePath, "r"); // No null check, should be fine (it's checked before)
+	char lineKeys[1024];
+	char currentValue[1024];
+	bool found;
+
+	while (fgets(lineKeys, sizeof(lineKeys), fileKeys)) {
+		strcpy(currentValue, lineKeys);
+		strtok(currentValue, " =");
+		if (strcmp(currentValue, "keyframes") == 0) {
+			found = true;
+			break;
+		}
+	}
+
+	if (found == false) {
+		printf("not found\n");
+		return 0;
+	}
+
+	int count = 0;
+
+	// Count ';' until '}'
+	while (fgets(lineKeys, sizeof(lineKeys), fileKeys)) {
+		if (strchr(lineKeys, ';') != NULL) {
+			count++;
+		}
+		if (strchr(lineKeys, '{') != NULL) {
+			break;
+		}
+	}
+
+	return count;
 }
 
 // Keyframes can be: valid or invalid (unended, empty, wrong data (type, ',' or ';', ect.))
@@ -343,13 +373,10 @@ bool isKeyframeValid(char *scenePath) {
 		}
 	}
 
-	//bool wasDot = false;
-
 	// Read the keyframes
 	// Expect this: n numbers, dot, n numbers, 'f', ',', n numbers, ',', n numbers, dot, n numbers, 'f', ';'
 	while (fgets(lineKey, sizeof(lineKey), fileKey)) {
-		printf("first input: \t\t'%s'\n", lineKey + offset);
-
+		n++;
 		// Go over the whitespace
 		while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
 			offset++;
@@ -360,138 +387,118 @@ bool isKeyframeValid(char *scenePath) {
 			break;
 		}
 
-		printf("after skip whitespace: \t'%s'\n", lineKey + offset);
+		// Lines don't have to have anything
+		if (lineKey[offset] == '\n' || lineKey[offset] == '\0') {
+			offset = 0;
+			continue;
+		}
+
+		// Ignore comments
+		if (lineKey[offset] == '/' && lineKey[offset + 1] == '/') {
+			offset = 0;
+			continue;
+		}
 
 		// Go over the numbers
 		while (isDigit(lineKey[offset]) == true) {
 			offset++;
 		}
-		printf("after first numbers: \t'%s'\n", lineKey + offset);
 
 		// The dot
 		if (lineKey[offset] == '.') {
 			offset++;
 		} else {
-			printf("fail\n"); // TODO
-			return 1;
+			e_parse(scenePath, n + 1, "incorrect type, float expected\n");
+			return false;
 		}
-
-		printf("after dot: \t\t'%s'\n", lineKey + offset);
 
 		// Go over the numbers after decimal
 		while (isDigit(lineKey[offset]) == true) {
 			offset++;
 		}
 
-		printf("after second numbers: \t'%s'\n", lineKey + offset);
-
 		// The f
 		if (lineKey[offset] == 'f') {
 			offset++;
 		} else {
-			printf("fail\n"); // TODO
-			return 1;
+			e_parse(scenePath, n + 1, "incorrect type, float expected\n");
+			return false;
 		}
-
-		printf("after the 'f': \t\t'%s'\n", lineKey + offset);
 
 		// Go over the whitespace
 		while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
 			offset++;
 		}
-
-		printf("after skip whitespace: \t'%s'\n", lineKey + offset);
 
 		if (lineKey[offset] == ',') {
 			offset++;
 		} else {
-			printf("fail\n"); // TODO
-			return 1;
+			e_parse(scenePath, n + 1, "incorrect value separator\n");
+			return false;
 		}
-
-		printf("after the ',': \t\t'%s'\n", lineKey + offset);
 
 		// Go over the whitespace
 		while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
 			offset++;
 		}
-
-		printf("after skip whitespace: \t'%s'\n", lineKey + offset);
 
 		// Normal number
 		while (isDigit(lineKey[offset]) == true) {
 			offset++;
 		}
 
-		printf("after integer: \t\t'%s'\n", lineKey + offset);
-
 		// Go over the whitespace
 		while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
 			offset++;
 		}
-
-		printf("after skip whitespace: \t'%s'\n", lineKey + offset);
 
 		if (lineKey[offset] == ',') {
 			offset++;
 		} else {
-			printf("fail"); // TODO
-			return 1;
+			e_parse(scenePath, n + 1, "incorrect value separator\n");
+			return false;
 		}
-
-		printf("after the ',': \t\t'%s'\n", lineKey + offset);
 
 		// Go over the whitespace
 		while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
 			offset++;
 		}
-
-		printf("after skip whitespace: \t'%s'\n", lineKey + offset);
 
 		// Check final number (float)
 		while (isDigit(lineKey[offset]) == true) {
 			offset++;
 		}
 
-		printf("after numbers: \t\t'%s'\n", lineKey + offset);
-
 		if (lineKey[offset] == '.') {
 			offset++;
 		} else {
-			printf("fail\n"); // TODO
-			return 1;
+			e_parse(scenePath, n + 1, "incorrect type, float expected\n");
+			return false;
 		}
-
-		printf("after the '.': \t\t'%s'\n", lineKey + offset);
 
 		// Final numbers
 		while (isDigit(lineKey[offset]) == true) {
 			offset++;
 		}
 
-		printf("after numbers: \t\t'%s'\n", lineKey + offset);
-
+		// Check for 'f'
 		if (lineKey[offset] == 'f') {
 			offset++;
 		} else {
-			printf("fail\n"); // TODO
-			return 1;
+			e_parse(scenePath, n + 1, "incorrect type, float expected\n");
+			return false;
 		}
-
-		printf("after the 'f': \t\t'%s'\n", lineKey + offset);
 
 		// Go over the whitespace
 		while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
 			offset++;
 		}
-
-		printf("after skip whitespace: \t'%s'\n", lineKey + offset);
 
 		if (lineKey[offset] == ';') {
 			offset++;
 		} else {
-			printf("fail\n"); // TODO
-			return 1;
+			e_parse(scenePath, n + 1, "incorrect keyframe terminator\n");
+			return false;
 		}
 
 		// Go over the whitespace
@@ -499,15 +506,22 @@ bool isKeyframeValid(char *scenePath) {
 			offset++;
 		}
 
-		if (lineKey[offset] == '\n') {
-			offset++;
+		if (lineKey[offset] == '\n' || lineKey[offset] == '\0') {
+			offset = 0;
+			continue;
 		} else {
-			printf("fail\n"); // TODO
+			offset++;
 		}
 
-		printf("final offset: %i\n", offset);
+		// Go over the whitespace
+		while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
+			offset++;
+		}
 
-		offset = 0;
+		// Ignore comments
+		if (lineKey[offset - 1] == '/' && lineKey[offset] == '/') {
+			offset = 0;
+		}
 	}
 
 	return false;

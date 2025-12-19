@@ -64,8 +64,6 @@ int renderScene(char *sceneNameInput, char *projectPath) {
 	if (checkValidity(scenePath) == false) {
 		return 1;
 	}
-	printf("success\n");
-	return 0;
 
 	d_print("'scene_path' (%s) found\n", scenePath);
 
@@ -98,7 +96,17 @@ int renderScene(char *sceneNameInput, char *projectPath) {
 
 	// Create the keyframes array
 	int keyframeCount = countKeyframes(scenePath);
-	printf("keyframeCount: %i\n", keyframeCount);
+
+	if (keyframeCount == 0) {
+		e_parse(scenePath, 0, "scenes must have at least one keyframe\n");
+		return 1;
+	}
+
+	// Could have used 'typedef' but whatever
+	struct Keyframe *keyframes = (struct Keyframe *)malloc(keyframeCount * sizeof(struct Keyframe));
+
+	// TEMP
+	printf("keytime: %f\n", keyframes[0].keytime);
 	
 	//loadKeyframes(scenePath);
 

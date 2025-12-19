@@ -12,7 +12,7 @@
 #include "main.h"
 
 // Global variables
-bool g_debug = true; // 'false' for normal, 'true' for debug
+bool g_debug = false; // 'false' for normal, 'true' for debug
 char *g_optslist = "hn.d.ea"; // Options
 
 // DO NOT CHANGE THE ORDER, YOU WILL BREAK EVERYTHING (I AM STUPID)
