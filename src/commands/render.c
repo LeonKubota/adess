@@ -110,6 +110,8 @@ int renderScene(char *sceneNameInput, char *projectPath) {
 	
 	//loadKeyframes(scenePath);
 
+	free(keyframes);
+
 	return 1;
 	/*
 	// Now do the actual rendering stuff 
