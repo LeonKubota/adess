@@ -343,65 +343,172 @@ bool isKeyframeValid(char *scenePath) {
 		}
 	}
 
-	bool wasDot = false;
+	//bool wasDot = false;
 
 	// Read the keyframes
+	// Expect this: n numbers, dot, n numbers, 'f', ',', n numbers, ',', n numbers, dot, n numbers, 'f', ';'
 	while (fgets(lineKey, sizeof(lineKey), fileKey)) {
-		n++;
+		printf("first input: \t\t'%s'\n", lineKey + offset);
+
+		// Go over the whitespace
+		while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
+			offset++;
+		}
+
+		// End loop if '}'
+		if (lineKey[offset] == '}') {
+			break;
+		}
+
+		printf("after skip whitespace: \t'%s'\n", lineKey + offset);
+
+		// Go over the numbers
+		while (isDigit(lineKey[offset]) == true) {
+			offset++;
+		}
+		printf("after first numbers: \t'%s'\n", lineKey + offset);
+
+		// The dot
+		if (lineKey[offset] == '.') {
+			offset++;
+		} else {
+			printf("fail\n"); // TODO
+			return 1;
+		}
+
+		printf("after dot: \t\t'%s'\n", lineKey + offset);
+
+		// Go over the numbers after decimal
+		while (isDigit(lineKey[offset]) == true) {
+			offset++;
+		}
+
+		printf("after second numbers: \t'%s'\n", lineKey + offset);
+
+		// The f
+		if (lineKey[offset] == 'f') {
+			offset++;
+		} else {
+			printf("fail\n"); // TODO
+			return 1;
+		}
+
+		printf("after the 'f': \t\t'%s'\n", lineKey + offset);
+
+		// Go over the whitespace
+		while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
+			offset++;
+		}
+
+		printf("after skip whitespace: \t'%s'\n", lineKey + offset);
+
+		if (lineKey[offset] == ',') {
+			offset++;
+		} else {
+			printf("fail\n"); // TODO
+			return 1;
+		}
+
+		printf("after the ',': \t\t'%s'\n", lineKey + offset);
+
+		// Go over the whitespace
+		while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
+			offset++;
+		}
+
+		printf("after skip whitespace: \t'%s'\n", lineKey + offset);
+
+		// Normal number
+		while (isDigit(lineKey[offset]) == true) {
+			offset++;
+		}
+
+		printf("after integer: \t\t'%s'\n", lineKey + offset);
+
+		// Go over the whitespace
+		while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
+			offset++;
+		}
+
+		printf("after skip whitespace: \t'%s'\n", lineKey + offset);
+
+		if (lineKey[offset] == ',') {
+			offset++;
+		} else {
+			printf("fail"); // TODO
+			return 1;
+		}
+
+		printf("after the ',': \t\t'%s'\n", lineKey + offset);
+
+		// Go over the whitespace
+		while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
+			offset++;
+		}
+
+		printf("after skip whitespace: \t'%s'\n", lineKey + offset);
+
+		// Check final number (float)
+		while (isDigit(lineKey[offset]) == true) {
+			offset++;
+		}
+
+		printf("after numbers: \t\t'%s'\n", lineKey + offset);
+
+		if (lineKey[offset] == '.') {
+			offset++;
+		} else {
+			printf("fail\n"); // TODO
+			return 1;
+		}
+
+		printf("after the '.': \t\t'%s'\n", lineKey + offset);
+
+		// Final numbers
+		while (isDigit(lineKey[offset]) == true) {
+			offset++;
+		}
+
+		printf("after numbers: \t\t'%s'\n", lineKey + offset);
+
+		if (lineKey[offset] == 'f') {
+			offset++;
+		} else {
+			printf("fail\n"); // TODO
+			return 1;
+		}
+
+		printf("after the 'f': \t\t'%s'\n", lineKey + offset);
+
+		// Go over the whitespace
+		while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
+			offset++;
+		}
+
+		printf("after skip whitespace: \t'%s'\n", lineKey + offset);
+
+		if (lineKey[offset] == ';') {
+			offset++;
+		} else {
+			printf("fail\n"); // TODO
+			return 1;
+		}
+
+		// Go over the whitespace
+		while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
+			offset++;
+		}
+
+		if (lineKey[offset] == '\n') {
+			offset++;
+		} else {
+			printf("fail\n"); // TODO
+		}
+
+		printf("final offset: %i\n", offset);
+
 		offset = 0;
-		// Skip leading whitespace
-		while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
-			offset++;
-		}
-
-		printf("%s\n", lineKey + offset);
-
-		// Check the first part (float keytime)
-		wasDot = false;
-		while (lineKey[offset + 1] != ',' || lineKey[offset] != '\n' || lineKey[offset] != '\0') {
-			if (isDigit(lineKey[offset]) == true) {
-				printf("d");
-				offset++;
-				continue;
-			} else if (lineKey[offset] == '.') {
-				printf(".");
-				if (wasDot == true) {
-					e_parse(scenePath, n + 1, "incorrect type, float expected\n");
-					return false;
-				}
-				wasDot = true;
-				offset++;
-				continue;
-			} else if (lineKey[offset] == 'f') {
-				printf("f");
-				offset++;
-				break;
-			} else {
-				e_parse(scenePath, n + 1, "incorrect type, float expected\n");
-				return false;
-			}
-			offset++;
-		}
-
-		// Skip some more whitespace
-		while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
-			offset++;
-		}
-
-		printf("after: %s\n", lineKey + offset);
-		
-		if (lineKey[offset] != ',') {
-			e_parse(scenePath, n + 1, "incorrect values divider\n");
-			return false;
-		}
-
-		printf("\n");
-
-		// Do the second value (int rpm)
-		break;
 	}
 
-	printf("first is correct\n");
-
-	return true;
+	return false;
 }
