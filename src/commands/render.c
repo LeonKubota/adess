@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdint.h> // For Linux
+#include <stdint.h>
+
+#include <inttypes.h>
 
 #include "commands/command.h"
 #include "commands/render.h"
@@ -44,10 +46,6 @@ int render(char **args) {
 	}
 }
 
-// This whole function is incredibly disgusting, unsafe and sinful
-// It doesn't even work now FIXME, this code is complete and utter garbage and needs a refactor ASAP
-
-// Ok I think it might be healing
 int renderScene(char *sceneNameInput, char *projectPath) {
 	// Get scene path
 	char *scenePathInput = parseLineValueS("scene_path", projectPath);
@@ -117,59 +115,77 @@ int renderScene(char *sceneNameInput, char *projectPath) {
 	d_print("Loaded keyframes [%i]:\n", keyframeCount);
 	printKeys(keyframes, keyframeCount);
 
-	free(keyframes);
+	// Sort the keyframes
+	if (sortKeys(keyframes, keyframeCount) == false) {
+		e_parse(scenePath, getVariableLineNumber("keyframes", scenePath) + 1, "multiple keyframes at the same time\n");
+		return 1;
+	}
 
-	return 1;
-	/*
-	// Now do the actual rendering stuff 
+	d_print("Sorted keyframes [%i]:\n", keyframeCount);
+	printKeys(keyframes, keyframeCount);
 
-	// Create the buffer
+	// Create main buffer
+	float lengthSeconds = parseLineValueF("length", scenePath);
+	if (lengthSeconds == FLOAT_FAIL) {
+		return 1;
+	}
 	
-	float lengthseconds = parseLineValueF("length", sceneFilePath);
-	if (lengthseconds == FLOAT_FAIL) {
+	int64_t sampleRate = parseLineValueI("sample_rate", projectPath);
+	if (sampleRate == INT_FAIL) {
 		return 1;
 	}
 
-	int samplerate = parseLineValueI("sample_rate", projectFilePath);
-	if (samplerate == INT_FAIL) {
+	int64_t sampleCount = lengthSeconds * sampleRate;
+
+	int bitDepth = parseLineValueI("bit_depth", projectPath);
+	if (bitDepth == INT_FAIL) {
+		return 1;
+	} else if (bitDepth%8 != 0 || bitDepth > 32 || bitDepth == 0) {
+		e_parse(projectPath, getVariableLineNumber("bit_depth", projectPath) + 1, "incorrect value for 'bit_depth'\n");
 		return 1;
 	}
 
-	int buffersize = lengthseconds * samplerate;
+	uint64_t bufferSize = (uint64_t) sampleCount * (uint64_t) bitDepth; // So that it can hold it
 
-	int maxbuffersize = parseLineValueI("max_buffer_size", projectFilePath);
-	if (maxbuffersize == INT_FAIL) {
+	int64_t maxBufferSize = parseLineValueI("max_buffer_size", projectPath);
+
+	if (maxBufferSize == INT_FAIL) {
 		return 1;
 	}
 
-	if (buffersize > maxbuffersize) {
-		e_fatal("required buffer size is too big, you can override it in '%s/max_buffer_size'\n", projectFilePath);
+	if (bufferSize > (uint64_t) maxBufferSize) {
+		e_fatal("required buffer size is too large [%.2f/%.2f GB], you can override it in '%s/max_buffer_size'\n", (float) bufferSize / 8589934592.0f, (float) maxBufferSize / 8589934592.0f, projectPath);
 		return 1;
 	}
 
-	// Create the buffer
-	int *buffer = (int *)malloc(buffersize * sizeof(int));
-
-	float time[4] = {0.15f, 0.30f, 0.60f, 1.25f};
-	int rpm[4] = {1000, 1100, 2000, 3000};
-	float load[4] = {0.0f, 0.1f, 0.1f, 0.2f};
-
-	// Load in keyframes
-	interpolateKeys(buffer, buffersize, time, rpm, load);
-
-	int i = 0;
-	while (i < buffersize) {
-		printf("%i", buffer[i]);
-		i++;
+	// Creating the buffer
+	/* This will be useful when I need add different bit depths TODO
+	switch (bitDepth) {
+	case 8:
+		uint8_t *buffer8 = (uint8_t *) malloc(sampleCount * sizeof(uint8_t));
+		break;
+	case 16:
+		int16_t *buffer16 = (int16_t *) malloc(sampleCount * sizeof(int16_t));
+		break;
+	case 24:
+		int32_t *buffer24 = (int32_t *) malloc(sampleCount * sizeof(int32_t));
+		break;
+	case 32:
+		float *buffer32 = (float *) malloc(sampleCount * sizeof(float));
+		break;
 	}
-
-	// TEMP used so it takes a bit so I can get the amount of used memory
-	sleep(5);
-
-	n_print("scene '%s' rendered successfully into '%s'\n", scenename, "<output_dir>"); // TODO
-	free(buffer);
-	return 0;
 	*/
+	int16_t *buffer = (int16_t *) malloc(sampleCount * sizeof(int16_t));
+
+	d_print("created buffer with %" PRId64 " samples of size [%.4f GB]\n", sampleCount, (sampleCount * sizeof(int16_t)) / 8589934592.0f);
+
+	// Interpolate keyframes
+	interpolateKeys(buffer, sampleCount, keyframes);
+
+	printEveryNBuffer(buffer, 4096*100, sampleCount);
+	free(buffer);
+	free(keyframes);
+	return 1;
 }
 
 int renderAll(char *projectFilePath) {
@@ -209,16 +225,48 @@ char *getThingPath(char *thingPath, char *thingName, char *thingType) {
 	return NULL;
 }
 
-void interpolateKeys(int *bufferkey, int buffersizekey, float *time, int *rpm, float *load) {
-	printf("time: %f\n", time[0]);
-	printf("rpm: %i\n", rpm[0]);
-	printf("load: %f\n", load[0]);
-	int i = 0;
-	while (i <= buffersizekey) {
-		bufferkey[i] = 1;
+void interpolateKeys(int16_t *buffer, uint64_t length, struct Keyframe *keyframes) {
+	uint64_t i = 0;
+
+	while (i < length) {
+		buffer[i] = keyframes[0].rpm;
 		i++;
 	}
 	return;
+}
+
+// Bubble sort - true = success
+bool sortKeys(struct Keyframe *keyframes, int keyCount) {
+	// Check if there are multiple keyframes at the same time
+	for (int i = 0; i < keyCount; i++) {
+		for (int n = 0; n < keyCount; n++) {
+			if (keyframes[i].keytime == keyframes[n].keytime && i != n) {
+				return false;
+			}
+		}
+	}
+
+	bool sorted = false;
+	struct Keyframe swap;
+
+	for (int i = 0; i < keyCount; i++) {
+		sorted = false; // TEMP idk if this is needed
+
+		for (int n = 0; n < keyCount - i - 1; n++) {
+			if (keyframes[n].keytime > keyframes[n + 1].keytime) {
+				swap = keyframes[n];
+				keyframes[n] = keyframes[n + 1];
+				keyframes[n + 1] = swap;
+				sorted = false;
+			}
+		}
+
+		if (sorted == true) {
+			break;
+		}
+	}
+
+	return true;
 }
 
 void printKeys(struct Keyframe *keyframesPrint, int keyCount) {
@@ -228,7 +276,19 @@ void printKeys(struct Keyframe *keyframesPrint, int keyCount) {
 	}
 
 	while (i < keyCount) {
-		printf("\x1b[1;35m" "[DEBUG]" "\e[m" "\tindex: '%i'; \tkeytime: '%f'; \trpm: '%i'; \tload: '%f';\n", i, keyframesPrint[i].keytime, keyframesPrint[i].rpm, keyframesPrint[i].load);
+		printf("\x1b[1;35m" "[DEBUG]" "\033[m" "\tindex: '%i'; \tkeytime: '%f'; \trpm: '%i'; \tload: '%f';\n", i, keyframesPrint[i].keytime, keyframesPrint[i].rpm, keyframesPrint[i].load);
 		i++;
 	}
+}
+
+void printEveryNBuffer(const int16_t *buffer, int n, uint64_t length) {
+	uint64_t i = 0;
+	while (i < length) {
+		printf("%i\t", buffer[i]);
+		i += n;
+		if (i%(n*12) == 0) {
+			printf("\n");
+		}
+	}
+	printf("\n");
 }

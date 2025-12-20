@@ -3,8 +3,8 @@
 #include <stdarg.h>
 
 #define DCOL "\x1b[1;35m" // Debug color
-#define COLOR_BOLD "\e[1m"
-#define COLOR_RESET "\e[m"
+#define COLOR_BOLD "\033[1m"
+#define COLOR_RESET "\033[m"
 
 #include "utils.h"
 

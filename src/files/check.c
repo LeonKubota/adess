@@ -163,10 +163,11 @@ bool checkValidity(char *path) {
 			n--;
 			// Float
 			if (typestring[n] == 'f') {
+				// Check if it really is a float
 				type = 'f';
 			}
 			// Check if it's a validatable int
-		   	else if (!isDigit(typestring[n - 1])) {
+		   	else if (!isDigit(typestring[n])) {
 				type = 'u';
 			}
 			// Int
@@ -223,7 +224,7 @@ bool checkValidity(char *path) {
 				return false;
 			}
 
-			e_parse(path, i + 1, "incorrent type, %s expected\n", typename);
+			e_parse(path, i + 1, "incorrect type, %s expected\n", typename);
 			return false;
 		}
 

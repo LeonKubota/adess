@@ -15,4 +15,4 @@ add_executable(adess ${SRC_FILES})
 
 target_include_directories(adess PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_compile_options(adess PRIVATE -std=c99 -Wall -Wextra -Werror)
+target_compile_options(adess PRIVATE -std=c99 -pedantic -Wall -Wextra -Werror)

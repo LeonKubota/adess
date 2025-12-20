@@ -2,6 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <inttypes.h>
+
 #include "utils.h"
 #include "files/check.h"
 #include "files/extract.h"
@@ -18,35 +20,35 @@ char *parseLineValueS(char *variable, char *path) {
 	if (string[0] == '\"') {
 		string++;
 	} else {
-		e_parse(path, getVariableLineNumber(variable, path) + 1, "string expected\n");
+		e_parse(path, getVariableLineNumber(variable, path) + 1, "incorrect type, string expected\n");
 		return NULL;
 	}
 
 	if ((string[strlen(string) - 1]) == '\"') {
 		string[strlen(string) - 1] = '\0';
 	} else {
-		e_parse(path, getVariableLineNumber(variable, path) + 1, "string expected\n");
+		e_parse(path, getVariableLineNumber(variable, path) + 1, "incorrect type, string expected\n");
 		return NULL;
 	}
 	
 	return string;
 }
 
-int parseLineValueI(char *variable, char *path) {
+int64_t parseLineValueI(char *variable, char *path) {
 	char *value = parseLineValue(variable, path);
 
-	// atoi returns 0 if input isn't an integer string
-	if (atoi(value) == 0) {
+	// atoll returns 0 if input isn't an integer string (64 bit int)
+	if (atoll(value) == 0) {
 		// If it really is a zero
-		if (value[0] == 0) {
-			return INT_FAIL;
+		if (value[0] == '0') {
+			return 0;
 		} else {
-			e_parse(path, getVariableLineNumber(variable, path) + 1, "integer expected\n");
+			e_parse(path, getVariableLineNumber(variable, path) + 1, "incorrect type, integer expected\n");
 			return INT_FAIL;
 		}
 	}
 
-	return atoi(value);
+	return atoll(value);
 }
 
 float parseLineValueF(char *variable, char *path) {
@@ -56,31 +58,29 @@ float parseLineValueF(char *variable, char *path) {
 		return 0;
 	}
 
-	// Floats must have a '.'
-	unsigned long i = 0;
-	bool detected = false;
-	while (i < strlen(string)) {
-		if (string[i] == '.') {
-			if (detected == true) {
-				e_parse(path, getVariableLineNumber(variable, path) + 1, "float expected\n");
+	// Prepare the stringNumber
+	char stringNumber[16];
+	bool wasDot = false;
+	int i = 0;
+
+	while (string[i] != 'f') {
+		if (isDigit(string[i]) == true) {
+			stringNumber[i] = string[i];
+		} else if (string[i] == '.') {
+			if (wasDot) {
+				e_parse(path, getVariableLineNumber(variable, path) + 1, "incorrect type, float expected\n");
 				return FLOAT_FAIL;
 			}
-			detected = true;
+			wasDot = true;
+			stringNumber[i] = string[i];
+		} else {
+			e_parse(path, getVariableLineNumber(variable, path) + 1, "incorrect type, float expected\n");
+			return FLOAT_FAIL;
 		}
 		i++;
 	}
-	if (detected == false) {
-		e_parse(path, getVariableLineNumber(variable, path) + 1, "float expected\n");
-		return FLOAT_FAIL;
-	}
 
-	// Floats must end with 'f'
-	if (string[strlen(string) - 1] != 'f') {
-		e_parse(path, getVariableLineNumber(variable, path) + 1, "float expected\n");
-		return FLOAT_FAIL;
-	}
-
-	return strtod(string, NULL);
+	return atof(stringNumber);
 }
 
 bool parseLineValueB(char *variable, char *path) {
@@ -91,7 +91,7 @@ bool parseLineValueB(char *variable, char *path) {
 	} else if ((strcmp(string, "false") == 0) || (string[0] == '0' && string[1] == '\0')) {
 		return false;
 	} else {
-		e_parse(path, getVariableLineNumber(variable, path) + 1, "boolean expected\n");
+		e_parse(path, getVariableLineNumber(variable, path) + 1, "incorrect type, boolean expected\n");
 		return NULL;
 	}
 }

@@ -96,12 +96,12 @@ void appendProjectDefault(char *path) {
 	// Define audio signal parameters
 	appendLine(path, "\n// Audio signal parameters\n");
 	appendLine(path, "sample_rate = 44100\n");
-	appendLine(path, "bit_depth = 24\n");
+	appendLine(path, "bit_depth = 16\n");
 
 	// Define adess parameters
 	appendLine(path, "\n// General adess-specific variables\n");
 	appendLine(path, "debug = false\n");
-	appendLine(path, "max_buffer_size = 105840000\n");
+	appendLine(path, "max_buffer_size = 8589934592\n");
 	appendLine(path, "amplitude_clip = true\n");
 	appendLine(path, "engine_path = \"engines\"\n");
 	appendLine(path, "scene_path = \"scenes\"\n");
