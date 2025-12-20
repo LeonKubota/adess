@@ -379,6 +379,26 @@ bool isKeyframeValid(char *scenePath) {
 		}
 	}
 
+	// Test if there is anything after '{'
+	while (lineKey[offset] != '{') {
+		offset++;
+	}
+
+	offset++;
+
+	while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
+		offset++;
+	}
+
+	if (lineKey[offset] != '\n' && lineKey[offset] != '\0') {
+		if (lineKey[offset] != '/' || lineKey[offset + 1] != '/') {
+			e_parse(scenePath, n + 1, "unexpected value\n");
+			return false;
+		}
+	}
+
+	offset = 0;
+
 	// Read the keyframes
 	// Expect this: n numbers, dot, n numbers, 'f', ',', n numbers, ',', n numbers, dot, n numbers, 'f', ';'
 	while (fgets(lineKey, sizeof(lineKey), fileKey)) {
@@ -512,22 +532,14 @@ bool isKeyframeValid(char *scenePath) {
 			offset++;
 		}
 
-		if (lineKey[offset] == '\n' || lineKey[offset] == '\0') {
-			offset = 0;
-			continue;
-		} else {
-			offset++;
+		if (lineKey[offset] != '\n' && lineKey[offset] != '\0') {
+			// If comment
+			if (lineKey[offset] != '/' || lineKey[offset + 1] != '/') {
+				e_parse(scenePath, n + 1, "incorrect keyframe terminator\n");
+				return false;
+			}
 		}
-
-		// Go over the whitespace
-		while (lineKey[offset] == ' ' || lineKey[offset] == '\t') {
-			offset++;
-		}
-
-		// Ignore comments
-		if (lineKey[offset - 1] == '/' && lineKey[offset] == '/') {
-			offset = 0;
-		}
+		offset = 0;
 	}
 
 	return true;

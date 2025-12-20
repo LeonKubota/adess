@@ -114,7 +114,7 @@ int renderScene(char *sceneNameInput, char *projectPath) {
 
 	loadKeyframes(scenePath, keyframes, keyframeCount);
 
-	d_print("Loaded keyframes:\n");
+	d_print("Loaded keyframes [%i]:\n", keyframeCount);
 	printKeys(keyframes, keyframeCount);
 
 	free(keyframes);
