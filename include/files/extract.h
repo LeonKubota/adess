@@ -14,6 +14,6 @@ char *parseLineValue(char *variable, char *path);
 bool compare(char *char1, char *char2);
 int getVariableLineNumber(char *variable, char *path);
 
-struct Keyframe *loadKeyframes(char *scenePath);
+void loadKeyframes(char *scenePath, struct Keyframe *keyframes, int keyCount);
 
 #endif

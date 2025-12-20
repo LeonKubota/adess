@@ -105,10 +105,17 @@ int renderScene(char *sceneNameInput, char *projectPath) {
 	// Could have used 'typedef' but whatever
 	struct Keyframe *keyframes = (struct Keyframe *)malloc(keyframeCount * sizeof(struct Keyframe));
 
-	// TEMP
-	printf("keytime: %f\n", keyframes[0].keytime);
-	
-	//loadKeyframes(scenePath);
+	// Initilize 'keyframes'
+	for (int i = 0; i < keyframeCount; i++) {
+		keyframes[i].keytime = 0.0f;
+		keyframes[i].rpm = 0;
+		keyframes[i].load = 0.0f;
+	}
+
+	loadKeyframes(scenePath, keyframes, keyframeCount);
+
+	d_print("Loaded keyframes:\n");
+	printKeys(keyframes, keyframeCount);
 
 	free(keyframes);
 
@@ -212,4 +219,16 @@ void interpolateKeys(int *bufferkey, int buffersizekey, float *time, int *rpm, f
 		i++;
 	}
 	return;
+}
+
+void printKeys(struct Keyframe *keyframesPrint, int keyCount) {
+	int i = 0;
+	if (g_debug == false) {
+		return;
+	}
+
+	while (i < keyCount) {
+		printf("\x1b[1;35m" "[DEBUG]" "\e[m" "\tindex: '%i'; \tkeytime: '%f'; \trpm: '%i'; \tload: '%f';\n", i, keyframesPrint[i].keytime, keyframesPrint[i].rpm, keyframesPrint[i].load);
+		i++;
+	}
 }

@@ -26,7 +26,7 @@
 struct Keyframe {
 	float keytime;
 	int rpm;
-	//float load;
+	float load;
 };
 
 extern bool g_debug;

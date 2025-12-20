@@ -181,11 +181,13 @@ bool checkValidity(char *path) {
 			strtok(varname, " =");
 			if (strcmp(varname, "keyframes") == 0) {
 				if (isKeyframeValid(path) == false) {
-					return 1;
+					return false;
 				}
+				type = 'k';
+				break;
 			} else {
-				printf("its a curve");
-				return 1;
+				printf("its a curve\n\n\n");
+				return false;
 			}
 		}
 
@@ -198,9 +200,11 @@ bool checkValidity(char *path) {
 			return false;
 		}
 
+
 		char *typename;
 		// Check if the value has the correct type
 		char requiredType = checkVar(type, varname);
+
 		if (requiredType != 'g') {
 			// Set typename base on type char
 			if (requiredType == 's') {
@@ -216,6 +220,7 @@ bool checkValidity(char *path) {
 			} else {
 				typename = NULL;
 				printf("Something is horribly broken (this is not your fault)\n");
+				return false;
 			}
 
 			e_parse(path, i + 1, "incorrent type, %s expected\n", typename);
@@ -252,6 +257,7 @@ char checkVar(char type, char *variable) {
 		"s output_path",
 		"s engine",
 		"f length",
+		"k keyframes",
 	};
 
 	int i = 0;
@@ -524,5 +530,5 @@ bool isKeyframeValid(char *scenePath) {
 		}
 	}
 
-	return false;
+	return true;
 }

@@ -208,8 +208,115 @@ int getVariableLineNumber(char *variable, char *path) {
 	return -1;
 }
 
-struct Keyframe *loadKeyframes(char *scenePath) {
-	printf("%s\n", scenePath);
-	// struct Keyframe currentKey = {1.0f, 1000};
-	return NULL;
+void loadKeyframes(char *scenePath, struct Keyframe *keyframes, int keyCount) {
+	FILE *file = fopen(scenePath, "r"); // No need to check NULL
+	char line[1024];
+	char currentValue[1024];
+
+	// TEMP
+	if (false)
+		printf("%f\n", keyframes[0].keytime);
+
+	while (fgets(line, sizeof(line), file)) {
+		strcpy(currentValue, line);
+		strtok(currentValue, " =");
+		if (strcmp(currentValue, "keyframes") == 0) {
+			break;
+		}
+	}
+
+	int offset = 0;
+
+	// Find where keyframes start
+	if (strchr(line, '{') == NULL) {
+		while (fgets(line, sizeof(line), file)) {
+			// Skip leading whitespace
+			while (line[offset] == ' ' || line[offset] == '\t') {
+				offset++;
+			}
+
+			// Break if found a '{'
+			if (line[offset] == '{') {
+				break;
+			} else if (line[offset] == '\n') {
+				continue;
+			} else if (line[offset] == '/' && line[offset + 1] == '/') {
+				continue;
+			}
+		}
+	}
+
+	int i = 0;
+	char keytime[32];
+	char rpm[32];
+	char load[32];
+
+	while (fgets(line, sizeof(line), file) && i < keyCount) {
+		// Go over whitespace
+		while (line[offset] == ' ' || line[offset] == '\t') {
+			offset++;
+		}
+
+		// Get keytime (ends with 'f')
+		strcpy(keytime, line);
+
+		bool secondF = false;
+		while (strlen(keytime) > 1) {
+			if (keytime[strlen(keytime) - 1] == 'f') {
+				if (secondF == true) {
+					break;
+				}
+				secondF = true;
+			}
+			keytime[strlen(keytime) - 1] = '\0';
+		}
+
+		keyframes[i].keytime = strtod(keytime + offset, NULL);
+
+		// Go to ','
+		while (line[offset] != ',') {
+			offset++;
+		}
+
+		// Skip it
+		offset++;
+
+		// Skip whitespace
+		while (line[offset] == ' ' || line[offset] == '\t') {
+			offset++;
+		}
+
+		// Get rpm (whole number)
+		int n = 0;
+		while (isDigit(line[offset]) == true) {
+			rpm[n] = line[offset];
+			offset++;
+			n++;
+		}
+
+		keyframes[i].rpm = atoi(rpm);
+
+		// Skip ','
+		offset++;
+
+		// Go over whitespace
+		while (line[offset] == ' ' || line[offset] == '\t') {
+			offset++;
+		}
+
+		// Get number (ends with 'f')
+		strcpy(load, line);
+
+		while (strlen(load) > 1) {
+			if (load[strlen(load) - 1] == 'f') {
+				break;
+			}
+			load[strlen(load) - 1] = '\0';
+		}
+
+		keyframes[i].load = strtod(load + offset, NULL);
+		// Go over ';'
+		offset = 0;
+		i++;
+	}
 }
