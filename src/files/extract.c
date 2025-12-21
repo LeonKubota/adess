@@ -213,10 +213,6 @@ void loadKeyframes(char *scenePath, struct Keyframe *keyframes, int keyCount) {
 	char line[1024];
 	char currentValue[1024];
 
-	// TEMP
-	if (false)
-		printf("%f\n", keyframes[0].keytime);
-
 	while (fgets(line, sizeof(line), file)) {
 		strcpy(currentValue, line);
 		strtok(currentValue, " =");
@@ -255,6 +251,12 @@ void loadKeyframes(char *scenePath, struct Keyframe *keyframes, int keyCount) {
 		// Go over whitespace
 		while (line[offset] == ' ' || line[offset] == '\t') {
 			offset++;
+		}
+
+		// Ignore comments
+		if (line[offset] == '/' && line[offset + 1] == '/') {
+			offset = 0;
+			continue;
 		}
 
 		// Get keytime (ends with 'f')

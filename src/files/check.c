@@ -320,6 +320,19 @@ int countKeyframes(char *scenePath) {
 
 	// Count ';' until '}'
 	while (fgets(lineKeys, sizeof(lineKeys), fileKeys)) {
+		// Ignore comments
+		if (strchr(lineKeys, '/') != NULL) {
+			// Skip whitespace
+			int offset = 0;
+			while (lineKeys[offset] == ' ' || lineKeys[offset] == '\t') {
+				offset++;
+			}
+
+			// Check if comment
+			if (lineKeys[offset] == '/' && lineKeys[offset] == '/') {
+				continue;
+			}
+		}
 		if (strchr(lineKeys, ';') != NULL) {
 			count++;
 		}

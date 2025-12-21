@@ -130,7 +130,7 @@ int renderScene(char *sceneNameInput, char *projectPath) {
 		return 1;
 	}
 	
-	int64_t sampleRate = parseLineValueI("sample_rate", projectPath);
+	int sampleRate = parseLineValueI("sample_rate", projectPath);
 	if (sampleRate == INT_FAIL) {
 		return 1;
 	}
@@ -154,7 +154,7 @@ int renderScene(char *sceneNameInput, char *projectPath) {
 	}
 
 	if (bufferSize > (uint64_t) maxBufferSize) {
-		e_fatal("required buffer size is too large [%.2f/%.2f GB], you can override it in '%s/max_buffer_size'\n", (float) bufferSize / 8589934592.0f, (float) maxBufferSize / 8589934592.0f, projectPath);
+		e_fatal("required buffer size is too large [%.2f/%.2f MB], you can override it in '%s/max_buffer_size'\n", (float) bufferSize / 8000000.0f, (float) maxBufferSize / 8589934592.0f, projectPath);
 		return 1;
 	}
 
@@ -175,15 +175,16 @@ int renderScene(char *sceneNameInput, char *projectPath) {
 		break;
 	}
 	*/
-	int16_t *buffer = (int16_t *) malloc(sampleCount * sizeof(int16_t));
+	uint16_t *rpmBuffer = (uint16_t *) malloc(sampleCount * sizeof(uint16_t));
 
-	d_print("created buffer with %" PRId64 " samples of size [%.4f GB]\n", sampleCount, (sampleCount * sizeof(int16_t)) / 8589934592.0f);
+	d_print("created rpm buffer with %" PRId64 " samples of size [%.2f MB]\n", sampleCount, (sampleCount * sizeof(uint16_t)) / 8000000.0f);
 
-	// Interpolate keyframes
-	interpolateKeys(buffer, sampleCount, keyframes);
+	// Interpolate keyframes (linear)
+	d_print("Interpolated keyframe rpm:\n");
+	interpolateKeysRpm(rpmBuffer, sampleCount, keyframes, keyframeCount, sampleRate);
 
-	printEveryNBuffer(buffer, 4096*100, sampleCount);
-	free(buffer);
+	printEveryNBuffer(rpmBuffer, 4096*100, sampleCount);
+	free(rpmBuffer);
 	free(keyframes);
 	return 1;
 }
@@ -225,14 +226,63 @@ char *getThingPath(char *thingPath, char *thingName, char *thingType) {
 	return NULL;
 }
 
-void interpolateKeys(int16_t *buffer, uint64_t length, struct Keyframe *keyframes) {
+void interpolateKeysRpm(uint16_t *buffer, uint64_t length, struct Keyframe *keyframes, int keyframeCount, int sampleRate) {
 	uint64_t i = 0;
 
+	// If there is only one keyframe
+	if (keyframeCount == 1) {
+		while (i < length) {
+			buffer[i] = keyframes[0].rpm;
+			i++;
+		}
+	}
+
+	// If there are more keyframes
+
+	// Keyframe stuff
+	uint16_t lastKey, nextKey = 0;
+	float currentTime = 0.0f;
+
+	float lastTime, nextTime = 0.0f;
+	uint16_t lastRpm, nextRpm = 0;
+
 	while (i < length) {
-		buffer[i] = keyframes[0].rpm;
+		currentTime = (float) i / (float) sampleRate;
+
+		// Calculate the next chronological keyframe
+		while (nextKey < keyframeCount) {
+			if (keyframes[nextKey].keytime > currentTime) {
+				break;
+			}
+			nextKey++;
+		}
+
+		lastKey = nextKey - 1;
+
+		
+		// If the next key is also the first key
+		// This is GENIUS because it has no drawbacks (I have the exact same amount of maximum keyframes)
+		if (lastKey == (uint16_t) -1) {
+			lastTime = 0;
+			lastRpm = keyframes[nextKey].rpm; // Set to the 'nextKey' rpm
+		} else {
+			lastTime = keyframes[lastKey].keytime;
+			lastRpm = keyframes[lastKey].rpm;
+		}
+
+		// Do the same with the next keyframe
+		if (nextKey >= keyframeCount) {
+			nextTime = (float) length / (float) sampleRate;
+			nextRpm = keyframes[lastKey].rpm;
+		} else {
+			nextTime = keyframes[nextKey].keytime;
+			nextRpm = keyframes[nextKey].rpm;
+		}
+
+		buffer[i] = lastRpm + (currentTime - lastTime) * ((nextRpm - lastRpm) / (nextTime - lastTime));
+
 		i++;
 	}
-	return;
 }
 
 // Bubble sort - true = success
@@ -250,8 +300,6 @@ bool sortKeys(struct Keyframe *keyframes, int keyCount) {
 	struct Keyframe swap;
 
 	for (int i = 0; i < keyCount; i++) {
-		sorted = false; // TEMP idk if this is needed
-
 		for (int n = 0; n < keyCount - i - 1; n++) {
 			if (keyframes[n].keytime > keyframes[n + 1].keytime) {
 				swap = keyframes[n];
@@ -260,7 +308,6 @@ bool sortKeys(struct Keyframe *keyframes, int keyCount) {
 				sorted = false;
 			}
 		}
-
 		if (sorted == true) {
 			break;
 		}
@@ -281,7 +328,7 @@ void printKeys(struct Keyframe *keyframesPrint, int keyCount) {
 	}
 }
 
-void printEveryNBuffer(const int16_t *buffer, int n, uint64_t length) {
+void printEveryNBuffer(const uint16_t *buffer, int n, uint64_t length) {
 	uint64_t i = 0;
 	while (i < length) {
 		printf("%i\t", buffer[i]);
