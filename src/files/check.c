@@ -285,7 +285,7 @@ char checkVar(char type, char *variable) {
 }
 
 bool isDigit(char input) {
-	char digits[11] = "0123456789\0";
+	char digits[11] = "0123456789";
 	int i = 0;
 	while (digits[i] != '\0') {
 		if (digits[i] == input) {
