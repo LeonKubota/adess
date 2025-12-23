@@ -7,8 +7,8 @@
 
 void d_showInput(char *name, char **args);
 void d_listArgs(char **args);
-void d_listOptions();
-void d_listValues();
+void d_listOptions(void);
+void d_listValues(void);
 char **getValue(char option);
 
 #endif

@@ -297,9 +297,9 @@ bool isDigit(char input) {
 
 int countKeyframes(char *scenePath) {
 	FILE *fileKeys = fopen(scenePath, "r"); // No null check, should be fine (it's checked before)
-	char lineKeys[1024];
+	char lineKeys[1024] = "";
 	char currentValue[1024];
-	bool found;
+	bool found = false;
 
 	while (fgets(lineKeys, sizeof(lineKeys), fileKeys)) {
 		strcpy(currentValue, lineKeys);

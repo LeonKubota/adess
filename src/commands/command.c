@@ -44,7 +44,7 @@ void d_listArgs(char **args) {
 }
 
 
-void d_listOptions() {
+void d_listOptions(void) {
 	int size = 0;
 	bool empty = true;
 	while (true) {
@@ -66,7 +66,7 @@ void d_listOptions() {
 	}
 }
 
-void d_listValues() {
+void d_listValues(void) {
 	bool empty = true;
 	for (int opt = 0; g_optslist[opt] != '\0'; opt++) {
 		// Option

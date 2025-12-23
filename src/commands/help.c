@@ -85,7 +85,7 @@ void showUsage(char *name, bool components, char *opts) {
 }
 
 // TODO
-void showOptions() {
+void showOptions(void) {
 }
 
 void showDescription(char *description) {
@@ -106,7 +106,7 @@ char *getLongOpt(char opt) {
 	return "\n\n\ngetLongOpt in help.c failed";
 }
 
-void defaultHelp() {
+void defaultHelp(void) {
 	// Print header
 	printf("usage: adess <command> [<options>]\n\n");
 	printf("Adess - artist directed engine sound synthetizer\n\n");

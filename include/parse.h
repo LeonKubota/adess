@@ -17,6 +17,6 @@ int execute(int (*command)(char **args), char **argv, char **args, int argscount
 
 int unacceptedOptions(char *accepted);
 int countArgs(int argc, char **argv);
-void version();
+void version(void);
 
 #endif

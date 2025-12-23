@@ -6,10 +6,10 @@
 #include "main.h"
 
 int help(char **args);
-void defaultHelp();
+void defaultHelp(void);
 
 void showUsage(char *name, bool components, char *opts);
-void showOptions();
+void showOptions(void);
 void showDescription(char *description);
 char *getLongOpt(char opt);
 

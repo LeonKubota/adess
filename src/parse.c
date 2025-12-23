@@ -266,7 +266,7 @@ int countArgs(int argc, char **argv) {
 	return argc;
 }
 
-void version() {
+void version(void) {
 	char *operatingsystem = "unknown";
 	char *architecture = "unknown";
 
