@@ -66,7 +66,7 @@ int parseCommand(int argc, char **argv) {
 	}
 	// render
 	else if ((strcmp(argv[1], "render")) == 0) {
-		return execute(render, argv, args, argscount, "a");
+		return execute(render, argv, args, argscount, "an");
 	}
 	// default (unknown command)
 	else {
@@ -87,13 +87,6 @@ int parseOptions(char **argv) {
 	while (!(argv[i] == NULL)) {
 		// Detect options
 		if (argv[i][0] == '-') {
-
-			// Long options (eg. "--input") TODO
-            if (argv[i][1] == '-') {
-				printf("Long option\n");
-                return 0;
-            }
-
 			n = 1;
             // Short options (eg. "-i")
             while (argv[i][n]) {
@@ -309,5 +302,12 @@ void version() {
 		operatingsystem = "unknown";
     #endif	
 	
+	// Don't support Windows
+	if (strcmp(operatingsystem, "Windows") == 0) {
+		printf("adess version %s (%s %s)\n", VERSION, operatingsystem, architecture);
+		printf("\033[1m" "warning" "\033[m" ": adess may not be fully supported\n");
+		return;
+	}
+
 	printf("adess version %s (%s %s)\n", VERSION, operatingsystem, architecture);
 }

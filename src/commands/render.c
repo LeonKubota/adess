@@ -25,6 +25,22 @@ int render(char **args) {
 		e_fatal("no scene to render, add it's name as an argument or use '-a' to render all\n");
 		return 1;
 	}
+
+	char name[1024];
+
+	// Check if the user specified a name
+	if (g_opts[1] == true) {
+		if (g_opts[6] == true) {
+			e_fatal("can not specify name for multiple scenes\n");
+			return 1;
+		}
+
+		strcpy(name, processName(g_vals[1][0]));
+
+		if (name[0] == '\0') {
+			return 1;
+		}
+	}
 	
 	// Generate the path to the project file
 	char projectFilePath[4096];
@@ -44,11 +60,11 @@ int render(char **args) {
 	if (g_opts[6] == true) {
 		return renderAll(projectFilePath);
 	} else {
-		return renderScene(args[2], projectFilePath);
+		return renderScene(args[2], projectFilePath, name);
 	}
 }
 
-int renderScene(char *sceneNameInput, char *projectPath) {
+int renderScene(char *sceneNameInput, char *projectPath, char *name) {
 	// Get scene path
 	char *scenePathInput = parseLineValueS("scene_path", projectPath);
 	if (scenePathInput == NULL) {
@@ -99,13 +115,19 @@ int renderScene(char *sceneNameInput, char *projectPath) {
 	}
 
 	outputPath = getCurDirectory(outputPath);
-	outputPath = strcat(outputPath, sceneNameInput);
 
-	// This is rather ugly, however, I don't give a -
-	outputPath[strlen(outputPath) - 5] = 'w';
-	outputPath[strlen(outputPath) - 4] = 'a';
-	outputPath[strlen(outputPath) - 3] = 'v';
-	outputPath[strlen(outputPath) - 2] = '\0';
+	// Use 'name' if possible, otherwise use 'sceneNameInput'
+	if (name[0] != '\0') {
+		outputPath = strcat(outputPath, name);
+	} else {
+		outputPath = strcat(outputPath, sceneNameInput);
+
+		// This is rather ugly, however, I don't give a -
+		outputPath[strlen(outputPath) - 5] = 'w';
+		outputPath[strlen(outputPath) - 4] = 'a';
+		outputPath[strlen(outputPath) - 3] = 'v';
+		outputPath[strlen(outputPath) - 2] = '\0';
+	}
 
 	d_print("'output' (%s) found\n", outputPath);
 
@@ -213,7 +235,6 @@ int renderScene(char *sceneNameInput, char *projectPath) {
 	FILE *file = fopen(outputPath, "wb");
 
 	if (file == NULL) {
-		fclose(file);
 		e_fatal("failed to write into file '%s'\n", outputPath);
 		return 1;
 	}
@@ -265,67 +286,6 @@ char *getThingPath(char *thingPath, char *thingName, char *thingType) {
 	return NULL;
 }
 
-/* TODO move to 'render-general' and make it generic
-void keysToSine(int16_t *buffer, uint64_t length, struct Keyframe *keyframes, int keyframeCount, int sampleRate) {
-	uint64_t i = 0;
-
-	// If there is only one keyframe
-	if (keyframeCount == 1) {
-		while (i < length) {
-			buffer[i] = keyframes[0].rpm;
-			i++;
-		}
-	}
-
-	// If there are more keyframes
-
-	// Keyframe stuff
-	uint16_t lastKey, nextKey = 0;
-	float currentTime = 0.0f;
-
-	float lastTime, nextTime = 0.0f;
-	uint16_t lastRpm, nextRpm = 0;
-
-	while (i < length) {
-		currentTime = (float) i / (float) sampleRate;
-
-		// Calculate the next chronological keyframe
-		while (nextKey < keyframeCount) {
-			if (keyframes[nextKey].keytime > currentTime) {
-				break;
-			}
-			nextKey++;
-		}
-
-		lastKey = nextKey - 1;
-
-		
-		// If the next key is also the first key
-		// This is GENIUS because it has no drawbacks (I have the exact same amount of maximum keyframes)
-		if (lastKey == (uint16_t) -1) {
-			lastTime = 0;
-			lastRpm = keyframes[nextKey].rpm; // Set to the 'nextKey' rpm
-		} else {
-			lastTime = keyframes[lastKey].keytime;
-			lastRpm = keyframes[lastKey].rpm;
-		}
-
-		// Do the same with the next keyframe
-		if (nextKey >= keyframeCount) {
-			nextTime = (float) length / (float) sampleRate;
-			nextRpm = keyframes[lastKey].rpm;
-		} else {
-			nextTime = keyframes[nextKey].keytime;
-			nextRpm = keyframes[nextKey].rpm;
-		}
-
-		buffer[i] = lastRpm + (currentTime - lastTime) * ((nextRpm - lastRpm) / (nextTime - lastTime));
-
-		i++;
-	}
-}
-*/
-
 // Bubble sort - true = success
 bool sortKeys(struct Keyframe *keyframes, int keyCount) {
 	// Check if there are multiple keyframes at the same time
@@ -369,16 +329,34 @@ void printKeys(struct Keyframe *keyframesPrint, int keyCount) {
 	}
 }
 
-/* TODO move to 'render-general.c' and make it generic
-void printEveryNBuffer(const uint16_t *buffer, int n, uint64_t length) {
-	uint64_t i = 0;
-	while (i < length) {
-		printf("%i\t", buffer[i]);
-		i += n;
-		if (i%(n*12) == 0) {
-			printf("\n");
-		}
+char *processName(char *inputName) {
+	if (strchr(inputName, '/') != NULL) {
+		e_fatal("invalid output name, illegal character '/'\n");
+		return "\0";
 	}
-	printf("\n");
+	
+	if (strchr(inputName, '.') != NULL) {
+		char *wavString = ".wav";
+		for (int i = 3; i > -1; i--) {
+			printf("%i\n", i);
+			if (inputName[strlen(inputName) - i - 1] != wavString[3 - i]) {
+				// Doesn't end in ".wav", add the ".wav"
+				if (strlen(inputName) > 1020) { // Check if there is space
+					e_fatal("invalid output name, too long\n");
+					return "\0";
+				}
+
+				return strcat(inputName, ".wav");
+			}
+		}
+	} else { // Not even a dot, for sure doesn't end in ".wav"
+		if (strlen(inputName) > 1020) { // Check if there is space
+			e_fatal("invalid output name, too long\n");
+			return "\0";
+		}
+
+		return strcat(inputName, ".wav");
+	}
+
+	return inputName;
 }
-*/

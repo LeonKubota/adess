@@ -19,10 +19,6 @@ int makeWavHeader(FILE *file, uint32_t sampleRate, uint16_t bitDepth, uint32_t s
 		audioFormat = 3; // Use 3 for 32 bit IEEE floating point PCM
 	}
 
-	printf("bitDepth: %i\n", bitDepth);
-	if (bitDepth == 24) {
-	}
-
 	uint32_t byteRate = sampleRate * numChannels * (bitDepth / 8);
 	uint16_t blockAlign = numChannels * (bitDepth / 8);
 

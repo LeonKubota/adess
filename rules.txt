@@ -30,7 +30,7 @@ variable = {
 }
 
 // [k] keyframe (used for animation)
-// Keyframes are used for animation, they have a time, RPM and a load field. Keyframes must be in chronological order.
+// Keyframes are used for animation, they have a time, RPM and a load field. Only one keyframe at one time
 keyframes = {
 	0.2f, 3400, 0.6f;
 	0.9f, 5000, 0.7f;
@@ -42,11 +42,10 @@ keyframes = {
 // Here are all the variables and their default value:
 
 // Adess-specific:
-engine_path =
-scene_path =
-output_path =
+engine_path = "engines"
+scene_path = "scenes"
+output_path = "output"
 max_buffer_size = 1693440000 // Should be enough for roughly 20 minule of audio, ~ 0.21 GB
-debug = false
 amplitude_clip = true // Should prevent hardware damage
 
 // Audio signal:

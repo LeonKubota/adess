@@ -250,7 +250,6 @@ char checkVar(char type, char *variable) {
 		// "<type> <name>"
 		"i sample_rate",
 		"i bit_depth",
-		"b debug",
 		"i max_buffer_size",
 		"b amplitude_clip",
 		"s engine_path",

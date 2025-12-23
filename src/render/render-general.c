@@ -61,12 +61,14 @@ void keysToSine8(uint8_t *buffer, struct Keyframe *keyframes, int keyframeCount,
 	float frequency = 0.0f;
 	double phase = 0.0f;
 
+	float timeStep = 1 / (float) sampleRate;
+
 	// If there is only one keyframe
 	if (keyframeCount == 1) {
 		currRpm = (float) keyframes[0].rpm;
 		frequency = currRpm; // TODO calculate real frequency based on rpm
 		while (i < sampleCount) {
-			phase = (TAU * frequency * i) / sampleRate; // Use a non-iterating approach for precision
+			phase += TAU * frequency * timeStep; // The iterative approach is surprisingly more stable than '(TAU * frequency * i) / sampleRate'
 			buffer[i] = (sin(phase) + 1.0f) * 128;
 			i++;
 		}
@@ -78,8 +80,6 @@ void keysToSine8(uint8_t *buffer, struct Keyframe *keyframes, int keyframeCount,
 		float currentTime = 0.0f;
 		float endTime = (float) sampleCount / (float) sampleRate;
 
-		float timeStep = 1 / (float) sampleRate;
-		
 		while (i < sampleCount) {
 			currentTime = (float) i / (float) sampleRate;
 	
@@ -132,12 +132,13 @@ void keysToSine16(int16_t *buffer, struct Keyframe *keyframes, int keyframeCount
 	float frequency = 0.0f;
 	double phase = 0.0f;
 
+	float timeStep = 1 / (float) sampleRate;
 	// Fill the buffer with rpm data from keyframes
 	if (keyframeCount == 1) {
 		currRpm = (float) keyframes[0].rpm;
 		frequency = currRpm; // TODO calculate real frequency based on rpm
 		while (i < sampleCount) {
-			phase = (TAU * frequency * i) / sampleRate;
+			phase += TAU * frequency * timeStep;
 			buffer[i] = sin(phase) * 32767;
 			i++;
 		}
@@ -148,8 +149,6 @@ void keysToSine16(int16_t *buffer, struct Keyframe *keyframes, int keyframeCount
 	
 		float currentTime = 0.0f;
 		float endTime = (float) sampleCount / (float) sampleRate;
-
-		float timeStep = 1 / (float) sampleRate;
 	
 		while (i < sampleCount) {
 			currentTime = (float) i / (float) sampleRate;
@@ -203,14 +202,15 @@ void keysToSine24(uint8_t *buffer, struct Keyframe *keyframes, int keyframeCount
 
 	int32_t combinedSample = 0;
 
+	float timeStep = 1 / (float) sampleRate;
 	// If there is only one keyframe
 	if (keyframeCount == 1) {
 		currRpm = (float) keyframes[0].rpm;
 		frequency = currRpm; // TODO calculate real frequency based on rpm
 
 		while (i < sampleCount * 3) {
-			phase = (TAU * frequency * i / 3) / sampleRate; // Don't forget to divide 'i' by 3!!
 			combinedSample = (int32_t) (sin(phase) * 8388607);
+			phase += TAU * frequency * timeStep;
 
 			// Split and write data in 3 parts
 			buffer[i] = (uint8_t) (combinedSample & 0xFF);
@@ -283,10 +283,12 @@ void keysToSine32(float *buffer, struct Keyframe *keyframes, int keyframeCount, 
 	uint64_t i = 0;
 
 	double phase = 0.0f;
+	float timeStep = 1 / (float) sampleRate;
+
 	if (keyframeCount == 1) {
 		while (i < sampleCount) {
 			buffer[i] = keyframes[0].rpm;
-			phase = (TAU * buffer[i] * i) / sampleRate;
+			phase += TAU * buffer[i] * timeStep;
 			buffer[i] = sin(phase);
 			i++;
 		}
@@ -336,8 +338,6 @@ void keysToSine32(float *buffer, struct Keyframe *keyframes, int keyframeCount, 
 	}
 
 	i = 0;	
-
-	float timeStep = 1 / (float) sampleRate;
 
 	// Splitting = approx. 12% speed increase
 	while (i < sampleCount) {
