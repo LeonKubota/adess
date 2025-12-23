@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdarg.h>
-
+#include <math.h>
 
 // Include
 #include "parse.h"

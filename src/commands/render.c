@@ -8,6 +8,8 @@
 #include "commands/command.h"
 #include "commands/render.h"
 #include "utils.h"
+#include "render/render-general.h"
+#include "files/export.h"
 
 int render(char **args) {
 	d_showInput("render", args);
@@ -73,7 +75,7 @@ int renderScene(char *sceneNameInput, char *projectPath) {
 	}
 
 	// Get engine name
-	// This removes enginePathInput, not anymore B-)
+	// This removes enginePathInput, not anymore B)
 	char *engineNameInput = parseLineValueS("engine", scenePath);
 	if(engineNameInput == NULL) {
 		return 1;
@@ -89,6 +91,23 @@ int renderScene(char *sceneNameInput, char *projectPath) {
 	}
 
 	d_print("'engine' (%s) found\n", enginePath);
+
+	// Get the output path - the file name will be the same as the scene name, just get the directory
+	char *outputPath = parseLineValueS("output_path", projectPath);
+	if (outputPath == NULL) {
+		return 1;
+	}
+
+	outputPath = getCurDirectory(outputPath);
+	outputPath = strcat(outputPath, sceneNameInput);
+
+	// This is rather ugly, however, I don't give a -
+	outputPath[strlen(outputPath) - 5] = 'w';
+	outputPath[strlen(outputPath) - 4] = 'a';
+	outputPath[strlen(outputPath) - 3] = 'v';
+	outputPath[strlen(outputPath) - 2] = '\0';
+
+	d_print("'output' (%s) found\n", outputPath);
 
 	// Load in keyframes
 
@@ -112,8 +131,6 @@ int renderScene(char *sceneNameInput, char *projectPath) {
 
 	loadKeyframes(scenePath, keyframes, keyframeCount);
 
-	d_print("Loaded keyframes [%i]:\n", keyframeCount);
-	printKeys(keyframes, keyframeCount);
 
 	// Sort the keyframes
 	if (sortKeys(keyframes, keyframeCount) == false) {
@@ -121,7 +138,7 @@ int renderScene(char *sceneNameInput, char *projectPath) {
 		return 1;
 	}
 
-	d_print("Sorted keyframes [%i]:\n", keyframeCount);
+	d_print("Keyframes:\n");
 	printKeys(keyframes, keyframeCount);
 
 	// Create main buffer
@@ -130,15 +147,15 @@ int renderScene(char *sceneNameInput, char *projectPath) {
 		return 1;
 	}
 	
-	int sampleRate = parseLineValueI("sample_rate", projectPath);
-	if (sampleRate == INT_FAIL) {
+	uint32_t sampleRate = parseLineValueI("sample_rate", projectPath);
+	if (sampleRate == (uint32_t) INT_FAIL) {
 		return 1;
 	}
 
 	int64_t sampleCount = lengthSeconds * sampleRate;
 
-	int bitDepth = parseLineValueI("bit_depth", projectPath);
-	if (bitDepth == INT_FAIL) {
+	uint16_t bitDepth = parseLineValueI("bit_depth", projectPath);
+	if (bitDepth == (uint16_t) INT_FAIL) {
 		return 1;
 	} else if (bitDepth%8 != 0 || bitDepth > 32 || bitDepth == 0) {
 		e_parse(projectPath, getVariableLineNumber("bit_depth", projectPath) + 1, "incorrect value for 'bit_depth'\n");
@@ -159,34 +176,56 @@ int renderScene(char *sceneNameInput, char *projectPath) {
 	}
 
 	// Creating the buffer
-	/* This will be useful when I need add different bit depths TODO
+	uint8_t sampleSize = 0;
+
+	// Set the type to the correct value
 	switch (bitDepth) {
 	case 8:
-		uint8_t *buffer8 = (uint8_t *) malloc(sampleCount * sizeof(uint8_t));
+		sampleSize = sizeof(uint8_t);
 		break;
 	case 16:
-		int16_t *buffer16 = (int16_t *) malloc(sampleCount * sizeof(int16_t));
+		sampleSize = sizeof(int16_t);
 		break;
 	case 24:
-		int32_t *buffer24 = (int32_t *) malloc(sampleCount * sizeof(int32_t));
+		sampleSize = 3 * sizeof(uint8_t); // 24 bit is really weirddd...
 		break;
 	case 32:
-		float *buffer32 = (float *) malloc(sampleCount * sizeof(float));
+		sampleSize = sizeof(float);
 		break;
 	}
-	*/
-	uint16_t *rpmBuffer = (uint16_t *) malloc(sampleCount * sizeof(uint16_t));
 
-	d_print("created rpm buffer with %" PRId64 " samples of size [%.2f MB]\n", sampleCount, (sampleCount * sizeof(uint16_t)) / 8000000.0f);
+	void *buffer = (void *) malloc(sampleCount * sampleSize);
+
+	if (buffer == NULL) {
+		e_fatal("failed to allocate memory for render buffer of size [%.2f MB]", (sampleCount * sampleSize) / 8000000.0f);
+		return 1;
+	}
+
+	d_print("Created rpm buffer with [%" PRId64 "] samples of size [%.2f MB] with sample size of [%i bits]\n", sampleCount, (sampleCount *  sampleSize)/ 8000000.0f, bitDepth);
 
 	// Interpolate keyframes (linear)
-	d_print("Interpolated keyframe rpm:\n");
-	interpolateKeysRpm(rpmBuffer, sampleCount, keyframes, keyframeCount, sampleRate);
+	keysToSine(buffer, bitDepth, keyframes, keyframeCount, sampleCount, sampleRate);
 
-	printEveryNBuffer(rpmBuffer, 4096*100, sampleCount);
-	free(rpmBuffer);
 	free(keyframes);
-	return 1;
+
+	// Now write into a WAV file
+	
+	FILE *file = fopen(outputPath, "wb");
+
+	if (file == NULL) {
+		fclose(file);
+		e_fatal("failed to write into file '%s'\n", outputPath);
+		return 1;
+	}
+
+	makeWavHeader(file, sampleRate, bitDepth, (uint32_t) sampleCount);
+
+	fwrite(buffer, 1, sampleCount * (bitDepth / 8), file);
+
+	free(buffer);
+	fclose(file);
+
+	return 0;
 }
 
 int renderAll(char *projectFilePath) {
@@ -226,7 +265,8 @@ char *getThingPath(char *thingPath, char *thingName, char *thingType) {
 	return NULL;
 }
 
-void interpolateKeysRpm(uint16_t *buffer, uint64_t length, struct Keyframe *keyframes, int keyframeCount, int sampleRate) {
+/* TODO move to 'render-general' and make it generic
+void keysToSine(int16_t *buffer, uint64_t length, struct Keyframe *keyframes, int keyframeCount, int sampleRate) {
 	uint64_t i = 0;
 
 	// If there is only one keyframe
@@ -284,6 +324,7 @@ void interpolateKeysRpm(uint16_t *buffer, uint64_t length, struct Keyframe *keyf
 		i++;
 	}
 }
+*/
 
 // Bubble sort - true = success
 bool sortKeys(struct Keyframe *keyframes, int keyCount) {
@@ -328,6 +369,7 @@ void printKeys(struct Keyframe *keyframesPrint, int keyCount) {
 	}
 }
 
+/* TODO move to 'render-general.c' and make it generic
 void printEveryNBuffer(const uint16_t *buffer, int n, uint64_t length) {
 	uint64_t i = 0;
 	while (i < length) {
@@ -339,3 +381,4 @@ void printEveryNBuffer(const uint16_t *buffer, int n, uint64_t length) {
 	}
 	printf("\n");
 }
+*/
