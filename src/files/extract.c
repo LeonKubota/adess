@@ -37,6 +37,10 @@ char *parseLineValueS(char *variable, char *path) {
 int64_t parseLineValueI(char *variable, char *path) {
 	char *value = parseLineValue(variable, path);
 
+	if (value == NULL) {
+		return INT_FAIL;
+	}
+
 	// atoll returns 0 if input isn't an integer string (64 bit int)
 	if (atoll(value) == 0) {
 		// If it really is a zero
@@ -55,7 +59,7 @@ float parseLineValueF(char *variable, char *path) {
 	char *string = parseLineValue(variable, path);
 
 	if (string == NULL) {
-		return 0;
+		return FLOAT_FAIL;
 	}
 
 	// Prepare the stringNumber
@@ -246,6 +250,7 @@ void loadKeyframes(char *scenePath, struct Keyframe *keyframes, int keyCount) {
 	char keytime[32];
 	char rpm[32];
 	char load[32];
+	int n = 0;
 
 	while (fgets(line, sizeof(line), file) && i < keyCount) {
 		// Go over whitespace
@@ -255,6 +260,12 @@ void loadKeyframes(char *scenePath, struct Keyframe *keyframes, int keyCount) {
 
 		// Ignore comments
 		if (line[offset] == '/' && line[offset + 1] == '/') {
+			offset = 0;
+			continue;
+		}
+
+		// Ignore empty lines
+		if (line[offset] == '\0' || line[offset] == '\n') {
 			offset = 0;
 			continue;
 		}
@@ -289,11 +300,12 @@ void loadKeyframes(char *scenePath, struct Keyframe *keyframes, int keyCount) {
 		}
 
 		// Get rpm (whole number)
-		int n = 0;
+		n = 0;
+		memset(rpm, 0, 32); // Reset the rpm string
 		while (isDigit(line[offset]) == true) {
 			rpm[n] = line[offset];
-			offset++;
 			n++;
+			offset++;
 		}
 
 		keyframes[i].rpm = atoi(rpm);
@@ -321,4 +333,48 @@ void loadKeyframes(char *scenePath, struct Keyframe *keyframes, int keyCount) {
 		offset = 0;
 		i++;
 	}
+}
+
+int loadEngine(char *enginePath, struct Engine *engine) {
+	// Load in the stuff
+	engine->stroke = parseLineValueI("stroke", enginePath);
+	engine->cylinderCount = parseLineValueI("cylinder_count", enginePath);
+
+	engine->baseNoise = parseLineValueF("base_noise", enginePath);
+	engine->loadNoise = parseLineValueF("load_noise", enginePath);
+
+	engine->baseVolume = parseLineValueF("base_volume", enginePath);
+	engine->loadVolume = parseLineValueF("load_volume", enginePath);
+	engine->rpmVolumeMultiplier = parseLineValueF("rpm_volume_multiplier", enginePath);
+	engine->volumeVariation = parseLineValueF("volume_variation", enginePath);
+	engine->camshaftVolume = parseLineValueF("camshaft_volume", enginePath);
+
+	// Check if things loaded
+	// Check physical parameters
+	if (engine->stroke == INT_FAIL) {
+		return 1;
+	} else if (engine->cylinderCount == INT_FAIL) {
+		return 1;
+	}
+
+	// Check noise characteristics
+	if (engine->baseNoise == FLOAT_FAIL) {
+		return 1;
+	} else if (engine->loadNoise == FLOAT_FAIL) {
+		return 1;
+	}
+
+	if (engine->baseVolume == FLOAT_FAIL) {
+		return 1;
+	} else if (engine->loadVolume == FLOAT_FAIL) {
+		return 1;
+	} else if (engine->rpmVolumeMultiplier == FLOAT_FAIL) {
+		return 1;
+	} else if (engine->volumeVariation == FLOAT_FAIL) {
+		return 1;
+	} else if (engine->camshaftVolume == FLOAT_FAIL) {
+		return 1;
+	}
+
+	return 0;
 }

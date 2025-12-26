@@ -246,18 +246,33 @@ char checkVar(char type, char *variable) {
 	}
 
 	// list of available variables (keyframes and curve type is not included because they are special)
-	char variables[16][64] = {
+	char variables[32][64] = { // Increase the first value
 		// "<type> <name>"
+		// General
 		"i sample_rate",
 		"i bit_depth",
 		"i max_buffer_size",
-		"b amplitude_clip",
 		"s engine_path",
 		"s scene_path",
 		"s output_path",
+
+		// Scene
 		"s engine",
 		"f length",
 		"k keyframes",
+
+		// Engine
+		"i stroke",
+		"i cylinder_count",
+
+		"f base_noise",
+		"f load_noise",
+
+		"f base_volume",
+		"f load_volume",
+		"f rpm_volume_multiplier",
+		"f volume_variation",
+		"f camshaft_volume",
 	};
 
 	int i = 0;

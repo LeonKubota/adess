@@ -25,8 +25,25 @@
 
 struct Keyframe {
 	float keytime;
-	int rpm;
+	float rpm;
 	float load;
+};
+
+struct Engine {
+	// Physical parameters
+	int stroke; // The amount of cycles per one work cycle
+	int cylinderCount; // The amount of cylinders
+
+	// Noise characteristics
+	float baseNoise; // The base noise (with 0.0f load)
+	float loadNoise; // Maximum noise (with 1.0f load)
+
+	// Volume characteristics
+	float baseVolume; // The base volume (with 0.0f load)
+	float loadVolume; // Maximum volume (with 1.0f load)
+	float rpmVolumeMultiplier; // What to multiply by with RPM
+	float volumeVariation; // How much the volume varies
+	float camshaftVolume; // The volume of the cam
 };
 
 extern bool g_debug;

@@ -5,6 +5,7 @@
 
 #include <inttypes.h>
 
+#include "main.h"
 #include "commands/command.h"
 #include "commands/render.h"
 #include "utils.h"
@@ -64,6 +65,7 @@ int render(char **args) {
 	}
 }
 
+// This function is extremly chaotic
 int renderScene(char *sceneNameInput, char *projectPath, char *name) {
 	// Get scene path
 	char *scenePathInput = parseLineValueS("scene_path", projectPath);
@@ -153,12 +155,20 @@ int renderScene(char *sceneNameInput, char *projectPath, char *name) {
 
 	loadKeyframes(scenePath, keyframes, keyframeCount);
 
-
 	// Sort the keyframes
 	if (sortKeys(keyframes, keyframeCount) == false) {
 		e_parse(scenePath, getVariableLineNumber("keyframes", scenePath) + 1, "multiple keyframes at the same time\n");
 		return 1;
 	}
+
+	// Get engine information and write it into engine struct
+	struct Engine *engine = (struct Engine *) malloc(sizeof(struct Engine));
+	if (loadEngine(enginePath, engine) == 1) {
+		return 1;
+	}
+
+	// Convert the keyframes to rps from rpm to speed up later calculations (~8%)
+	rpmToFreqency(keyframes, keyframeCount, engine);
 
 	d_print("Keyframes:\n");
 	printKeys(keyframes, keyframeCount);
@@ -225,13 +235,16 @@ int renderScene(char *sceneNameInput, char *projectPath, char *name) {
 
 	d_print("Created rpm buffer with [%" PRId64 "] samples of size [%.2f MB] with sample size of [%i bits]\n", sampleCount, (sampleCount *  sampleSize)/ 8000000.0f, bitDepth);
 
-	// Interpolate keyframes (linear)
-	keysToSine(buffer, bitDepth, keyframes, keyframeCount, sampleCount, sampleRate);
+	uint32_t seed = 456123789;
 
+	// Convert the keys to sine
+	keysToSine(buffer, bitDepth, keyframes, keyframeCount, sampleCount, sampleRate, &seed);
+
+	free(engine);
 	free(keyframes);
-
-	// Now write into a WAV file
 	
+	b_todo("writing to: '%s'\n", outputPath);
+
 	FILE *file = fopen(outputPath, "wb");
 
 	if (file == NULL) {
@@ -245,6 +258,8 @@ int renderScene(char *sceneNameInput, char *projectPath, char *name) {
 
 	free(buffer);
 	fclose(file);
+
+	printf("rendered succesfully\n");
 
 	return 0;
 }
@@ -324,7 +339,19 @@ void printKeys(struct Keyframe *keyframesPrint, int keyCount) {
 	}
 
 	while (i < keyCount) {
-		printf("\x1b[1;35m" "[DEBUG]" "\033[m" "\tindex: '%i'; \tkeytime: '%f'; \trpm: '%i'; \tload: '%f';\n", i, keyframesPrint[i].keytime, keyframesPrint[i].rpm, keyframesPrint[i].load);
+		printf("\x1b[1;35m" "[DEBUG]" "\033[m" "\tindex: '%i'; \tkeytime: '%f'; \trpm: '%f'; \tload: '%f';\n", i, keyframesPrint[i].keytime, keyframesPrint[i].rpm, keyframesPrint[i].load);
+		i++;
+	}
+}
+
+void rpmToFreqency(struct Keyframe *keyframes, int keyCount, struct Engine *engine) {
+	int i = 0;
+
+	float n = (2.0f / engine->stroke);
+
+	while (i < keyCount) {
+		keyframes[i].rpm = keyframes[i].rpm / 60; // Convert to rps
+		keyframes[i].rpm = keyframes[i].rpm * n * engine->cylinderCount;
 		i++;
 	}
 }

@@ -18,6 +18,7 @@ bool sortKeys(struct Keyframe *keyframes, int keyCount);
 void printKeys(struct Keyframe *keyframesPrint, int keyCount);
 
 // Other helpers
+void rpmToFreqency(struct Keyframe *keyframes, int keyCount, struct Engine *engine);
 char *processName(char *inputName);
 
 #endif
