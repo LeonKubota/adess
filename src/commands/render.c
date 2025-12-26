@@ -66,100 +66,27 @@ int render(char **args) {
 }
 
 // This function is extremly chaotic
+// TODO making it nice and clean (just hiding the ugliness with abstractions)
 int renderScene(char *sceneNameInput, char *projectPath, char *name) {
-	// Get scene path
-	char *scenePathInput = parseLineValueS("scene_path", projectPath);
-	if (scenePathInput == NULL) {
-		return 1;
-	}
-
-	char *scenePath = getThingPath(scenePathInput, sceneNameInput, "scene");
+	// Get the scene path and validate
+	char *scenePath = getScenePath(sceneNameInput, projectPath);
 	if (scenePath == NULL) {
 		return 1;
 	}
 
-	// Check validity of scene file
-	if (checkValidity(scenePath) == false) {
-		return 1;
-	}
-
-	d_print("'scene_path' (%s) found\n", scenePath);
-
-	// Get engine path
-	char enginePathInput[4096];
-	strcpy(enginePathInput, parseLineValueS("engine_path", projectPath));
-	if (enginePathInput[0] == '\0') {
-		return 1;
-	}
-
-	// Get engine name
-	// This removes enginePathInput, not anymore B)
-	char *engineNameInput = parseLineValueS("engine", scenePath);
-	if(engineNameInput == NULL) {
-		return 1;
-	}
-
-	char *enginePath = getThingPath(enginePathInput, engineNameInput, "engine");
+	// Get engine path and validate
+	char *enginePath = getEnginePath(scenePath, projectPath);
 	if (enginePath == NULL) {
 		return 1;
 	}
-
-	if (checkValidity(enginePath) == false) {
-		return 1;
-	}
-
-	d_print("'engine' (%s) found\n", enginePath);
-
-	// Get the output path - the file name will be the same as the scene name, just get the directory
-	char *outputPath = parseLineValueS("output_path", projectPath);
+	
+	// Get output path and validate
+	char *outputPath = getOutputPath(name, sceneNameInput, projectPath);
 	if (outputPath == NULL) {
 		return 1;
 	}
 
-	outputPath = getCurDirectory(outputPath);
-
-	// Use 'name' if possible, otherwise use 'sceneNameInput'
-	if (name[0] != '\0') {
-		outputPath = strcat(outputPath, name);
-	} else {
-		outputPath = strcat(outputPath, sceneNameInput);
-
-		// This is rather ugly, however, I don't give a -
-		outputPath[strlen(outputPath) - 5] = 'w';
-		outputPath[strlen(outputPath) - 4] = 'a';
-		outputPath[strlen(outputPath) - 3] = 'v';
-		outputPath[strlen(outputPath) - 2] = '\0';
-	}
-
-	d_print("'output' (%s) found\n", outputPath);
-
-	// Load in keyframes
-
-	// Create the keyframes array
-	int keyframeCount = countKeyframes(scenePath);
-
-	if (keyframeCount == 0) {
-		e_parse(scenePath, 0, "scenes must have at least one keyframe\n");
-		return 1;
-	}
-
-	// Could have used 'typedef' but whatever
-	struct Keyframe *keyframes = (struct Keyframe *)malloc(keyframeCount * sizeof(struct Keyframe));
-
-	// Initilize 'keyframes'
-	for (int i = 0; i < keyframeCount; i++) {
-		keyframes[i].keytime = 0.0f;
-		keyframes[i].rpm = 0;
-		keyframes[i].load = 0.0f;
-	}
-
-	loadKeyframes(scenePath, keyframes, keyframeCount);
-
-	// Sort the keyframes
-	if (sortKeys(keyframes, keyframeCount) == false) {
-		e_parse(scenePath, getVariableLineNumber("keyframes", scenePath) + 1, "multiple keyframes at the same time\n");
-		return 1;
-	}
+	d_print("Files necessary for rendering found\n");
 
 	// Get engine information and write it into engine struct
 	struct Engine *engine = (struct Engine *) malloc(sizeof(struct Engine));
@@ -167,11 +94,10 @@ int renderScene(char *sceneNameInput, char *projectPath, char *name) {
 		return 1;
 	}
 
-	// Convert the keyframes to rps from rpm to speed up later calculations (~8%)
-	rpmToFreqency(keyframes, keyframeCount, engine);
-
-	d_print("Keyframes:\n");
-	printKeys(keyframes, keyframeCount);
+	// Get keyframe information, sort and precalculate frequency
+	int keyframeCount = countKeyframes(scenePath);
+	struct Keyframe *keyframes = (struct Keyframe *) malloc(keyframeCount * sizeof(struct Keyframe));
+	getKeyframes(keyframes, keyframeCount, engine, scenePath);
 
 	// Create main buffer
 	float lengthSeconds = parseLineValueF("length", scenePath);
@@ -194,18 +120,7 @@ int renderScene(char *sceneNameInput, char *projectPath, char *name) {
 		return 1;
 	}
 
-	uint64_t bufferSize = (uint64_t) sampleCount * (uint64_t) bitDepth; // So that it can hold it
-
-	int64_t maxBufferSize = parseLineValueI("max_buffer_size", projectPath);
-
-	if (maxBufferSize == INT_FAIL) {
-		return 1;
-	}
-
-	if (bufferSize > (uint64_t) maxBufferSize) {
-		e_fatal("required buffer size is too large [%.2f/%.2f MB], you can override it in '%s/max_buffer_size'\n", (float) bufferSize / 8000000.0f, (float) maxBufferSize / 8589934592.0f, projectPath);
-		return 1;
-	}
+	//uint64_t bufferSize = (uint64_t) sampleCount * (uint64_t) bitDepth; // So that it can hold it
 
 	// Creating the buffer
 	uint8_t sampleSize = 0;
@@ -268,6 +183,108 @@ int renderAll(char *projectFilePath) {
 	printf("rendering all, %s\n", projectFilePath);
 	return 1;
 }
+
+// TODO make this return a struct with info
+char *getScenePath(char *sceneNameInput, char *projectPath) {
+	char *scenePathInput = parseLineValueS("scene_path", projectPath);
+	if (scenePathInput == NULL) {
+		return NULL;
+	}
+
+	char *scenePath = getThingPath(scenePathInput, sceneNameInput, "scene");
+	if (scenePath == NULL) {
+		return NULL;
+	}
+
+	// Check validity of scene file
+	if (checkValidity(scenePath) == false) {
+		return NULL;
+	}
+
+	return scenePath;
+}
+
+// TODO make this return a struct with info
+char *getEnginePath(char *scenePath, char *projectPath) {
+	char enginePathInput[4096];
+	strcpy(enginePathInput, parseLineValueS("engine_path", projectPath));
+	if (enginePathInput[0] == '\0') {
+		return NULL;
+	}
+
+	char *engineNameInput = parseLineValueS("engine", scenePath);
+	if (engineNameInput == NULL) {
+		return NULL;
+	}
+
+	char *enginePath = getThingPath(enginePathInput, engineNameInput, "engine");
+	if (enginePath == NULL) {
+		return NULL;
+	}
+
+	if (checkValidity(enginePath) == false) {
+		return NULL;
+	}
+	
+	return enginePath;
+}
+
+char *getOutputPath(char *name, char *sceneNameInput, char *projectPath) {
+	char *outputPath = parseLineValueS("output_path", projectPath);
+	if (outputPath == NULL) {
+		return NULL;
+	}
+
+	outputPath = getCurDirectory(outputPath);
+
+	char *outputPathFinal;
+
+	// Use 'name' if provided, otherwise use sceneName
+	if (name[0] != '\0') {
+		outputPathFinal = strcat(outputPath, name);
+	} else {
+		outputPathFinal = strcat(outputPath, sceneNameInput); // TODO change to scenename
+
+		// Add the .wav extention (and override the '.adess' as a nice bonus) + it's disgusting
+		outputPathFinal[strlen(outputPathFinal) - 5] = 'w';
+		outputPathFinal[strlen(outputPathFinal) - 4] = 'a';
+		outputPathFinal[strlen(outputPathFinal) - 3] = 'v';
+		outputPathFinal[strlen(outputPathFinal) - 2] = '\0';
+	}
+	printf("outputPathFinal: %s\n", outputPathFinal);
+	return outputPathFinal;
+}
+
+int getKeyframes(struct Keyframe *keyframes, int keyframeCount, struct Engine *engine, char *scenePath) {
+	if (keyframeCount == 0) {
+		e_parse(scenePath, 0, "scenes must have at least one keyframe\n");
+		return 1;
+	}
+
+	for (int i = 0; i < keyframeCount; i++) {
+		keyframes[i].keytime = 0.0f;
+		keyframes[i].rpm = 0;
+		keyframes[i].load = 0.0f;
+	}
+
+	if (keyframes == NULL) {
+		e_fatal("keyframe buffer creation failed\n");
+		return 1;
+	}
+
+	loadKeyframes(scenePath, keyframes, keyframeCount);
+
+	if (sortKeys(keyframes, keyframeCount) == false) {
+		e_parse(scenePath, getVariableLineNumber("keyframes", scenePath) + 1, "keyframes must have unique times\n");
+		return 1;
+	}
+
+	// Precalculate keyframe rpm to frequency (speed it up later)
+	rpmToFrequency(keyframes, keyframeCount, engine);
+
+	return 0;
+}
+
 
 // Helper functions for render function, in execution order
 char *getThingPath(char *thingPath, char *thingName, char *thingType) {
@@ -332,19 +349,7 @@ bool sortKeys(struct Keyframe *keyframes, int keyCount) {
 	return true;
 }
 
-void printKeys(struct Keyframe *keyframesPrint, int keyCount) {
-	int i = 0;
-	if (g_debug == false) {
-		return;
-	}
-
-	while (i < keyCount) {
-		printf("\x1b[1;35m" "[DEBUG]" "\033[m" "\tindex: '%i'; \tkeytime: '%f'; \trpm: '%f'; \tload: '%f';\n", i, keyframesPrint[i].keytime, keyframesPrint[i].rpm, keyframesPrint[i].load);
-		i++;
-	}
-}
-
-void rpmToFreqency(struct Keyframe *keyframes, int keyCount, struct Engine *engine) {
+void rpmToFrequency(struct Keyframe *keyframes, int keyCount, struct Engine *engine) {
 	int i = 0;
 
 	float n = (2.0f / engine->stroke);
@@ -386,4 +391,16 @@ char *processName(char *inputName) {
 	}
 
 	return inputName;
+}
+
+void printKeys(struct Keyframe *keyframesPrint, int keyCount) {
+	int i = 0;
+	if (g_debug == false) {
+		return;
+	}
+
+	while (i < keyCount) {
+		printf("\x1b[1;35m" "[DEBUG]" "\033[m" "\tindex: '%i'; \tkeytime: '%f'; \trpm: '%f'; \tload: '%f';\n", i, keyframesPrint[i].keytime, keyframesPrint[i].rpm, keyframesPrint[i].load);
+		i++;
+	}
 }

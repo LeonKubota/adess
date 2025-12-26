@@ -232,8 +232,6 @@ bool checkValidity(char *path) {
 	}
 	
 	fclose(file);
-
-	d_print("file %s is a valid DST file\n", path);
 	
 	return true;
 }
@@ -251,7 +249,6 @@ char checkVar(char type, char *variable) {
 		// General
 		"i sample_rate",
 		"i bit_depth",
-		"i max_buffer_size",
 		"s engine_path",
 		"s scene_path",
 		"s output_path",

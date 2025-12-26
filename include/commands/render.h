@@ -11,14 +11,21 @@ int renderAll(char *projectFilePath);
 int renderScene(char *rawscenename, char *projectFilePath, char *name);
 
 // Helper functions in execution order
-char *getThingPath(char *thingPath, char *thingName, char *thingType);
+char *getScenePath(char *sceneNameInput, char *projectPath);
+char *getEnginePath(char *scenePath, char *projectPath);
+char *getOutputPath(char *name, char *sceneNameInput, char *projectPath);
+int getKeyframes(struct Keyframe *keyframes, int keyframeCount, struct Engine *engine, char *scenePath); 
+
 bool sortKeys(struct Keyframe *keyframes, int keyCount);
+void rpmToFrequency(struct Keyframe *keyframes, int keyCount, struct Engine *engine);
+
+
+char *getThingPath(char *thingPath, char *thingName, char *thingType);
+
+// OtherHelpers
+char *processName(char *inputName);
 
 // Printing functions
 void printKeys(struct Keyframe *keyframesPrint, int keyCount);
-
-// Other helpers
-void rpmToFreqency(struct Keyframe *keyframes, int keyCount, struct Engine *engine);
-char *processName(char *inputName);
 
 #endif
