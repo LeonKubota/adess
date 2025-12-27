@@ -27,10 +27,10 @@ int render(char **args) {
 		return 1;
 	}
 
-	char name[1024];
+	char *name = NULL;
 
 	// Check if the user specified a name
-	if (g_opts[1] == true) {
+	if (g_opts[1] == true) { // If -n
 		if (g_opts[6] == true) {
 			e_fatal("can not specify name for multiple scenes\n");
 			return 1;
@@ -79,12 +79,15 @@ int renderScene(char *sceneNameInput, char *projectPath, char *name) {
 	if (enginePath == NULL) {
 		return 1;
 	}
+
 	
 	// Get output path and validate
 	char *outputPath = getOutputPath(name, sceneNameInput, projectPath);
 	if (outputPath == NULL) {
 		return 1;
 	}
+
+	b_todo("outputPath: %s\n", outputPath);
 
 	d_print("Files necessary for rendering found\n");
 
@@ -239,8 +242,10 @@ char *getOutputPath(char *name, char *sceneNameInput, char *projectPath) {
 
 	char *outputPathFinal;
 
+	printf("name = %s\n", name);
+
 	// Use 'name' if provided, otherwise use sceneName
-	if (name[0] != '\0') {
+	if (name != NULL) {
 		outputPathFinal = strcat(outputPath, name);
 	} else {
 		outputPathFinal = strcat(outputPath, sceneNameInput); // TODO change to scenename
