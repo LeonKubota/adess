@@ -68,40 +68,35 @@ int render(char **args) {
 // This function is extremly chaotic
 // TODO making it nice and clean (just hiding the ugliness with abstractions)
 int renderScene(char *sceneNameInput, char *projectPath, char *name) {
-	// Get the scene path and validate
-	char *scenePath = getScenePath(sceneNameInput, projectPath);
-	if (scenePath == NULL) {
-		return 1;
-	}
+	// Create scene struct
+	struct Scene *scene = (struct Scene *) malloc(sizeof(struct Scene));
+	if (scene == NULL) return 1; // Verify creation of struct 'scene'
+
+	// Get scene information into the struct
+	if (getScene(scene, sceneNameInput, projectPath) == 1) return 1;
+
 
 	// Get engine path and validate
-	char *enginePath = getEnginePath(scenePath, projectPath);
-	if (enginePath == NULL) {
-		return 1;
-	}
+	struct Engine *engine = (struct Engine *) malloc(sizeof(struct Engine));
+	if (engine == NULL) return 1; // Verify creation of struct 'engine'
 
-	
+	// Get engine information into the struct
+	if (getEngine(scene, engine, projectPath) == 1) return 1;
+
+
 	// Get output path and validate
 	char *outputPath = getOutputPath(name, sceneNameInput, projectPath);
-	if (outputPath == NULL) {
-		return 1;
-	}
+	if (outputPath == NULL) return 1;
 
-	b_todo("outputPath: %s\n", outputPath);
+	d_print("Files for rendering found and loaded\n");
 
-	d_print("Files necessary for rendering found\n");
-
-	// Get engine information and write it into engine struct
-	struct Engine *engine = (struct Engine *) malloc(sizeof(struct Engine));
-	if (loadEngine(enginePath, engine) == 1) {
-		return 1;
-	}
 
 	// Get keyframe information, sort and precalculate frequency
-	int keyframeCount = countKeyframes(scenePath);
-	struct Keyframe *keyframes = (struct Keyframe *) malloc(keyframeCount * sizeof(struct Keyframe));
-	getKeyframes(keyframes, keyframeCount, engine, scenePath);
+	struct Keyframe *keyframes = (struct Keyframe *) malloc(scene->keyframeCount * sizeof(struct Keyframe));
+	getKeyframes(keyframes, scene, engine);
 
+
+	/*
 	// Create main buffer
 	float lengthSeconds = parseLineValueF("length", scenePath);
 	if (lengthSeconds == FLOAT_FAIL) {
@@ -180,6 +175,8 @@ int renderScene(char *sceneNameInput, char *projectPath, char *name) {
 	printf("rendered succesfully\n");
 
 	return 0;
+	*/
+	return 0;
 }
 
 int renderAll(char *projectFilePath) {
@@ -187,49 +184,77 @@ int renderAll(char *projectFilePath) {
 	return 1;
 }
 
-// TODO make this return a struct with info
-char *getScenePath(char *sceneNameInput, char *projectPath) {
+int getScene(struct Scene *scene, char *sceneNameInput, char *projectPath) {
 	char *scenePathInput = parseLineValueS("scene_path", projectPath);
-	if (scenePathInput == NULL) {
-		return NULL;
-	}
+	if (scenePathInput == NULL) return 1;
 
 	char *scenePath = getThingPath(scenePathInput, sceneNameInput, "scene");
-	if (scenePath == NULL) {
-		return NULL;
-	}
+	if (scenePath == NULL) return 1;
 
 	// Check validity of scene file
-	if (checkValidity(scenePath) == false) {
-		return NULL;
-	}
+	if (checkValidity(scenePath) == false) return 1;
 
-	return scenePath;
+	// Load information into struct
+	strcpy(scene->engine, "\0");
+	strcpy(scene->engine, parseLineValueS("engine", scenePath));
+	if (strcmp(scene->engine, "\0") == 0) return 1;
+
+	scene->length = parseLineValueF("length", scenePath);
+	if (scene->length == FLOAT_FAIL) return 1;
+
+	scene->keyframeCount = countKeyframes(scenePath);
+	if (scene->keyframeCount == -1) return 1;
+
+	strcpy(scene->scenePath, scenePath);
+
+	return 0;
 }
 
-// TODO make this return a struct with info
-char *getEnginePath(char *scenePath, char *projectPath) {
+int getEngine(struct Scene *scene, struct Engine *engine, char *projectPath) {
 	char enginePathInput[4096];
 	strcpy(enginePathInput, parseLineValueS("engine_path", projectPath));
-	if (enginePathInput[0] == '\0') {
-		return NULL;
-	}
+	if (enginePathInput[0] == '\0') return 1;
 
-	char *engineNameInput = parseLineValueS("engine", scenePath);
-	if (engineNameInput == NULL) {
-		return NULL;
-	}
+	char *engineNameInput = parseLineValueS("engine", scene->scenePath);
+	if (engineNameInput == NULL) return 1;
 
 	char *enginePath = getThingPath(enginePathInput, engineNameInput, "engine");
-	if (enginePath == NULL) {
-		return NULL;
-	}
+	if (enginePath == NULL) return 1;
 
-	if (checkValidity(enginePath) == false) {
-		return NULL;
-	}
-	
-	return enginePath;
+	// Check validity of engine file
+	if (checkValidity(enginePath) == false) return 1;
+
+	// Load information into struct
+	engine->stroke = parseLineValueI("stroke", enginePath);
+	if (engine->stroke == INT_FAIL) return 1;
+
+	engine->cylinderCount = parseLineValueI("cylinder_count", enginePath);
+	if (engine->cylinderCount == INT_FAIL) return 1;
+
+	// Noise parameters
+	engine->baseNoise = parseLineValueF("base_noise", enginePath);
+	if (engine->baseNoise == FLOAT_FAIL) return 1;
+
+	engine->loadNoise = parseLineValueF("load_noise", enginePath);
+	if (engine->loadNoise == FLOAT_FAIL) return 1;
+
+	// Volume parameters
+	engine->baseVolume = parseLineValueF("base_volume", enginePath);
+	if (engine->baseVolume == FLOAT_FAIL) return 1;
+
+	engine->loadVolume = parseLineValueF("load_volume", enginePath);
+	if (engine->loadVolume == FLOAT_FAIL) return 1;
+
+	engine->rpmVolumeMultiplier = parseLineValueF("rpm_volume_multiplier", enginePath);
+	if (engine->rpmVolumeMultiplier == FLOAT_FAIL) return 1;
+
+	engine->volumeVariation = parseLineValueF("volume_variation", enginePath);
+	if (engine->volumeVariation == FLOAT_FAIL) return 1;
+
+	engine->camshaftVolume = parseLineValueF("camshaft_volume", enginePath);
+	if (engine->camshaftVolume == FLOAT_FAIL) return 1;
+
+	return 0;
 }
 
 char *getOutputPath(char *name, char *sceneNameInput, char *projectPath) {
@@ -242,13 +267,11 @@ char *getOutputPath(char *name, char *sceneNameInput, char *projectPath) {
 
 	char *outputPathFinal;
 
-	printf("name = %s\n", name);
-
 	// Use 'name' if provided, otherwise use sceneName
 	if (name != NULL) {
 		outputPathFinal = strcat(outputPath, name);
 	} else {
-		outputPathFinal = strcat(outputPath, sceneNameInput); // TODO change to scenename
+		outputPathFinal = strcat(outputPath, sceneNameInput);
 
 		// Add the .wav extention (and override the '.adess' as a nice bonus) + it's disgusting
 		outputPathFinal[strlen(outputPathFinal) - 5] = 'w';
@@ -256,17 +279,16 @@ char *getOutputPath(char *name, char *sceneNameInput, char *projectPath) {
 		outputPathFinal[strlen(outputPathFinal) - 3] = 'v';
 		outputPathFinal[strlen(outputPathFinal) - 2] = '\0';
 	}
-	printf("outputPathFinal: %s\n", outputPathFinal);
 	return outputPathFinal;
 }
 
-int getKeyframes(struct Keyframe *keyframes, int keyframeCount, struct Engine *engine, char *scenePath) {
-	if (keyframeCount == 0) {
-		e_parse(scenePath, 0, "scenes must have at least one keyframe\n");
+int getKeyframes(struct Keyframe *keyframes, struct Scene *scene, struct Engine *engine) {
+	if (scene->keyframeCount == 0) {
+		e_parse(scene->scenePath, 0, "scenes must have at least one keyframe\n");
 		return 1;
 	}
 
-	for (int i = 0; i < keyframeCount; i++) {
+	for (int i = 0; i < scene->keyframeCount; i++) {
 		keyframes[i].keytime = 0.0f;
 		keyframes[i].rpm = 0;
 		keyframes[i].load = 0.0f;
@@ -277,15 +299,15 @@ int getKeyframes(struct Keyframe *keyframes, int keyframeCount, struct Engine *e
 		return 1;
 	}
 
-	loadKeyframes(scenePath, keyframes, keyframeCount);
+	loadKeyframes(scene, keyframes);
 
-	if (sortKeys(keyframes, keyframeCount) == false) {
-		e_parse(scenePath, getVariableLineNumber("keyframes", scenePath) + 1, "keyframes must have unique times\n");
+	if (sortKeys(keyframes, scene->keyframeCount) == false) {
+		e_parse(scene->scenePath, getVariableLineNumber("keyframes", scene->scenePath) + 1, "keyframes must have unique times\n");
 		return 1;
 	}
 
 	// Precalculate keyframe rpm to frequency (speed it up later)
-	rpmToFrequency(keyframes, keyframeCount, engine);
+	rpmToFrequency(keyframes, scene->keyframeCount, engine);
 
 	return 0;
 }

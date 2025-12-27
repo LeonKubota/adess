@@ -212,8 +212,8 @@ int getVariableLineNumber(char *variable, char *path) {
 	return -1;
 }
 
-void loadKeyframes(char *scenePath, struct Keyframe *keyframes, int keyCount) {
-	FILE *file = fopen(scenePath, "r"); // No need to check NULL
+void loadKeyframes(struct Scene *scene, struct Keyframe *keyframes) {
+	FILE *file = fopen(scene->scenePath, "r"); // No need to check NULL
 	char line[1024];
 	char currentValue[1024];
 
@@ -252,7 +252,7 @@ void loadKeyframes(char *scenePath, struct Keyframe *keyframes, int keyCount) {
 	char load[32];
 	int n = 0;
 
-	while (fgets(line, sizeof(line), file) && i < keyCount) {
+	while (fgets(line, sizeof(line), file) && i < scene->keyframeCount) {
 		// Go over whitespace
 		while (line[offset] == ' ' || line[offset] == '\t') {
 			offset++;
@@ -333,38 +333,4 @@ void loadKeyframes(char *scenePath, struct Keyframe *keyframes, int keyCount) {
 		offset = 0;
 		i++;
 	}
-}
-
-int loadEngine(char *enginePath, struct Engine *engine) {
-	// Physical parameters
-	engine->stroke = parseLineValueI("stroke", enginePath);
-	if (engine->stroke == INT_FAIL) return 1;
-
-	engine->cylinderCount = parseLineValueI("cylinder_count", enginePath);
-	if (engine->cylinderCount == INT_FAIL) return 1;
-
-	// Noise parameters
-	engine->baseNoise = parseLineValueF("base_noise", enginePath);
-	if (engine->baseNoise == FLOAT_FAIL) return 1;
-
-	engine->loadNoise = parseLineValueF("load_noise", enginePath);
-	if (engine->loadNoise == FLOAT_FAIL) return 1;
-
-	// Volume parameters
-	engine->baseVolume = parseLineValueF("base_volume", enginePath);
-	if (engine->baseVolume == FLOAT_FAIL) return 1;
-
-	engine->loadVolume = parseLineValueF("load_volume", enginePath);
-	if (engine->loadVolume == FLOAT_FAIL) return 1;
-
-	engine->rpmVolumeMultiplier = parseLineValueF("rpm_volume_multiplier", enginePath);
-	if (engine->rpmVolumeMultiplier == FLOAT_FAIL) return 1;
-
-	engine->volumeVariation = parseLineValueF("volume_variation", enginePath);
-	if (engine->volumeVariation == FLOAT_FAIL) return 1;
-
-	engine->camshaftVolume = parseLineValueF("camshaft_volume", enginePath);
-	if (engine->camshaftVolume == FLOAT_FAIL) return 1;
-
-	return 0;
 }

@@ -11,10 +11,10 @@ int renderAll(char *projectFilePath);
 int renderScene(char *rawscenename, char *projectFilePath, char *name);
 
 // Helper functions in execution order
-char *getScenePath(char *sceneNameInput, char *projectPath);
-char *getEnginePath(char *scenePath, char *projectPath);
+int getScene(struct Scene *scene, char *sceneNameInput, char *projectPath);
+int getEngine(struct Scene *scene, struct Engine *engine, char *projectPath);
 char *getOutputPath(char *name, char *sceneNameInput, char *projectPath);
-int getKeyframes(struct Keyframe *keyframes, int keyframeCount, struct Engine *engine, char *scenePath); 
+int getKeyframes(struct Keyframe *keyframes, struct Scene *scene, struct Engine *engine); 
 
 bool sortKeys(struct Keyframe *keyframes, int keyCount);
 void rpmToFrequency(struct Keyframe *keyframes, int keyCount, struct Engine *engine);

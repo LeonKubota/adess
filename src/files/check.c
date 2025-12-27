@@ -323,8 +323,8 @@ int countKeyframes(char *scenePath) {
 	}
 
 	if (found == false) {
-		printf("not found\n");
-		return 0;
+		e_parse(scenePath, 0, "'keyframes' not found\n");
+		return -1;
 	}
 
 	int count = 0;

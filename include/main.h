@@ -23,10 +23,13 @@
 #define PATH_SEPARATOR "/" // for sane people
 #endif
 
-struct Keyframe {
-	float keytime;
-	float rpm;
-	float load;
+struct Scene {
+	char engine[1024]; // The engine name
+	float length; // Length of the scenes in seconds
+
+	// Calculated
+	char scenePath[1024];
+	int keyframeCount;
 };
 
 struct Engine {
@@ -45,6 +48,13 @@ struct Engine {
 	float volumeVariation; // How much the volume varies
 	float camshaftVolume; // The volume of the cam
 };
+
+struct Keyframe {
+	float keytime; // Time of the keyframe
+	float rpm; // The rpm at that time
+	float load; // The load at that time
+};
+
 
 extern bool g_debug;
 extern char *g_optslist;
