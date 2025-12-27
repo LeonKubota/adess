@@ -336,45 +336,35 @@ void loadKeyframes(char *scenePath, struct Keyframe *keyframes, int keyCount) {
 }
 
 int loadEngine(char *enginePath, struct Engine *engine) {
-	// Load in the stuff
+	// Physical parameters
 	engine->stroke = parseLineValueI("stroke", enginePath);
+	if (engine->stroke == INT_FAIL) return 1;
+
 	engine->cylinderCount = parseLineValueI("cylinder_count", enginePath);
+	if (engine->cylinderCount == INT_FAIL) return 1;
 
+	// Noise parameters
 	engine->baseNoise = parseLineValueF("base_noise", enginePath);
+	if (engine->baseNoise == FLOAT_FAIL) return 1;
+
 	engine->loadNoise = parseLineValueF("load_noise", enginePath);
+	if (engine->loadNoise == FLOAT_FAIL) return 1;
 
+	// Volume parameters
 	engine->baseVolume = parseLineValueF("base_volume", enginePath);
+	if (engine->baseVolume == FLOAT_FAIL) return 1;
+
 	engine->loadVolume = parseLineValueF("load_volume", enginePath);
+	if (engine->loadVolume == FLOAT_FAIL) return 1;
+
 	engine->rpmVolumeMultiplier = parseLineValueF("rpm_volume_multiplier", enginePath);
+	if (engine->rpmVolumeMultiplier == FLOAT_FAIL) return 1;
+
 	engine->volumeVariation = parseLineValueF("volume_variation", enginePath);
+	if (engine->volumeVariation == FLOAT_FAIL) return 1;
+
 	engine->camshaftVolume = parseLineValueF("camshaft_volume", enginePath);
-
-	// Check if things loaded
-	// Check physical parameters
-	if (engine->stroke == INT_FAIL) {
-		return 1;
-	} else if (engine->cylinderCount == INT_FAIL) {
-		return 1;
-	}
-
-	// Check noise characteristics
-	if (engine->baseNoise == FLOAT_FAIL) {
-		return 1;
-	} else if (engine->loadNoise == FLOAT_FAIL) {
-		return 1;
-	}
-
-	if (engine->baseVolume == FLOAT_FAIL) {
-		return 1;
-	} else if (engine->loadVolume == FLOAT_FAIL) {
-		return 1;
-	} else if (engine->rpmVolumeMultiplier == FLOAT_FAIL) {
-		return 1;
-	} else if (engine->volumeVariation == FLOAT_FAIL) {
-		return 1;
-	} else if (engine->camshaftVolume == FLOAT_FAIL) {
-		return 1;
-	}
+	if (engine->camshaftVolume == FLOAT_FAIL) return 1;
 
 	return 0;
 }
