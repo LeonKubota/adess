@@ -5,6 +5,8 @@
 #include <stdarg.h>
 #include <math.h>
 
+#include <time.h>
+
 // Include
 #include "parse.h"
 
@@ -14,6 +16,7 @@
 // Global variables
 bool g_debug = true; // 'false' for normal, 'true' for debug
 char *g_optslist = "hn.d.ea"; // Options
+clock_t g_startTime;
 
 // DO NOT CHANGE THE ORDER, YOU WILL BREAK EVERYTHING (I AM STUPID)
 
@@ -34,6 +37,7 @@ bool g_opts[MAX_OPT_COUNT]; // Array of if values are on
 char *g_vals[MAX_OPT_COUNT][MAX_VAL_COUNT]; // Holds values (first index corresponds to option index)
 
 int main(int argc, char **argv) {
+ 	g_startTime = clock();
 	// Initilize options (won't work otherwise)
 	for (int i = 0; i < g_maxoptcount; i++) {
 		g_opts[i] = false;

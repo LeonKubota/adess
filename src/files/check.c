@@ -252,6 +252,7 @@ char checkVar(char type, char *variable) {
 		"s engine_path",
 		"s scene_path",
 		"s output_path",
+		"i seed",
 
 		// Scene
 		"s engine",
@@ -266,10 +267,14 @@ char checkVar(char type, char *variable) {
 		"f load_noise",
 
 		"f base_volume",
-		"f load_volume",
+		"f valvetrain_volume",
+		"f mechanical_volume",
+		"f secondary_vibration_volume",
+
+		"f load_volume_multiplier",
 		"f rpm_volume_multiplier",
+
 		"f volume_variation",
-		"f camshaft_volume",
 	};
 
 	int i = 0;

@@ -7,22 +7,23 @@
 
 int render(char **args);
 
-int renderAll(char *projectFilePath);
-int renderScene(char *rawscenename, char *projectFilePath, char *name);
+int renderAll(struct Project *project);
+int renderScene(char *rawscenename, struct Project *project, char *name);
 
 // Helper functions in execution order
-int getScene(struct Scene *scene, char *sceneNameInput, char *projectPath);
-int getEngine(struct Scene *scene, struct Engine *engine, char *projectPath);
-char *getOutputPath(char *name, char *sceneNameInput, char *projectPath);
+int getScene(struct Scene *scene, char *sceneNameInput, struct Project *project);
+int getEngine(struct Scene *scene, struct Engine *engine, struct Project *project);
+char *getOutputPath(char *name, char *sceneNameInput, struct Project *project);
 int getKeyframes(struct Keyframe *keyframes, struct Scene *scene, struct Engine *engine); 
 
+// Helper functions
 bool sortKeys(struct Keyframe *keyframes, int keyCount);
 void rpmToFrequency(struct Keyframe *keyframes, int keyCount, struct Engine *engine);
-
 
 char *getThingPath(char *thingPath, char *thingName, char *thingType);
 
 // OtherHelpers
+int getProject(struct Project *project, char *projectFilePath);
 char *processName(char *inputName);
 
 // Printing functions

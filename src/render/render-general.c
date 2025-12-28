@@ -11,10 +11,6 @@
 #include "main.h"
 #include "render/render-general.h"
 
-// Make some constants (from my handy 'CASIO fx-85CE X CLASSWIZ')
-const float PI = 3.141592654f;
-const float TAU = 2 * PI;
-
 // I have to interpolate keys to rpm and calculate the sine in one step to avoid loss of data (uint8_t can't fit the rpm range)
 void keysToSine(void *voidBuffer, int8_t type, struct Keyframe *keyframes, int keyframeCount, uint64_t sampleCount, int sampleRate, uint32_t *state) {
 	// Put the array in the correct type

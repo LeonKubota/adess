@@ -23,12 +23,31 @@
 #define PATH_SEPARATOR "/" // for sane people
 #endif
 
+// Make some constants (from my handy 'CASIO fx-85CE X CLASSWIZ')
+#define PI 3.141592654f
+#define TAU 6
+
+struct Project {
+	int sampleRate;
+	int bitDepth;
+
+	char enginePath[1024];
+	char scenePath[1024];
+	char outputPath[1024];
+
+	int seed;
+
+	// Calculated
+	//char projectPath[1024];
+};
+
 struct Scene {
 	char engine[1024]; // The engine name
 	float length; // Length of the scenes in seconds
 
 	// Calculated
 	char scenePath[1024];
+	uint64_t sampleCount;
 	int keyframeCount;
 };
 
@@ -42,11 +61,15 @@ struct Engine {
 	float loadNoise; // Maximum noise (with 1.0f load)
 
 	// Volume characteristics
-	float baseVolume; // The base volume (with 0.0f load)
-	float loadVolume; // Maximum volume (with 1.0f load)
+	float baseVolume; // The base volume
+	float valvetrainVolume; // The volume of the valvetrain
+	float mechanicalVolume; // THe volume of mechanical parts
+	float secondaryVibrationVolume; // The volume of secondary vibrations
+
+	float loadVolumeMultiplier; // Maximum volume (with 1.0f load)
 	float rpmVolumeMultiplier; // What to multiply by with RPM
+
 	float volumeVariation; // How much the volume varies
-	float camshaftVolume; // The volume of the cam
 };
 
 struct Keyframe {
@@ -55,6 +78,21 @@ struct Keyframe {
 	float load; // The load at that time
 };
 
+// This struct is used for sending data to pthreads
+struct ThreadData {
+	// Buffers I can use
+	float *buffer1;
+	float *buffer2;
+	float *buffer3;
+	float *buffer4;
+	float *buffer5;
+
+	// Structs used for calculation
+	struct Project *project;
+	struct Scene *scene;
+	struct Engine *engine;
+	struct Keyframe *keyframes;
+};
 
 extern bool g_debug;
 extern char *g_optslist;

@@ -2,14 +2,18 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
-
+#include <math.h>
 #include <inttypes.h>
+
+#include <pthread.h> // For multithreading
+
+#include <time.h> // For debugging
 
 #include "main.h"
 #include "commands/command.h"
 #include "commands/render.h"
 #include "utils.h"
-#include "render/render-general.h"
+#include "render/multithreading.h"
 #include "files/export.h"
 
 int render(char **args) {
@@ -46,34 +50,36 @@ int render(char **args) {
 	// Generate the path to the project file
 	char projectFilePath[4096];
 	char *tempProjFile = findProjectFile(getCurDirectory(NULL));
-	if (tempProjFile == NULL) {
-		return 1;
-	}
+	if (tempProjFile == NULL) return 1;
 
 	strncpy(projectFilePath, tempProjFile, 4096);
 
 	// Check if the adess DST file has valid syntax
-	if (checkValidity(projectFilePath) == false) {
-		return 1;
-	}
+	if (checkValidity(projectFilePath) == false) return 1;
+
+	// Put things into the project struct
+	struct Project *project = (struct Project *) malloc(sizeof(struct Project));
+	if (project == NULL) return 1;
+
+	if (getProject(project, projectFilePath) == 1) return 1;
 	
 	// If '-a' option is on, render every scene
 	if (g_opts[6] == true) {
-		return renderAll(projectFilePath);
+		return renderAll(project);
 	} else {
-		return renderScene(args[2], projectFilePath, name);
+		return renderScene(args[2], project, name);
 	}
 }
 
 // This function is extremly chaotic
 // TODO making it nice and clean (just hiding the ugliness with abstractions)
-int renderScene(char *sceneNameInput, char *projectPath, char *name) {
+int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	// Create scene struct
 	struct Scene *scene = (struct Scene *) malloc(sizeof(struct Scene));
 	if (scene == NULL) return 1; // Verify creation of struct 'scene'
 
 	// Get scene information into the struct
-	if (getScene(scene, sceneNameInput, projectPath) == 1) return 1;
+	if (getScene(scene, sceneNameInput, project) == 1) return 1;
 
 
 	// Get engine path and validate
@@ -81,22 +87,132 @@ int renderScene(char *sceneNameInput, char *projectPath, char *name) {
 	if (engine == NULL) return 1; // Verify creation of struct 'engine'
 
 	// Get engine information into the struct
-	if (getEngine(scene, engine, projectPath) == 1) return 1;
+	if (getEngine(scene, engine, project) == 1) return 1;
 
 
 	// Get output path and validate
-	char *outputPath = getOutputPath(name, sceneNameInput, projectPath);
+	char *outputPath = getOutputPath(name, sceneNameInput, project);
 	if (outputPath == NULL) return 1;
-
-	d_print("Files for rendering found and loaded\n");
 
 
 	// Get keyframe information, sort and precalculate frequency
 	struct Keyframe *keyframes = (struct Keyframe *) malloc(scene->keyframeCount * sizeof(struct Keyframe));
 	getKeyframes(keyframes, scene, engine);
 
+	d_print("Files for rendering found and loaded\n");
+
+	// Create threads for rendering process
+	pthread_t thread1, thread2, thread3, thread4;
+
+	// Stage: prepare
+	printf("\n");
+	d_print("rendering [1/4] - prepare\n");
+
+	// Interpolation: product: 'frequencyBuffer' and 'loadBuffer' 
+	float *frequencyBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
+	if (frequencyBuffer == NULL) return 1;
+
+	float *loadBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
+	if (loadBuffer == NULL) return 1;
+
+	struct ThreadData interpolationData = {frequencyBuffer, loadBuffer, NULL, NULL, NULL, project, scene, NULL, keyframes};
+
+	if (pthread_create(&thread1, NULL, interpolate, (void *) &interpolationData) != 0) return 1;
+
+
+	// Generation of noise: product: 'lowFrequencyNoiseBuffer' and 'highFrequencyNoiseBuffer'
+	float *pinkNoiseBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
+	if (pinkNoiseBuffer == NULL) return 1;
+
+	float *brownNoiseBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
+	if (brownNoiseBuffer == NULL) return 1;
+
+	float *lowFrequencyNoiseBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
+	if (lowFrequencyNoiseBuffer == NULL) return 1;
+
+	struct ThreadData noiseGenerationData = {pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, NULL, NULL, project, scene, engine, NULL};
+
+	if (pthread_create(&thread2, NULL, generateNoise, (void *) &noiseGenerationData) != 0) return 1;
+
+
+	// Join threads from part 1 of rendering
+	if (pthread_join(thread1, NULL) != 0) return 1;
+	if (pthread_join(thread2, NULL) != 0) return 1;
+
+	// Stage: compute
+	printf("\n");
+	d_print("rendering [2/4] - compute\n");
+
+	// Render base frequencies
+	float *baseBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
+	if (baseBuffer == NULL) return 1;
+
+	struct ThreadData baseRenderingData = {frequencyBuffer, loadBuffer, pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, project, scene, engine, NULL};
+
+	if (pthread_create(&thread1, NULL, renderBase, (void *) &baseRenderingData) != 0) return 1;
+
+
+	// Render valvetrain
+	float *valvetrainBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
+	if (valvetrainBuffer == NULL) return 1;
+
+	struct ThreadData valvetrainRenderingData = {frequencyBuffer, loadBuffer, pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, project, scene, engine, NULL};
+
+	if (pthread_create(&thread2, NULL, renderValvetrain, (void *) &valvetrainRenderingData) != 0) return 1;
+
+
+	// Render mechanical
+	float *mechanicalBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
+	if (mechanicalBuffer == NULL) return 1;
+
+	struct ThreadData mechanicalRenderingData = {frequencyBuffer, loadBuffer, pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, project, scene, engine, NULL};
+
+	if (pthread_create(&thread3, NULL, renderMechanical, (void *) &mechanicalRenderingData) != 0) return 1;
+
+
+	// Render vibration
+	float *vibrationBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
+	if (vibrationBuffer == NULL) return 1;
+
+	struct ThreadData vibrationRenderingData = {frequencyBuffer, loadBuffer, pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, project, scene, engine, NULL};
+
+	if (pthread_create(&thread4, NULL, renderVibration, (void *) &vibrationRenderingData) != 0) return 1;
+
+
+	// Free data from prepare stage
+	free(frequencyBuffer);
+	free(loadBuffer);
+	free(pinkNoiseBuffer);
+	free(brownNoiseBuffer);
+	free(lowFrequencyNoiseBuffer);
+
+	// Stage: join
+	printf("\n");
+	d_print("rendering [3/4] - join\n");
+
+	// Stage: write
+	printf("\n");
+	d_print("rendering [4/4] - write\n");
+
+	b_todo("writing to: '%s'\n", outputPath);
+
+	FILE *file = fopen(outputPath, "wb");
+
+	if (file == NULL) {
+		e_fatal("failed to write into file '%s'\n", outputPath);
+		return 1;
+	}
+	project->bitDepth = 32;
+
+	makeWavHeader(file, project->sampleRate, project->bitDepth, (uint32_t) scene->sampleCount);
+
+	fwrite(brownNoiseBuffer, 1, scene->sampleCount * (project->bitDepth / 8), file);
+
+	fclose(file);
 
 	/*
+	//
+	* TODO retire this code
 	// Create main buffer
 	float lengthSeconds = parseLineValueF("length", scenePath);
 	if (lengthSeconds == FLOAT_FAIL) {
@@ -179,13 +295,48 @@ int renderScene(char *sceneNameInput, char *projectPath, char *name) {
 	return 0;
 }
 
-int renderAll(char *projectFilePath) {
-	printf("rendering all, %s\n", projectFilePath);
+int renderAll(struct Project *project) {
+	printf("rendering all, %s\n", project->scenePath);
 	return 1;
 }
 
-int getScene(struct Scene *scene, char *sceneNameInput, char *projectPath) {
-	char *scenePathInput = parseLineValueS("scene_path", projectPath);
+int getProject(struct Project *project, char *projectFilePath) {
+	char *tempProjFile = findProjectFile(getCurDirectory(NULL));
+	if (tempProjFile == NULL) return 1;
+
+	strncpy(projectFilePath, tempProjFile, 1024);
+
+	if (checkValidity(projectFilePath) == false) return 1;
+
+	// Load things into project struct
+	project->sampleRate = parseLineValueI("sample_rate", projectFilePath);
+	if (project->sampleRate == INT_FAIL) return 1;
+
+	project->bitDepth = parseLineValueI("bit_depth", projectFilePath);
+	if (project->bitDepth == INT_FAIL) return 1;
+
+	// Paths
+	strcpy(project->scenePath, "\0");
+	strcpy(project->enginePath, "\0");
+	strcpy(project->outputPath, "\0");
+
+	strcpy(project->scenePath, parseLineValueS("scene_path", projectFilePath));
+	if (strcmp(project->scenePath, "\0") == 0) return 1;
+
+	strcpy(project->enginePath, parseLineValueS("engine_path", projectFilePath));
+	if (strcmp(project->enginePath, "\0") == 0) return 1;
+
+	strcpy(project->outputPath, parseLineValueS("output_path", projectFilePath));
+	if (strcmp(project->outputPath, "\0") == 0) return 1;
+
+	project->seed = parseLineValueI("seed", projectFilePath);
+	if (project->seed == INT_FAIL) return 1;
+
+	return 0;
+}
+
+int getScene(struct Scene *scene, char *sceneNameInput, struct Project *project) {
+	char *scenePathInput = project->scenePath;
 	if (scenePathInput == NULL) return 1;
 
 	char *scenePath = getThingPath(scenePathInput, sceneNameInput, "scene");
@@ -202,23 +353,22 @@ int getScene(struct Scene *scene, char *sceneNameInput, char *projectPath) {
 	scene->length = parseLineValueF("length", scenePath);
 	if (scene->length == FLOAT_FAIL) return 1;
 
+	// Non-user defined things
+	strcpy(scene->scenePath, scenePath);
+
+	scene->sampleCount = (int) scene->length * project->sampleRate;
+
 	scene->keyframeCount = countKeyframes(scenePath);
 	if (scene->keyframeCount == -1) return 1;
-
-	strcpy(scene->scenePath, scenePath);
 
 	return 0;
 }
 
-int getEngine(struct Scene *scene, struct Engine *engine, char *projectPath) {
-	char enginePathInput[4096];
-	strcpy(enginePathInput, parseLineValueS("engine_path", projectPath));
-	if (enginePathInput[0] == '\0') return 1;
-
+int getEngine(struct Scene *scene, struct Engine *engine, struct Project *project) {
 	char *engineNameInput = parseLineValueS("engine", scene->scenePath);
 	if (engineNameInput == NULL) return 1;
 
-	char *enginePath = getThingPath(enginePathInput, engineNameInput, "engine");
+	char *enginePath = getThingPath(project->enginePath, engineNameInput, "engine");
 	if (enginePath == NULL) return 1;
 
 	// Check validity of engine file
@@ -242,8 +392,18 @@ int getEngine(struct Scene *scene, struct Engine *engine, char *projectPath) {
 	engine->baseVolume = parseLineValueF("base_volume", enginePath);
 	if (engine->baseVolume == FLOAT_FAIL) return 1;
 
-	engine->loadVolume = parseLineValueF("load_volume", enginePath);
-	if (engine->loadVolume == FLOAT_FAIL) return 1;
+	engine->valvetrainVolume = parseLineValueF("valvetrain_volume", enginePath);
+	if (engine->valvetrainVolume == FLOAT_FAIL) return 1;
+
+	engine->mechanicalVolume = parseLineValueF("mechanical_volume", enginePath);
+	if (engine->mechanicalVolume == FLOAT_FAIL) return 1;
+
+	engine->secondaryVibrationVolume = parseLineValueF("secondary_vibration_volume", enginePath);
+	if (engine->volumeVariation == FLOAT_FAIL) return 1;
+
+	// Volume multipliers
+	engine->loadVolumeMultiplier = parseLineValueF("load_volume_multiplier", enginePath);
+	if (engine->loadVolumeMultiplier == FLOAT_FAIL) return 1;
 
 	engine->rpmVolumeMultiplier = parseLineValueF("rpm_volume_multiplier", enginePath);
 	if (engine->rpmVolumeMultiplier == FLOAT_FAIL) return 1;
@@ -251,19 +411,11 @@ int getEngine(struct Scene *scene, struct Engine *engine, char *projectPath) {
 	engine->volumeVariation = parseLineValueF("volume_variation", enginePath);
 	if (engine->volumeVariation == FLOAT_FAIL) return 1;
 
-	engine->camshaftVolume = parseLineValueF("camshaft_volume", enginePath);
-	if (engine->camshaftVolume == FLOAT_FAIL) return 1;
-
 	return 0;
 }
 
-char *getOutputPath(char *name, char *sceneNameInput, char *projectPath) {
-	char *outputPath = parseLineValueS("output_path", projectPath);
-	if (outputPath == NULL) {
-		return NULL;
-	}
-
-	outputPath = getCurDirectory(outputPath);
+char *getOutputPath(char *name, char *sceneNameInput, struct Project *project) {
+	char *outputPath = getCurDirectory(project->outputPath);
 
 	char *outputPathFinal;
 

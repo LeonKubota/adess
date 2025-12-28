@@ -1,3 +1,0 @@
-The known limits of Adess:
-
-- User can put arbitrarily sized numbers (both integers and floats) into DST

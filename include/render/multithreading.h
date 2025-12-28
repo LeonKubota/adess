@@ -1,0 +1,24 @@
+#include <time.h>
+
+#include "main.h"
+#include "commands/render.h"
+
+#ifndef MULTITHREADING_H
+#define MULTITHREADING_H
+
+extern clock_t g_startTime;
+
+// STAGE 1
+void *interpolate(void *arg);
+void *generateNoise(void *arg);
+
+// STAGE 2
+void *renderBase(void *arg);
+void *renderValvetrain(void *arg);
+void *renderMechanical(void *arg);
+void *renderVibration(void *arg);
+
+// STAGE 3
+void *joinBuffers(void *arg);
+
+#endif
