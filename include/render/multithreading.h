@@ -6,8 +6,6 @@
 #ifndef MULTITHREADING_H
 #define MULTITHREADING_H
 
-extern clock_t g_startTime;
-
 // STAGE 1
 void *interpolate(void *arg);
 void *generateNoise(void *arg);

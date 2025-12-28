@@ -11,6 +11,7 @@
 // STAGE 1
 // Interpolate keyframes, output 'frequencyBuffer' and 'loadBuffer'
 void *interpolate(void *arg) {
+ 	time_t startTime = clock();
 	struct ThreadData *threadData = (struct ThreadData *) arg;
 
 	// Get data from threadData
@@ -78,13 +79,14 @@ void *interpolate(void *arg) {
 			i++;
 		}
 	}
-	d_print("%.2f ms - interpolation finished\n", (clock() - g_startTime) * 1000.0f / CLOCKS_PER_SEC);
+	d_print("%.2f ms - interpolation finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 
 	return NULL;
 }
 
 // Generate noise: pink, brown and "low frequency"
 void *generateNoise(void *arg) {
+ 	time_t startTime = clock();
 	struct ThreadData *threadData = (struct ThreadData *) arg;
 
 	float *pinkNoiseBuffer = threadData->buffer1;
@@ -143,7 +145,7 @@ void *generateNoise(void *arg) {
 
 		i++;
 	}
-	d_print("%.2f ms - noise generation finished\n", (clock() - g_startTime) * 1000.0f / CLOCKS_PER_SEC);
+	d_print("%.2f ms - noise generation finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 
 	return NULL;
 }
@@ -152,33 +154,38 @@ void *generateNoise(void *arg) {
 // STAGE 2
 // Render the base frequencies
 void *renderBase(void *arg) {
+ 	time_t startTime = clock();
 	if (false) printf("%p\n", arg);
-	d_print("%.2f ms - base renedering finished\n", (clock() - g_startTime) * 1000.0f / CLOCKS_PER_SEC);
+	d_print("%.2f ms - base renedering finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 	return NULL;
 }
 
 void *renderValvetrain(void *arg) {
+ 	time_t startTime = clock();
 	if (false) printf("%p\n", arg);
-	d_print("%.2f ms - valvetrain rendering finished\n", (clock() - g_startTime) * 1000.0f / CLOCKS_PER_SEC);
+	d_print("%.2f ms - valvetrain rendering finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 	return NULL;
 }
 
 void *renderMechanical(void *arg) {
+ 	time_t startTime = clock();
 	if (false) printf("%p\n", arg);
-	d_print("%.2f ms - mechanical rendering finished\n", (clock() - g_startTime) * 1000.0f / CLOCKS_PER_SEC);
+	d_print("%.2f ms - mechanical rendering finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 	return NULL;
 }
 
 void *renderVibration(void *arg) {
+ 	time_t startTime = clock();
 	if (false) printf("%p\n", arg);
-	d_print("%.2f ms - vibration rendering finished\n", (clock() - g_startTime) * 1000.0f / CLOCKS_PER_SEC);
+	d_print("%.2f ms - vibration rendering finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 	return NULL;
 }
 
 // STAGE 3
 void *joinBuffers(void *arg) {
+ 	time_t startTime = clock();
 	if (false) printf("%p\n", arg);
-	d_print("%.2f ms - join finished\n", (clock() - g_startTime) * 1000.0f / CLOCKS_PER_SEC);
+	d_print("%.2f ms - join finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 	return NULL;
 
 }
