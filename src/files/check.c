@@ -269,7 +269,7 @@ char checkVar(char type, char *variable) {
 		"f base_volume",
 		"f valvetrain_volume",
 		"f mechanical_volume",
-		"f secondary_vibration_volume",
+		"f vibration_volume",
 
 		"f load_volume_multiplier",
 		"f rpm_volume_multiplier",

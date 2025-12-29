@@ -74,6 +74,7 @@ int render(char **args) {
 // This function is extremly chaotic
 // TODO making it nice and clean (just hiding the ugliness with abstractions)
 int renderScene(char *sceneNameInput, struct Project *project, char *name) {
+ 	time_t startTime = clock();
 	// Create scene struct
 	struct Scene *scene = (struct Scene *) malloc(sizeof(struct Scene));
 	if (scene == NULL) return 1; // Verify creation of struct 'scene'
@@ -108,36 +109,47 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	printf("\n");
 	d_print("rendering [1/4] - prepare\n");
 
-	// Interpolation: product: 'frequencyBuffer' and 'loadBuffer' 
+	// Interpolation: product: 'frequencyBuffer', 'phaseBuffer', 'loadBuffer'
 	float *frequencyBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 	if (frequencyBuffer == NULL) return 1;
+
+	double *phaseBuffer = (double *) malloc(scene->sampleCount * sizeof(double));
+	if (phaseBuffer == NULL) return 1;
 
 	float *loadBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 	if (loadBuffer == NULL) return 1;
 
-	struct ThreadData interpolationData = {frequencyBuffer, loadBuffer, NULL, NULL, NULL, project, scene, NULL, keyframes};
+	struct ThreadData interpolationData = {frequencyBuffer, (float *) phaseBuffer, loadBuffer, NULL, NULL, NULL, project, scene, NULL, keyframes};
 
 	if (pthread_create(&thread1, NULL, interpolate, (void *) &interpolationData) != 0) return 1;
 
 
-	// Generation of noise: product: 'lowFrequencyNoiseBuffer' and 'highFrequencyNoiseBuffer'
+	// Generate pink noise (expensive)
 	float *pinkNoiseBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 	if (pinkNoiseBuffer == NULL) return 1;
 
+	struct ThreadData pinkNoiseGenerationData = {pinkNoiseBuffer, NULL, NULL, NULL, NULL, NULL, project, scene, engine, NULL};
+
+	if (pthread_create(&thread2, NULL, generatePinkNoise, (void *) &pinkNoiseGenerationData) != 0) return 1;
+
+	// Generate brown and low frequency noise
 	float *brownNoiseBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 	if (brownNoiseBuffer == NULL) return 1;
 
 	float *lowFrequencyNoiseBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 	if (lowFrequencyNoiseBuffer == NULL) return 1;
 
-	struct ThreadData noiseGenerationData = {pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, NULL, NULL, project, scene, engine, NULL};
+	struct ThreadData noiseGenerationData = {brownNoiseBuffer, lowFrequencyNoiseBuffer, NULL, NULL, NULL, NULL, project, scene, engine, NULL};
 
-	if (pthread_create(&thread2, NULL, generateNoise, (void *) &noiseGenerationData) != 0) return 1;
+	if (pthread_create(&thread3, NULL, generateNoise, (void *) &noiseGenerationData) != 0) return 1;
 
 
 	// Join threads from part 1 of rendering
 	if (pthread_join(thread1, NULL) != 0) return 1;
 	if (pthread_join(thread2, NULL) != 0) return 1;
+	if (pthread_join(thread3, NULL) != 0) return 1;
+
+	free(keyframes); // No longer needed after interpolation
 
 	// Stage: compute
 	printf("\n");
@@ -147,7 +159,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	float *baseBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 	if (baseBuffer == NULL) return 1;
 
-	struct ThreadData baseRenderingData = {frequencyBuffer, loadBuffer, pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, project, scene, engine, NULL};
+	struct ThreadData baseRenderingData = {baseBuffer, (float *) phaseBuffer, loadBuffer, pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, project, scene, engine, NULL};
 
 	if (pthread_create(&thread1, NULL, renderBase, (void *) &baseRenderingData) != 0) return 1;
 
@@ -156,7 +168,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	float *valvetrainBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 	if (valvetrainBuffer == NULL) return 1;
 
-	struct ThreadData valvetrainRenderingData = {frequencyBuffer, loadBuffer, pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, project, scene, engine, NULL};
+	struct ThreadData valvetrainRenderingData = {valvetrainBuffer, frequencyBuffer, loadBuffer, pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, project, scene, engine, NULL};
 
 	if (pthread_create(&thread2, NULL, renderValvetrain, (void *) &valvetrainRenderingData) != 0) return 1;
 
@@ -165,7 +177,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	float *mechanicalBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 	if (mechanicalBuffer == NULL) return 1;
 
-	struct ThreadData mechanicalRenderingData = {frequencyBuffer, loadBuffer, pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, project, scene, engine, NULL};
+	struct ThreadData mechanicalRenderingData = {mechanicalBuffer, frequencyBuffer, loadBuffer, pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, project, scene, engine, NULL};
 
 	if (pthread_create(&thread3, NULL, renderMechanical, (void *) &mechanicalRenderingData) != 0) return 1;
 
@@ -174,14 +186,22 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	float *vibrationBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 	if (vibrationBuffer == NULL) return 1;
 
-	struct ThreadData vibrationRenderingData = {frequencyBuffer, loadBuffer, pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, project, scene, engine, NULL};
+	struct ThreadData vibrationRenderingData = {vibrationBuffer, frequencyBuffer, loadBuffer, pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, project, scene, engine, NULL};
 
 	if (pthread_create(&thread4, NULL, renderVibration, (void *) &vibrationRenderingData) != 0) return 1;
 
 
+	// Join the threads
+	if (pthread_join(thread1, NULL) != 0) return 1;
+	if (pthread_join(thread2, NULL) != 0) return 1;
+	if (pthread_join(thread3, NULL) != 0) return 1;
+	if (pthread_join(thread4, NULL) != 0) return 1;
+
 	// Free data from prepare stage
 	free(frequencyBuffer);
+	free(phaseBuffer);
 	free(loadBuffer);
+
 	free(pinkNoiseBuffer);
 	free(brownNoiseBuffer);
 	free(lowFrequencyNoiseBuffer);
@@ -206,9 +226,15 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	makeWavHeader(file, project->sampleRate, project->bitDepth, (uint32_t) scene->sampleCount);
 
-	fwrite(brownNoiseBuffer, 1, scene->sampleCount * (project->bitDepth / 8), file);
+	fwrite(baseBuffer, 1, scene->sampleCount * (project->bitDepth / 8), file);
 
 	fclose(file);
+
+	free(project);
+	free(scene);
+	free(engine);
+
+	d_print("%.2f ms - render finished\n\tspeed: [%.2f s/s]", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC, (scene->length / ((clock() - startTime) * 1000.0f / CLOCKS_PER_SEC)) * 1000.0f);
 
 	/*
 	//
@@ -398,8 +424,8 @@ int getEngine(struct Scene *scene, struct Engine *engine, struct Project *projec
 	engine->mechanicalVolume = parseLineValueF("mechanical_volume", enginePath);
 	if (engine->mechanicalVolume == FLOAT_FAIL) return 1;
 
-	engine->secondaryVibrationVolume = parseLineValueF("secondary_vibration_volume", enginePath);
-	if (engine->volumeVariation == FLOAT_FAIL) return 1;
+	engine->vibrationVolume = parseLineValueF("vibration_volume", enginePath);
+	if (engine->vibrationVolume == FLOAT_FAIL) return 1;
 
 	// Volume multipliers
 	engine->loadVolumeMultiplier = parseLineValueF("load_volume_multiplier", enginePath);

@@ -64,7 +64,7 @@ struct Engine {
 	float baseVolume; // The base volume
 	float valvetrainVolume; // The volume of the valvetrain
 	float mechanicalVolume; // THe volume of mechanical parts
-	float secondaryVibrationVolume; // The volume of secondary vibrations
+	float vibrationVolume; // The volume of secondary vibrations
 
 	float loadVolumeMultiplier; // Maximum volume (with 1.0f load)
 	float rpmVolumeMultiplier; // What to multiply by with RPM
@@ -81,6 +81,7 @@ struct Keyframe {
 // This struct is used for sending data to pthreads
 struct ThreadData {
 	// Buffers I can use
+	float *buffer0;
 	float *buffer1;
 	float *buffer2;
 	float *buffer3;
