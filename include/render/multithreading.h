@@ -8,8 +8,9 @@
 
 // STAGE 1
 void *interpolate(void *arg);
-void *generateNoise(void *arg);
 void *generatePinkNoise(void *arg);
+void *generateBrownNoise(void *arg);
+void *generateLowFrequencyNoise(void *arg);
 
 // STAGE 2
 void *renderBase(void *arg);

@@ -16,6 +16,15 @@ void e_fatal(const char *format, ...) {
     va_end(args);
 }
 
+void e_warning(const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    printf(COLOR_BOLD "warning: " COLOR_RESET "");
+    vprintf(format, args);
+    va_end(args);
+	sleep(1); // Punish user for causing a warning, let him read it and think about it
+}
+
 void e_parse(char *path, int linenr, const char *format, ...) {
 	va_list args;
 	va_start(args, format);

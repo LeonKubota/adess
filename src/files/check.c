@@ -156,8 +156,11 @@ bool checkValidity(char *path) {
 		// Int or float
 		} else if (isDigit(typestring[0]) == true) {
 			int n = 0;
-			// Get the last char
+			// Get the last char that isn't a comment
 			while (typestring[n] != '\0') {
+				if (typestring[n + 1] == '/' && typestring[n + 2] == '/') {
+					break;
+				}
 				n++;
 			}
 			n--;
@@ -262,15 +265,21 @@ char checkVar(char type, char *variable) {
 		// Engine
 		"i stroke",
 		"i cylinder_count",
+		"i idle_rpm",
+		"i max_rpm",
 
-		"f base_noise",
-		"f load_noise",
+		"i harmonics",
+
+		"f low_frequency_noise_frequency",
+		"i low_frequency_noise_falloff",
+		"f low_frequency_noise_strength",
 
 		"f base_volume",
 		"f valvetrain_volume",
 		"f mechanical_volume",
 		"f vibration_volume",
 
+		"f minimum_volume",
 		"f load_volume_multiplier",
 		"f rpm_volume_multiplier",
 

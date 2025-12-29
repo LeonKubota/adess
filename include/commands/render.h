@@ -28,5 +28,6 @@ char *processName(char *inputName);
 
 // Printing functions
 void printKeys(struct Keyframe *keyframesPrint, int keyCount);
+void printMinMax(float *buffer, struct Scene *scene, struct Project *project);
 
 #endif

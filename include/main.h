@@ -55,16 +55,25 @@ struct Engine {
 	// Physical parameters
 	int stroke; // The amount of cycles per one work cycle
 	int cylinderCount; // The amount of cylinders
+	int idleRpm;
+	int maxRpm; // The maximum rpm of the engine
+
+	// Harmonics
+	int harmonics; // How many harmonics the engine should have
 
 	// Noise characteristics
-	float baseNoise; // The base noise (with 0.0f load)
-	float loadNoise; // Maximum noise (with 1.0f load)
+	// 'LowFrequencyNoise' settings
+	float lowFrequencyNoiseFrequency; // The frequency of low frequency noise
+	int lowFrequencyNoiseFalloff; // How much the low frequency noise falls off (at what rpm does the noise come down to 0)
+	float lowFrequencyNoiseStrength; // How strong the low frequency noise is
 
 	// Volume characteristics
 	float baseVolume; // The base volume
 	float valvetrainVolume; // The volume of the valvetrain
 	float mechanicalVolume; // THe volume of mechanical parts
 	float vibrationVolume; // The volume of secondary vibrations
+
+	float minimumVolume; // The minimum volume
 
 	float loadVolumeMultiplier; // Maximum volume (with 1.0f load)
 	float rpmVolumeMultiplier; // What to multiply by with RPM
@@ -87,12 +96,16 @@ struct ThreadData {
 	float *buffer3;
 	float *buffer4;
 	float *buffer5;
+	float *buffer6;
 
 	// Structs used for calculation
 	struct Project *project;
 	struct Scene *scene;
 	struct Engine *engine;
 	struct Keyframe *keyframes;
+
+	// Failed
+	bool failed;
 };
 
 extern bool g_debug;
