@@ -32,6 +32,7 @@ int render(char **args) {
 	}
 
 	static char name[1024];
+	name[0] = '\0';
 
 	// Check if the user specified a name
 	if (g_opts[1] == true) { // If -n
@@ -98,7 +99,10 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	// Get keyframe information, sort and precalculate frequency
 	struct Keyframe *keyframes = (struct Keyframe *) malloc(scene->keyframeCount * sizeof(struct Keyframe));
-	getKeyframes(keyframes, scene, engine);
+	if (keyframes == NULL) return 1;
+
+	// Get the keyframes
+	if (getKeyframes(keyframes, scene, engine) == 1) return 1;
 
 	d_print("Files for rendering found and loaded\n");
 
@@ -189,7 +193,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	float *valvetrainBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 	if (valvetrainBuffer == NULL) return 1;
 
-	struct ThreadData valvetrainRenderingData = {valvetrainBuffer, (float *) phaseBuffer, loadBuffer, pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, rpmBuffer, project, scene, engine, NULL, false};
+	struct ThreadData valvetrainRenderingData = {valvetrainBuffer, (float *) phaseBuffer, rpmBuffer, pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, rpmBuffer, project, scene, engine, NULL, false};
 
 	if (pthread_create(&thread2, NULL, renderValvetrain, (void *) &valvetrainRenderingData) != 0) return 1;
 
@@ -241,7 +245,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	d_print("rendering [3/4] - join\n");
 
 	// TEST
-	printMinMax(baseBuffer, scene, project);
+	printMinMax(valvetrainBuffer, scene, project);
 
 	// Stage: write
 	printf("\n");
@@ -259,7 +263,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	makeWavHeader(file, project->sampleRate, project->bitDepth, (uint32_t) scene->sampleCount);
 
-	fwrite(baseBuffer, 1, scene->sampleCount * (project->bitDepth / 8), file);
+	fwrite(valvetrainBuffer, 1, scene->sampleCount * (project->bitDepth / 8), file);
 
 	fclose(file);
 
@@ -441,7 +445,7 @@ int getEngine(struct Scene *scene, struct Engine *engine, struct Project *projec
 	if (engine->stroke == INT_FAIL) return 1;
 
 	if (engine->stroke != 4 && engine->stroke != 2) {
-		e_warning("non-standard stroke: [%i]\n", engine->stroke);
+		e_warning("non-standard stroke: [%i]\n", engine->stroke); // ;) a bit freaky
 	}
 
 	engine->cylinderCount = parseLineValueI("cylinder_count", enginePath);
@@ -518,12 +522,12 @@ char *getOutputPath(char *name, char *sceneNameInput, struct Project *project) {
 	char *outputPathFinal = (char *) malloc(1024 * sizeof(char));
 
 	// Use 'name' if provided, otherwise use sceneName
-	if (name != NULL) {
+	if (strlen(name) != 0) {
 		strcat(outputPath, name);
 		strcpy(outputPathFinal, outputPath);
 	} else {
-		strcat(outputPath, sceneNameInput);
 		strcpy(outputPathFinal, outputPath);
+		strcat(outputPathFinal, sceneNameInput);
 
 		// Add the .wav extention (and override the '.adess' as a nice bonus) + it's disgusting
 		outputPathFinal[strlen(outputPathFinal) - 5] = 'w';
@@ -547,12 +551,13 @@ int getKeyframes(struct Keyframe *keyframes, struct Scene *scene, struct Engine 
 		keyframes[i].load = 0.0f;
 	}
 
+
 	if (keyframes == NULL) {
 		e_fatal("keyframe buffer creation failed\n");
 		return 1;
 	}
 
-	loadKeyframes(scene, keyframes);
+	loadKeyframes(scene, keyframes); // FIX
 
 	if (sortKeys(keyframes, scene->keyframeCount) == false) {
 		e_parse(scene->scenePath, getVariableLineNumber("keyframes", scene->scenePath) + 1, "keyframes must have unique times\n");

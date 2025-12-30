@@ -258,9 +258,9 @@ void loadKeyframes(struct Scene *scene, struct Keyframe *keyframes) {
 	}
 
 	int i = 0;
-	char keytime[32];
-	char rpm[32];
-	char load[32];
+	char keytime[1024];
+	char rpm[1024];
+	char load[1024];
 	int n = 0;
 
 	while (fgets(line, sizeof(line), file) && i < scene->keyframeCount) {
@@ -282,7 +282,12 @@ void loadKeyframes(struct Scene *scene, struct Keyframe *keyframes) {
 		}
 
 		// Get keytime (ends with 'f')
+
+		printf("before- %i\n", i);
+
 		strcpy(keytime, line);
+
+		printf(" -after\n");
 
 		bool secondF = false;
 		while (strlen(keytime) > 1) {

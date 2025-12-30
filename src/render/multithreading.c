@@ -34,8 +34,6 @@ void *interpolate(void *arg) {
 	uint32_t lowFrequencyNoiseFalloff = engine->lowFrequencyNoiseFalloff * 16100;
 	float lowFrequencyNoiseConstant = (engine->idleRpm * engine->idleRpm) / lowFrequencyNoiseFalloff;
 
-	printf("%f\n", engine->lowFrequencyNoiseStrength);
-
 	uint64_t i = 0;
 
 	// If there is only one keyframe
@@ -295,6 +293,7 @@ void *renderBase(void *arg) {
 		}
 
 		// Get absolute maximum value
+		// TEST FIXME TODO
 		if (absoluteMax < baseBuffer[i] * baseBuffer[i]) {
 			absoluteMax = baseBuffer[i] * baseBuffer[i];
 		}
@@ -343,15 +342,24 @@ void *renderValvetrain(void *arg) {
 
 	struct ThreadData *threadData = (struct ThreadData *) arg;
 
+	struct Project *project = threadData->project;
+	struct Scene *scene = threadData->scene;
+
 	float *valvetrainBuffer = threadData->buffer0;
 	double *phaseBuffer = (double *) threadData->buffer1;
+	float *rpmBuffer = threadData->buffer2;
 
-	struct Scene *scene = threadData->scene;
+	double phase = 0.0f;
+	float timeStep = 1.0f / project->sampleRate;
 
 	uint64_t i = 0;
 
 	while (i < scene->sampleCount) {
-		valvetrainBuffer[i] = sin(phaseBuffer[i]);
+		phase += TAU * rpmBuffer[i] * 0.01f * timeStep;
+		valvetrainBuffer[i] = sin(phaseBuffer[i] * 10.0f) * ((sin(phase) * 0.5f)+ 0.5f);
+
+		// TEST
+		if (valvetrainBuffer[i] * valvetrainBuffer[i] > 1) printf("exceeded\n");
 		i++;
 	}
 
