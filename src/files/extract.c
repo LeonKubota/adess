@@ -17,7 +17,6 @@ char *parseLineValueS(char *variable, char *path) {
 	}
 
 	char *string = (char *) malloc(1024 * sizeof(char)); 
-	printf("stringInput: %s\n", stringInput);
 	strcpy(string, stringInput);
 	
 	// Remove the first character if it's "

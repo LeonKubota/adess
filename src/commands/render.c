@@ -31,7 +31,7 @@ int render(char **args) {
 		return 1;
 	}
 
-	char *name = "";
+	static char name[1024];
 
 	// Check if the user specified a name
 	if (g_opts[1] == true) { // If -n
@@ -61,9 +61,7 @@ int render(char **args) {
 	struct Project *project = (struct Project *) malloc(sizeof(struct Project));
 	if (project == NULL) return 1;
 
-	printf("before\n");
 	if (getProject(project, projectFilePath) == 1) return 1;
-	printf("after\n");
 	
 	// If '-a' option is on, render every scene
 	if (g_opts[6] == true) {
@@ -252,11 +250,11 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	b_todo("writing to: '%s'\n", outputPath);
 
 	FILE *file = fopen(outputPath, "wb");
-
 	if (file == NULL) {
 		e_fatal("failed to write into file '%s'\n", outputPath);
 		return 1;
 	}
+
 	project->bitDepth = 32;
 
 	makeWavHeader(file, project->sampleRate, project->bitDepth, (uint32_t) scene->sampleCount);
@@ -362,7 +360,6 @@ int renderAll(struct Project *project) {
 }
 
 int getProject(struct Project *project, char *projectFilePath) {
-	printf("start\n");
 	char *tempProjFile = findProjectFile(getCurDirectory(NULL));
 	if (tempProjFile == NULL) return 1;
 
@@ -382,10 +379,8 @@ int getProject(struct Project *project, char *projectFilePath) {
 	strcpy(project->enginePath, "\0");
 	strcpy(project->outputPath, "\0");
 
-	printf("before string parsing\n");
 	strcpy(project->scenePath, parseLineValueS("scene_path", projectFilePath));
 	if (strcmp(project->scenePath, "\0") == 0) return 1;
-	printf("after string parsing\n");
 
 	strcpy(project->enginePath, parseLineValueS("engine_path", projectFilePath));
 	if (strcmp(project->enginePath, "\0") == 0) return 1;
@@ -393,6 +388,7 @@ int getProject(struct Project *project, char *projectFilePath) {
 	strcpy(project->outputPath, parseLineValueS("output_path", projectFilePath));
 	if (strcmp(project->outputPath, "\0") == 0) return 1;
 
+	// Seed
 	project->seed = parseLineValueI("seed", projectFilePath);
 	if (project->seed == INT_FAIL) return 1;
 
@@ -519,13 +515,15 @@ int getEngine(struct Scene *scene, struct Engine *engine, struct Project *projec
 char *getOutputPath(char *name, char *sceneNameInput, struct Project *project) {
 	char *outputPath = getCurDirectory(project->outputPath);
 
-	char *outputPathFinal;
+	char *outputPathFinal = (char *) malloc(1024 * sizeof(char));
 
 	// Use 'name' if provided, otherwise use sceneName
 	if (name != NULL) {
-		outputPathFinal = strcat(outputPath, name);
+		strcat(outputPath, name);
+		strcpy(outputPathFinal, outputPath);
 	} else {
-		outputPathFinal = strcat(outputPath, sceneNameInput);
+		strcat(outputPath, sceneNameInput);
+		strcpy(outputPathFinal, outputPath);
 
 		// Add the .wav extention (and override the '.adess' as a nice bonus) + it's disgusting
 		outputPathFinal[strlen(outputPathFinal) - 5] = 'w';
@@ -533,6 +531,7 @@ char *getOutputPath(char *name, char *sceneNameInput, struct Project *project) {
 		outputPathFinal[strlen(outputPathFinal) - 3] = 'v';
 		outputPathFinal[strlen(outputPathFinal) - 2] = '\0';
 	}
+
 	return outputPathFinal;
 }
 
