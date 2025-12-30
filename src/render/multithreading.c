@@ -130,6 +130,9 @@ void *interpolate(void *arg) {
 void *generatePinkNoise(void *arg) {
  	time_t startTime = clock();
 
+	// Test
+	d_print("%.2f ms - pink noise generation finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC); return NULL;
+
 	struct ThreadData *threadData = (struct ThreadData *) arg;
 
 	float *pinkNoiseBuffer = threadData->buffer0;
@@ -338,10 +341,22 @@ void *renderBase(void *arg) {
 void *renderValvetrain(void *arg) {
  	time_t startTime = clock();
 
-	//struct ThreadData *threadData = (struct ThreadData *) arg;
+	struct ThreadData *threadData = (struct ThreadData *) arg;
 
-	if (false) printf("%p\n", arg);
+	float *valvetrainBuffer = threadData->buffer0;
+	double *phaseBuffer = (double *) threadData->buffer1;
+
+	struct Scene *scene = threadData->scene;
+
+	uint64_t i = 0;
+
+	while (i < scene->sampleCount) {
+		valvetrainBuffer[i] = sin(phaseBuffer[i]);
+		i++;
+	}
+
 	d_print("%.2f ms - valvetrain rendering finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
+
 	return NULL;
 }
 

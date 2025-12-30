@@ -9,28 +9,33 @@
 #include "files/extract.h"
 
 char *parseLineValueS(char *variable, char *path) {
-	char *string = parseLineValue(variable, path);
+	char *stringInput = parseLineValue(variable, path);
 
 	// Check for empty strings
-	if (string == NULL) {
-		return NULL;
+	if (stringInput == NULL) {
+		return "\0";
 	}
+
+	char *string = (char *) malloc(1024 * sizeof(char)); 
+	printf("stringInput: %s\n", stringInput);
+	strcpy(string, stringInput);
 	
 	// Remove the first character if it's "
 	if (string[0] == '\"') {
 		string++;
 	} else {
 		e_parse(path, getVariableLineNumber(variable, path) + 1, "incorrect type, string expected\n");
-		return NULL;
+		return "\0";
 	}
 
 	if ((string[strlen(string) - 1]) == '\"') {
 		string[strlen(string) - 1] = '\0';
 	} else {
 		e_parse(path, getVariableLineNumber(variable, path) + 1, "incorrect type, string expected\n");
-		return NULL;
+		return "\0";
 	}
-	
+
+
 	return string;
 }
 
@@ -41,8 +46,10 @@ int64_t parseLineValueI(char *variable, char *path) {
 		return INT_FAIL;
 	}
 
+	int64_t output = atoll(value);
+
 	// atoll returns 0 if input isn't an integer string (64 bit int)
-	if (atoll(value) == 0) {
+	if (output == 0) {
 		// If it really is a zero
 		if (value[0] == '0') {
 			return 0;
@@ -51,8 +58,8 @@ int64_t parseLineValueI(char *variable, char *path) {
 			return INT_FAIL;
 		}
 	}
-
-	return atoll(value);
+	
+	return output;
 }
 
 float parseLineValueF(char *variable, char *path) {
@@ -66,6 +73,7 @@ float parseLineValueF(char *variable, char *path) {
 	char stringNumber[16];
 	bool wasDot = false;
 	int i = 0;
+
 
 	while (string[i] != 'f') {
 		if (isDigit(string[i]) == true) {
@@ -100,7 +108,7 @@ bool parseLineValueB(char *variable, char *path) {
 	}
 }
 
-char *parseLineValue(char *variable, char *path) {
+char *parseLineValue(char *variable, char *path) { // FIXME
 	FILE *file = fopen(path, "r");
 
 	// If the file doesn't exist
@@ -119,7 +127,7 @@ char *parseLineValue(char *variable, char *path) {
 		}
 
 		if (compare(line, variable) == true) {
-			strncpy(output, line, sizeof(output) - 1);
+			strcpy(output, line);
 			output[sizeof(output) - 1] = '\0';
 		}
 	}
@@ -132,43 +140,47 @@ char *parseLineValue(char *variable, char *path) {
 
 	fclose(file);
 
-	char *value = strchr(output, '='); // Skip to "="
-	if (value == NULL) {
+	char *cursor = strchr(output, '='); // Skip to "="
+
+	if (cursor == NULL) {
 		return NULL;
 	}
-	value++; // Skip "="
-	//value = strtok(value, "//"); // before comment ("//")
+
+	cursor++; // Skip "="
 
 	// Skip leading whitespace
-	while (*value == ' ' || *value == '\t') {
-		value++;
+	while (*cursor == ' ' || *cursor == '\t') {
+		cursor++;
 	}
 
 	// Skip trailing whitespace
-	char *end = value + strlen(value) - 1;
-	while (end > value && (*end == '\t' || *end == ' ' || *end == '\n')) {
+	char *end = cursor + strlen(cursor) - 1;
+	while (end > cursor && (*end == '\t' || *end == ' ' || *end == '\n')) {
 		*end-- = '\0';
 	}
 
 	// Delete comment
-	char *curchar = value;
-	if (strstr(value, "//") != NULL) {
+	char *curchar = cursor;
+	if (strstr(cursor, "//") != NULL) {
 		// WTF pointer things
 		int i = 0;
 		bool instring = false;
-		while (curchar < (value + strlen(value) - 1)) {
+		while (curchar < (cursor + strlen(cursor) - 1)) {
 			// Flip 'instring' if " detected
 			if (curchar[0] == '\"') {
 				instring = !instring;
 			}
 			
 			if (instring == false && curchar[0] == '/' && curchar[1] == '/') {
-				value[i - 1] = '\0';
+				cursor[i - 1] = '\0';
 			}
 			i++;
 			curchar++;
 		}
 	}
+
+	char *value = (char *) malloc(1024 * sizeof(char));
+	if (value) strcpy(value, cursor);
 
 	return value;
 }

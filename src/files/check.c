@@ -81,13 +81,15 @@ char *findProjectFile(char *path) {
 }
 
 char *getCurDirectory(char *userpath) {
-	char cwd[4096];
+	static char currentWorkingDirectory[4096]; // TODO Static was changed, might mess something up
 	
-	if (getcwd(cwd, sizeof(cwd)) != NULL) {
+	if (getcwd(currentWorkingDirectory, sizeof(currentWorkingDirectory)) != NULL) {
 		if (userpath == NULL) {
-			return strcat(cwd, PATH_SEPARATOR);
+			strcat(currentWorkingDirectory, PATH_SEPARATOR);
+			return currentWorkingDirectory;
 		} else {
-			return strcat(strcat(strcat(cwd, PATH_SEPARATOR), userpath), PATH_SEPARATOR);
+			strcat(strcat(strcat(currentWorkingDirectory, PATH_SEPARATOR), userpath), PATH_SEPARATOR);
+			return currentWorkingDirectory;
 		}
 	} else {
 		e_fatal("directory not found\n");
@@ -96,6 +98,7 @@ char *getCurDirectory(char *userpath) {
 	return NULL;
 }
 
+// 'true' if valid, 'false' if invalid
 bool checkValidity(char *path) {
 	FILE *file = fopen(path, "r");
 	
@@ -111,7 +114,6 @@ bool checkValidity(char *path) {
 	int i = 0;
 	
 	while (fgets(line, sizeof(line), file)) {
-
 		// Reset 'type'
 		type = ' ';
 
@@ -127,15 +129,20 @@ bool checkValidity(char *path) {
 			continue;
 		}
 
-		strncpy(varname, line, sizeof(varname) - 1);
+		strcpy(varname, line);
 
 		if (varname[0] == '\n') {
 			i++;
 			continue;
 		}
-		
+
 		// Get the type of the value
 		typestring = strchr(varname, '=');
+		if (typestring == NULL) {
+			e_parse(path, i + 1, "variables have to be defined with '='\n");
+			return false;
+		}
+
 		typestring++;
 
 		// Skip leading whitespace
@@ -148,6 +155,7 @@ bool checkValidity(char *path) {
 		while (end > typestring &&  (*end == '\t' || *end == ' ' || *end == '\n')) {
 			*end-- = '\0';
 		}
+
 		
 		// Picking 'type'
 		// String
@@ -233,7 +241,7 @@ bool checkValidity(char *path) {
 
 		i++;
 	}
-	
+
 	fclose(file);
 	
 	return true;
@@ -269,6 +277,8 @@ char checkVar(char type, char *variable) {
 		"i max_rpm",
 
 		"i harmonics",
+
+		"f brown_noise_strength",
 
 		"f low_frequency_noise_frequency",
 		"i low_frequency_noise_falloff",

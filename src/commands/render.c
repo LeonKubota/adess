@@ -31,7 +31,7 @@ int render(char **args) {
 		return 1;
 	}
 
-	char *name = NULL;
+	char *name = "";
 
 	// Check if the user specified a name
 	if (g_opts[1] == true) { // If -n
@@ -52,7 +52,7 @@ int render(char **args) {
 	char *tempProjFile = findProjectFile(getCurDirectory(NULL));
 	if (tempProjFile == NULL) return 1;
 
-	strncpy(projectFilePath, tempProjFile, 4096);
+	strcpy(projectFilePath, tempProjFile);
 
 	// Check if the adess DST file has valid syntax
 	if (checkValidity(projectFilePath) == false) return 1;
@@ -61,7 +61,9 @@ int render(char **args) {
 	struct Project *project = (struct Project *) malloc(sizeof(struct Project));
 	if (project == NULL) return 1;
 
+	printf("before\n");
 	if (getProject(project, projectFilePath) == 1) return 1;
+	printf("after\n");
 	
 	// If '-a' option is on, render every scene
 	if (g_opts[6] == true) {
@@ -189,7 +191,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	float *valvetrainBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 	if (valvetrainBuffer == NULL) return 1;
 
-	struct ThreadData valvetrainRenderingData = {valvetrainBuffer, frequencyBuffer, loadBuffer, pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, rpmBuffer, project, scene, engine, NULL, false};
+	struct ThreadData valvetrainRenderingData = {valvetrainBuffer, (float *) phaseBuffer, loadBuffer, pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, rpmBuffer, project, scene, engine, NULL, false};
 
 	if (pthread_create(&thread2, NULL, renderValvetrain, (void *) &valvetrainRenderingData) != 0) return 1;
 
@@ -263,11 +265,11 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	fclose(file);
 
+	d_print("%.2f ms - render finished\n\tspeed: [%.2f s/s]\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC, (scene->length / ((clock() - startTime) * 1000.0f / CLOCKS_PER_SEC)) * 1000.0f);
+
 	free(project);
 	free(scene);
 	free(engine);
-
-	d_print("%.2f ms - render finished\n\tspeed: [%.2f s/s]\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC, (scene->length / ((clock() - startTime) * 1000.0f / CLOCKS_PER_SEC)) * 1000.0f);
 
 	/*
 	//
@@ -360,6 +362,7 @@ int renderAll(struct Project *project) {
 }
 
 int getProject(struct Project *project, char *projectFilePath) {
+	printf("start\n");
 	char *tempProjFile = findProjectFile(getCurDirectory(NULL));
 	if (tempProjFile == NULL) return 1;
 
@@ -379,8 +382,10 @@ int getProject(struct Project *project, char *projectFilePath) {
 	strcpy(project->enginePath, "\0");
 	strcpy(project->outputPath, "\0");
 
+	printf("before string parsing\n");
 	strcpy(project->scenePath, parseLineValueS("scene_path", projectFilePath));
 	if (strcmp(project->scenePath, "\0") == 0) return 1;
+	printf("after string parsing\n");
 
 	strcpy(project->enginePath, parseLineValueS("engine_path", projectFilePath));
 	if (strcmp(project->enginePath, "\0") == 0) return 1;

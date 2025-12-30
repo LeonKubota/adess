@@ -157,7 +157,6 @@ int appendLine(char *path, const char *format, ...) {
 	file = fopen(path, "a");
 	
 	if (file == NULL) {
-		fclose(file);
 		e_fatal("failed to write into file '%s'\n", path);
 		return 1;
 	}
