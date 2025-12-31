@@ -283,11 +283,7 @@ void loadKeyframes(struct Scene *scene, struct Keyframe *keyframes) {
 
 		// Get keytime (ends with 'f')
 
-		printf("before- %i\n", i);
-
 		strcpy(keytime, line);
-
-		printf(" -after\n");
 
 		bool secondF = false;
 		while (strlen(keytime) > 1) {

@@ -277,7 +277,7 @@ void *renderBase(void *arg) {
 	// For rpm multiplication
 	float rpmVolumeMultiplier = engine->rpmVolumeMultiplier * 60.0f / (2.0f / engine->stroke) / engine->cylinderCount;
 
-	// Used to normalize, power of two so I have the absolute value later
+	// Used to normalize
 	float absoluteMax = 0.0f;
 
 	// Calculate base frequency and 'n' harmonic frequencies
@@ -293,16 +293,13 @@ void *renderBase(void *arg) {
 		}
 
 		// Get absolute maximum value
-		// TEST FIXME TODO
-		if (absoluteMax < baseBuffer[i] * baseBuffer[i]) {
-			absoluteMax = baseBuffer[i] * baseBuffer[i];
+		if (absoluteMax < fabs(baseBuffer[i])) {
+			absoluteMax = fabs(baseBuffer[i]);
 		}
 
 		i++;
 	}
 	i = 0;
-
-	absoluteMax = sqrtf(absoluteMax);
 
 	// Normalize to -1.0f to 1.0f
 	if (absoluteMax != 0.0f) {
@@ -344,6 +341,7 @@ void *renderValvetrain(void *arg) {
 
 	struct Project *project = threadData->project;
 	struct Scene *scene = threadData->scene;
+	struct Engine *engine = threadData->engine;
 
 	float *valvetrainBuffer = threadData->buffer0;
 	double *phaseBuffer = (double *) threadData->buffer1;
@@ -351,12 +349,33 @@ void *renderValvetrain(void *arg) {
 
 	double phase = 0.0f;
 	float timeStep = 1.0f / project->sampleRate;
+	float frequency = 0.0f;
+	float multiplier = 0;
+	float multiplier2 = 0;
+
+	//float length = 0.25f;
+	float offset = 1.2f;
+	printf("%f", offset);
+
+	// TODO this needs to be improved
 
 	uint64_t i = 0;
 
 	while (i < scene->sampleCount) {
-		phase += TAU * rpmBuffer[i] * 0.01f * timeStep;
-		valvetrainBuffer[i] = sin(phaseBuffer[i] * 10.0f) * ((sin(phase) * 0.5f)+ 0.5f);
+		// Intake valve sound
+		// Formula: ((rps / 2) * cylinderCount) / 4 / 2
+		// Divide by four so we only get the intake and divide by 2 because I use abs later
+		frequency = (rpmBuffer[i] / 120.0f) * engine->cylinderCount * 0.125f * 0.5f; // TEST
+		phase += TAU * frequency * timeStep;
+		multiplier = (fabs(sin(phase)) - 0.9f) * 10.0f;
+		if (multiplier < 0.0f) multiplier = 0.0f;
+
+		multiplier2 = (fabs(sin(phase + offset)) - 0.9f) * 10.0f;
+		if (multiplier2 < 0.0f) multiplier2 = 0.0f;
+		multiplier += multiplier2;
+
+		// Exhaust buffer
+		valvetrainBuffer[i] = sin(phaseBuffer[i] * 10.0f) * (multiplier) * 0.25f;
 
 		// TEST
 		if (valvetrainBuffer[i] * valvetrainBuffer[i] > 1) printf("exceeded\n");
