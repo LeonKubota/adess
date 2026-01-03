@@ -460,9 +460,9 @@ void *combineBuffers(void *arg) {
 	i = 0;
 
 	// Do a fast fourier transform on this into the buffer 'frequencyBuffer'
-	float *frequencyBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
+	//float *frequencyBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 
-	while (i < scene->sampleCount) {
+	while (i < scene->sampleCount) {
 		i++;
 	}
 
