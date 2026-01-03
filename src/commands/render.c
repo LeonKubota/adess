@@ -250,6 +250,8 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	combineBuffers((void *) &combineBuffersData);
 
+	if (combineBuffersData.failed == true) return 1;
+
 	/*
 	free(baseBuffer);
 	free(valvetrainBuffer);

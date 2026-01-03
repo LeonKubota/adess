@@ -2,11 +2,15 @@
 #include <math.h>
 #include <time.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <inttypes.h>
+#include <string.h>
 
 #include "main.h"
 #include "utils.h"
 #include "commands/render.h"
 #include "render/multithreading.h"
+#include "render/fourier.h"
 
 // STAGE 1
 // Interpolate keyframes, output 'frequencyBuffer' and 'loadBuffer'
@@ -374,10 +378,8 @@ void *renderValvetrain(void *arg) {
 	float *valvetrainBuffer = threadData->buffer0;
 	double *phaseBuffer = (double *) threadData->buffer1;
 	float *rpmBuffer = threadData->buffer2;
-	float *frequencyBuffer = threadData->buffer3;
+	//float *frequencyBuffer = threadData->buffer3;
 	float *pinkNoiseBuffer = threadData->buffer4;
-
-	printf("frequencyBuffer[0] = %f\n", frequencyBuffer[0]);
 
 	double phase = 0.0f;
 	float timeStep = 1.0f / project->sampleRate;
@@ -441,6 +443,7 @@ void *combineBuffers(void *arg) {
 
 	struct ThreadData *threadData = (struct ThreadData *) arg;
 
+	//struct Project *project = threadData->project;
 	struct Scene *scene = threadData->scene;
 	struct Engine *engine = threadData->engine;
 
@@ -459,15 +462,47 @@ void *combineBuffers(void *arg) {
 	}
 	i = 0;
 
-	// Do a fast fourier transform on this into the buffer 'frequencyBuffer'
-	//float *frequencyBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
-
-	while (i < scene->sampleCount) {
+	// Get smallest 'n' that is a power of 2 and fits 'combinedBuffer'
+	uint64_t n = 2;
+	while (n < scene->sampleCount) {
+		n = 1 << i; // this = pow(2, n)
 		i++;
 	}
+	i = 0;
+
+	// Zero-pad 'combinedBuffer'
+	complex double *paddedCombinedBuffer = (complex double *) malloc(n * sizeof(complex double));
+	if (paddedCombinedBuffer == NULL) {
+		threadData->failed = true;
+		return NULL;
+	}
+
+	// Copy from 'combinedBuffer' into 'paddedCombinedBuffer'
+	while (i < scene->sampleCount) {
+		paddedCombinedBuffer[i] = combinedBuffer[i] + (0.0f * I); // Convert to complex number
+		i++;
+	} // Fill the rest with zeroes
+	while (i < n) {
+		paddedCombinedBuffer[i] = 0.0f + (0.0f * I);
+		i++;
+	}
+	i = 0;
+
+	complex double *fourierTemp = (complex double *) malloc(n * sizeof(complex double));
+
+	fastFourierTransform(paddedCombinedBuffer, n, fourierTemp);
+	inverseFastFourierTransform(paddedCombinedBuffer, n, fourierTemp);
+
+	free(fourierTemp);
+
+	while (i < scene->sampleCount) {
+		combinedBuffer[i] = crealf(paddedCombinedBuffer[i]); // Extract the real component
+		i++;
+	}
+
+	free(paddedCombinedBuffer);
 
 	if (false) printf("%p\n", arg);
 	d_print("%.2f ms - join finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 	return NULL;
-
 }
