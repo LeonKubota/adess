@@ -9,7 +9,7 @@
 // STAGE 1
 void *interpolate(void *arg);
 void *generatePinkNoise(void *arg);
-void *generateBrownNoise(void *arg);
+void *generateStableBrownNoise(void *arg);
 void *generateLowFrequencyNoise(void *arg);
 
 // STAGE 2
@@ -19,6 +19,6 @@ void *renderMechanical(void *arg);
 void *renderVibration(void *arg);
 
 // STAGE 3
-void *joinBuffers(void *arg);
+void *combineBuffers(void *arg);
 
 #endif

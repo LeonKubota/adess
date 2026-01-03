@@ -128,9 +128,6 @@ void *interpolate(void *arg) {
 void *generatePinkNoise(void *arg) {
  	time_t startTime = clock();
 
-	// Test
-	d_print("%.2f ms - pink noise generation finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC); return NULL;
-
 	struct ThreadData *threadData = (struct ThreadData *) arg;
 
 	float *pinkNoiseBuffer = threadData->buffer0;
@@ -172,7 +169,7 @@ void *generatePinkNoise(void *arg) {
 	return NULL;
 }
 
-void *generateBrownNoise(void *arg) {
+void *generateLowFrequencyNoise(void *arg) {
  	time_t startTime = clock();
 
 	struct ThreadData *threadData = (struct ThreadData *) arg;
@@ -208,12 +205,12 @@ void *generateBrownNoise(void *arg) {
 	return NULL;
 }
 
-void *generateLowFrequencyNoise(void *arg) {
+void *generateStableBrownNoise(void *arg) {
 	time_t startTime = clock();
 
 	struct ThreadData *threadData = (struct ThreadData *) arg;
 
-	float *brownNoiseBuffer = threadData->buffer0;
+	float *stableBrownNoiseBuffer = threadData->buffer0;
 	
 	struct Project *project = threadData->project;
 	struct Scene *scene = threadData->scene;
@@ -235,12 +232,23 @@ void *generateLowFrequencyNoise(void *arg) {
 		if (lastBrown > 1.0f) lastBrown = 1.0f;
 		if (lastBrown < -1.0f) lastBrown = -1.0f;
 
-		brownNoiseBuffer[i] = lastBrown;
+		stableBrownNoiseBuffer[i] = lastBrown;
 
 		i++;
 	}
+	i = 0;
 
-	d_print("%.2f ms - brown noise generation finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
+	int n = 0;
+	while (n < 10) {
+		while (i < scene->sampleCount) {
+			stableBrownNoiseBuffer[i] = (fabs(0.25f * stableBrownNoiseBuffer[i - 1]) + fabs(0.5f * stableBrownNoiseBuffer[i]) + fabs(0.25f * stableBrownNoiseBuffer[i + 1]));
+			i++;
+		}
+		i = 0;
+		n++;
+	}
+
+	d_print("%.2f ms - stable brown noise generation finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 
 	return NULL;
 }
@@ -260,7 +268,7 @@ void *renderBase(void *arg) {
 	float *frequencyBuffer = threadData->buffer3;
 	float *lowFrequencyNoiseMultiplierBuffer = threadData->buffer4;
 	float *lowFrequencyNoiseBuffer = threadData->buffer5;
-	//float *rpmBuffer = threadData->buffer6;
+	float *stableBrownNoiseBuffer = threadData->buffer6;
 
 	struct Project *project = threadData->project;
 	struct Scene *scene = threadData->scene;
@@ -273,6 +281,7 @@ void *renderBase(void *arg) {
 
 	// For multiplication
 	float inverseMinimumVolume = 1.0f - engine->minimumVolume;
+	float inverseMinimumNoise = 1.0f - engine->minimumNoise;
 
 	// For rpm multiplication
 	float rpmVolumeMultiplier = engine->rpmVolumeMultiplier * 60.0f / (2.0f / engine->stroke) / engine->cylinderCount;
@@ -282,12 +291,22 @@ void *renderBase(void *arg) {
 
 	// Calculate base frequency and 'n' harmonic frequencies
 	while (i < scene->sampleCount) {
-		// Add noise to phase
+		// Add noise to phase of low frequencies
 		phaseBuffer[i] += lowFrequencyNoiseMultiplierBuffer[i] * lowFrequencyNoiseBuffer[i];
+
+		// Add noise based on load
+		phaseBuffer[i] += engine->loadNoiseMultiplier * ((loadBuffer[i] * inverseMinimumNoise) + engine->minimumNoise) * stableBrownNoiseBuffer[i];
 
 		n = 0;
 		// Add harmonics
 		while (n < harmonics) {
+			// This sounds stupid (like wind)
+			//baseBuffer[i] += sin(phaseBuffer[i] * (n + 1 + ((n + 1) * (stableBrownNoiseBuffer[i] * 0.001f * loadBuffer[i])))) * (1.0f / (n + 1) * (1 + (stableBrownNoiseBuffer[i] * 0.01f)));
+			
+			// This doesn't have noise (sounds like a sine wave, because it is one)
+// 			baseBuffer[i] += sin(phaseBuffer[i] * (n + 1)) * (1.0f / (n + 1));
+			
+			// This sounds GREAT! Just like a real engine
 			baseBuffer[i] += sin(phaseBuffer[i] * (n + 1)) * (1.0f / (n + 1));
 			n++;
 		}
@@ -312,6 +331,9 @@ void *renderBase(void *arg) {
 
 	// Apply volume multiplication
 	while (i < scene->sampleCount) {
+		// Add a tiny bit noise
+		baseBuffer[i] *= (stableBrownNoiseBuffer[i] * inverseMinimumNoise * 0.1f) + ((1.0f / 0.1f) * engine->minimumNoise);
+
 		// Multiply with load
 		baseBuffer[i] *= (loadBuffer[i] * engine->loadVolumeMultiplier * inverseMinimumVolume) + engine->minimumVolume;
 
@@ -343,21 +365,27 @@ void *renderValvetrain(void *arg) {
 	struct Scene *scene = threadData->scene;
 	struct Engine *engine = threadData->engine;
 
+	// Don't calculate valvetrain for 2 stroke engines
+	if (engine->stroke == 2) {
+		d_print("%.2f ms - valvetrain rendering finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
+		return NULL;
+	}
+
 	float *valvetrainBuffer = threadData->buffer0;
 	double *phaseBuffer = (double *) threadData->buffer1;
 	float *rpmBuffer = threadData->buffer2;
+	float *frequencyBuffer = threadData->buffer3;
+	float *pinkNoiseBuffer = threadData->buffer4;
+
+	printf("frequencyBuffer[0] = %f\n", frequencyBuffer[0]);
 
 	double phase = 0.0f;
 	float timeStep = 1.0f / project->sampleRate;
 	float frequency = 0.0f;
-	float multiplier = 0;
-	float multiplier2 = 0;
+	float intakeMultiplier = 0;
+	float exhaustMultiplier = 0;
 
-	//float length = 0.25f;
-	float offset = 1.2f;
-	printf("%f", offset);
-
-	// TODO this needs to be improved
+	float offset = engine->valvetrainTimingOffset;
 
 	uint64_t i = 0;
 
@@ -365,20 +393,20 @@ void *renderValvetrain(void *arg) {
 		// Intake valve sound
 		// Formula: ((rps / 2) * cylinderCount) / 4 / 2
 		// Divide by four so we only get the intake and divide by 2 because I use abs later
-		frequency = (rpmBuffer[i] / 120.0f) * engine->cylinderCount * 0.125f * 0.5f; // TEST
+		frequency = (rpmBuffer[i] / 120.0f) * engine->cylinderCount * 0.125f;
 		phase += TAU * frequency * timeStep;
-		multiplier = (fabs(sin(phase)) - 0.9f) * 10.0f;
-		if (multiplier < 0.0f) multiplier = 0.0f;
+		intakeMultiplier = (fabs(sin(phase + 0.1f * pinkNoiseBuffer[i + 1])) - 0.9f) * 10.0f;
+		if (intakeMultiplier < 0.0f) intakeMultiplier = 0.0f;
 
-		multiplier2 = (fabs(sin(phase + offset)) - 0.9f) * 10.0f;
-		if (multiplier2 < 0.0f) multiplier2 = 0.0f;
-		multiplier += multiplier2;
+		exhaustMultiplier = (fabs(sin(phase + offset + 0.1f * pinkNoiseBuffer[i])) - 0.9f) * 10.0f;
+		if (exhaustMultiplier < 0.0f) exhaustMultiplier = 0.0f;
 
-		// Exhaust buffer
-		valvetrainBuffer[i] = sin(phaseBuffer[i] * 10.0f) * (multiplier) * 0.25f;
+		// Saw wave generation
+		valvetrainBuffer[i] = 2.0f * (fmod(phaseBuffer[i] * 2.0f, TAU) / TAU) - 1.0f;
 
-		// TEST
-		if (valvetrainBuffer[i] * valvetrainBuffer[i] > 1) printf("exceeded\n");
+		// Multiply (make it 'click')
+		valvetrainBuffer[i] *= 0.5f * (pow(intakeMultiplier, 2) + pow(exhaustMultiplier, 2));
+
 		i++;
 	}
 
@@ -408,10 +436,35 @@ void *renderVibration(void *arg) {
 }
 
 // STAGE 3
-void *joinBuffers(void *arg) {
+void *combineBuffers(void *arg) {
  	time_t startTime = clock();
 
-	//struct ThreadData *threadData = (struct ThreadData *) arg;
+	struct ThreadData *threadData = (struct ThreadData *) arg;
+
+	struct Scene *scene = threadData->scene;
+	struct Engine *engine = threadData->engine;
+
+	float *combinedBuffer = threadData->buffer0;
+	float *baseBuffer = threadData->buffer1;
+	float *valvetrainBuffer = threadData->buffer2;
+	float *mechanicalBuffer = threadData->buffer3;
+
+	uint64_t i = 0;
+
+	while (i < scene->sampleCount) {
+		combinedBuffer[i] += baseBuffer[i] * engine->baseVolume;
+		combinedBuffer[i] += valvetrainBuffer[i] * engine->valvetrainVolume;
+		combinedBuffer[i] += mechanicalBuffer[i] * engine->mechanicalVolume;
+		i++;
+	}
+	i = 0;
+
+	// Do a fast fourier transform on this into the buffer 'frequencyBuffer'
+	float *frequencyBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
+
+	while (i < scene->sampleCount) {
+		i++;
+	}
 
 	if (false) printf("%p\n", arg);
 	d_print("%.2f ms - join finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);

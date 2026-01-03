@@ -146,12 +146,12 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	if (pthread_create(&thread2, NULL, generatePinkNoise, (void *) &pinkNoiseGenerationData) != 0) return 1;
 
 	// Generate brown noise
-	float *brownNoiseBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
-	if (brownNoiseBuffer == NULL) return 1;
+	float *stableBrownNoiseBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
+	if (stableBrownNoiseBuffer == NULL) return 1;
 
-	struct ThreadData brownNoiseGenerationData = {brownNoiseBuffer, NULL, NULL, NULL, NULL, NULL, NULL, project, scene, engine, NULL, false};
+	struct ThreadData stableBrownNoiseGenerationData = {stableBrownNoiseBuffer, NULL, NULL, NULL, NULL, NULL, NULL, project, scene, engine, NULL, false};
 
-	if (pthread_create(&thread3, NULL, generateBrownNoise, (void *) &brownNoiseGenerationData) != 0) return 1;
+	if (pthread_create(&thread3, NULL, generateStableBrownNoise, (void *) &stableBrownNoiseGenerationData) != 0) return 1;
 
 	// Generate low frequency noise
 	float *lowFrequencyNoiseBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
@@ -171,7 +171,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	// Test if any failed
 	if (interpolationData.failed == true) return 1;
 	if (pinkNoiseGenerationData.failed == true) return 1;
-	if (brownNoiseGenerationData.failed == true) return 1;
+	if (stableBrownNoiseGenerationData.failed == true) return 1;
 	if (lowFrequencyNoiseGenerationData.failed == true) return 1;
 
 	free(keyframes); // No longer needed after interpolation
@@ -184,7 +184,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	float *baseBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 	if (baseBuffer == NULL) return 1;
 
-	struct ThreadData baseRenderingData = {baseBuffer, (float *) phaseBuffer, loadBuffer, frequencyBuffer, lowFrequencyNoiseMultiplierBuffer, lowFrequencyNoiseBuffer, rpmBuffer, project, scene, engine, NULL, false};
+	struct ThreadData baseRenderingData = {baseBuffer, (float *) phaseBuffer, loadBuffer, frequencyBuffer, lowFrequencyNoiseMultiplierBuffer, lowFrequencyNoiseBuffer, stableBrownNoiseBuffer, project, scene, engine, NULL, false};
 
 	if (pthread_create(&thread1, NULL, renderBase, (void *) &baseRenderingData) != 0) return 1;
 
@@ -193,7 +193,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	float *valvetrainBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 	if (valvetrainBuffer == NULL) return 1;
 
-	struct ThreadData valvetrainRenderingData = {valvetrainBuffer, (float *) phaseBuffer, rpmBuffer, pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, rpmBuffer, project, scene, engine, NULL, false};
+	struct ThreadData valvetrainRenderingData = {valvetrainBuffer, (float *) phaseBuffer, rpmBuffer, frequencyBuffer, pinkNoiseBuffer, lowFrequencyNoiseBuffer, rpmBuffer, project, scene, engine, NULL, false};
 
 	if (pthread_create(&thread2, NULL, renderValvetrain, (void *) &valvetrainRenderingData) != 0) return 1;
 
@@ -202,7 +202,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	float *mechanicalBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 	if (mechanicalBuffer == NULL) return 1;
 
-	struct ThreadData mechanicalRenderingData = {mechanicalBuffer, frequencyBuffer, loadBuffer, pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, rpmBuffer, project, scene, engine, NULL, false};
+	struct ThreadData mechanicalRenderingData = {mechanicalBuffer, frequencyBuffer, loadBuffer, pinkNoiseBuffer, stableBrownNoiseBuffer, lowFrequencyNoiseBuffer, rpmBuffer, project, scene, engine, NULL, false};
 
 	if (pthread_create(&thread3, NULL, renderMechanical, (void *) &mechanicalRenderingData) != 0) return 1;
 
@@ -211,7 +211,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	float *vibrationBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 	if (vibrationBuffer == NULL) return 1;
 
-	struct ThreadData vibrationRenderingData = {vibrationBuffer, frequencyBuffer, loadBuffer, pinkNoiseBuffer, brownNoiseBuffer, lowFrequencyNoiseBuffer, rpmBuffer, project, scene, engine, NULL, false};
+	struct ThreadData vibrationRenderingData = {vibrationBuffer, frequencyBuffer, loadBuffer, pinkNoiseBuffer, stableBrownNoiseBuffer, lowFrequencyNoiseBuffer, rpmBuffer, project, scene, engine, NULL, false};
 
 	if (pthread_create(&thread4, NULL, renderVibration, (void *) &vibrationRenderingData) != 0) return 1;
 
@@ -237,15 +237,28 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	free(lowFrequencyNoiseMultiplierBuffer);
 
 	free(pinkNoiseBuffer);
-	free(brownNoiseBuffer);
+	free(stableBrownNoiseBuffer);
 	free(lowFrequencyNoiseBuffer);
 
 	// Stage: join
 	printf("\n");
 	d_print("rendering [3/4] - join\n");
 
+	float *combinedBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
+
+	struct ThreadData combineBuffersData = {combinedBuffer, baseBuffer, valvetrainBuffer, mechanicalBuffer, NULL, NULL, NULL, project, scene, engine, NULL, false};
+
+	combineBuffers((void *) &combineBuffersData);
+
+	/*
+	free(baseBuffer);
+	free(valvetrainBuffer);
+	free(mechanicalBuffer);
+	free(vibrationBuffer);
+	*/
+
 	// TEST
-	printMinMax(valvetrainBuffer, scene, project);
+	printMinMax(stableBrownNoiseBuffer, scene, project);
 
 	// Stage: write
 	printf("\n");
@@ -263,7 +276,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	makeWavHeader(file, project->sampleRate, project->bitDepth, (uint32_t) scene->sampleCount);
 
-	fwrite(valvetrainBuffer, 1, scene->sampleCount * (project->bitDepth / 8), file);
+	fwrite(combinedBuffer, 1, scene->sampleCount * (project->bitDepth / 8), file);
 
 	fclose(file);
 
@@ -457,6 +470,9 @@ int getEngine(struct Scene *scene, struct Engine *engine, struct Project *projec
 	engine->maxRpm = parseLineValueI("max_rpm", enginePath);
 	if (engine->maxRpm == INT_FAIL) return 1;
 
+	engine->valvetrainTimingOffset = parseLineValueF("valvetrain_timing_offset", enginePath);
+	if (engine->valvetrainTimingOffset == FLOAT_FAIL) return 1;
+
 
 	// Harmonics
 	engine->harmonics = parseLineValueI("harmonics", enginePath);
@@ -498,20 +514,23 @@ int getEngine(struct Scene *scene, struct Engine *engine, struct Project *projec
 	if (engine->vibrationVolume == FLOAT_FAIL) return 1;
 
 	
-	// Minimum volume
+	// Volume stuff
 	engine->minimumVolume = parseLineValueF("minimum_volume", enginePath);
 	if (engine->minimumVolume == FLOAT_FAIL) return 1;
 
-
-	// Volume multipliers
 	engine->loadVolumeMultiplier = parseLineValueF("load_volume_multiplier", enginePath);
 	if (engine->loadVolumeMultiplier == FLOAT_FAIL) return 1;
 
 	engine->rpmVolumeMultiplier = parseLineValueF("rpm_volume_multiplier", enginePath);
 	if (engine->rpmVolumeMultiplier == FLOAT_FAIL) return 1;
 
-	engine->volumeVariation = parseLineValueF("volume_variation", enginePath);
-	if (engine->volumeVariation == FLOAT_FAIL) return 1;
+
+	// Noise amount
+	engine->minimumNoise = parseLineValueF("minimum_noise", enginePath);
+	if (engine->minimumNoise == FLOAT_FAIL) return 1;
+
+	engine->loadNoiseMultiplier = parseLineValueF("load_noise_multiplier", enginePath);
+	if (engine->loadNoiseMultiplier == FLOAT_FAIL) return 1;
 
 	return 0;
 }

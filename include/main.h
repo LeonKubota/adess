@@ -1,5 +1,4 @@
 #include <stdbool.h>
-#include <stdint.h>
 
 #ifndef MAIN_H
 #define MAIN_H
@@ -56,17 +55,20 @@ struct Engine {
 	// Physical parameters
 	int stroke; // The amount of cycles per one work cycle
 	int cylinderCount; // The amount of cylinders
-	int idleRpm;
+	int idleRpm; // The idle rpm of the engine
 	int maxRpm; // The maximum rpm of the engine
+	float valvetrainTimingOffset; // The offset between the intake and exhaust valve time
 
 	// Harmonics
 	int harmonics; // How many harmonics the engine should have
 
 	// Noise characteristics
-	// 'LowFrequencyNoise' settings
-	float lowFrequencyNoiseFrequency; // The frequency of low frequency noise
-	int lowFrequencyNoiseFalloff; // How much the low frequency noise falls off (at what rpm does the noise come down to 0)
-	float lowFrequencyNoiseStrength; // How strong the low frequency noise is
+	float baseNoise; // The base noise (with 0.0f load)
+	float loadNoise; // Maximum noise (with 1.0f load)
+
+	float lowFrequencyNoiseFrequency;
+	float lowFrequencyNoiseStrength;
+	float lowFrequencyNoiseFalloff;
 
 	// Volume characteristics
 	float baseVolume; // The base volume
@@ -75,11 +77,11 @@ struct Engine {
 	float vibrationVolume; // The volume of secondary vibrations
 
 	float minimumVolume; // The minimum volume
-
 	float loadVolumeMultiplier; // Maximum volume (with 1.0f load)
 	float rpmVolumeMultiplier; // What to multiply by with RPM
 
-	float volumeVariation; // How much the volume varies
+	float minimumNoise;
+	float loadNoiseMultiplier;
 };
 
 struct Keyframe {

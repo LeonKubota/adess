@@ -275,6 +275,7 @@ char checkVar(char type, char *variable) {
 		"i cylinder_count",
 		"i idle_rpm",
 		"i max_rpm",
+		"f valvetrain_timing_offset",
 
 		"i harmonics",
 
@@ -293,7 +294,8 @@ char checkVar(char type, char *variable) {
 		"f load_volume_multiplier",
 		"f rpm_volume_multiplier",
 
-		"f volume_variation",
+		"f minimum_noise",
+		"f load_noise_multiplier",
 	};
 
 	int i = 0;
