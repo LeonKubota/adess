@@ -6,11 +6,13 @@
 #include <inttypes.h>
 #include <string.h>
 
+#include <pthread.h>
+
 #include "main.h"
 #include "utils.h"
 #include "commands/render.h"
 #include "render/multithreading.h"
-#include "render/fourier.h"
+#include "render/pitch-shift.h"
 
 // STAGE 1
 // Interpolate keyframes, output 'frequencyBuffer' and 'loadBuffer'
@@ -230,7 +232,7 @@ void *generateStableBrownNoise(void *arg) {
 		*state ^= *state >> 17;
 		*state ^= *state << 5;
 
-		lastBrown += (((*state / (float) UINT32_MAX) * 2.0f) - 1.0f) * 0.02f;
+		lastBrown += ((*state / (double) UINT32_MAX) * 2.0f - 1.0f) * 0.02f;
 
 		// Clamp the result
 		if (lastBrown > 1.0f) lastBrown = 1.0f;
@@ -243,9 +245,9 @@ void *generateStableBrownNoise(void *arg) {
 	i = 0;
 
 	int n = 0;
-	while (n < 10) {
+	while (n < 8) {
 		while (i < scene->sampleCount) {
-			stableBrownNoiseBuffer[i] = (fabs(0.25f * stableBrownNoiseBuffer[i - 1]) + fabs(0.5f * stableBrownNoiseBuffer[i]) + fabs(0.25f * stableBrownNoiseBuffer[i + 1]));
+			stableBrownNoiseBuffer[i] = (0.25f * stableBrownNoiseBuffer[i - 1]) + (0.5f * stableBrownNoiseBuffer[i]) + (0.25f * stableBrownNoiseBuffer[i + 1]);
 			i++;
 		}
 		i = 0;
@@ -437,6 +439,7 @@ void *renderVibration(void *arg) {
 	return NULL;
 }
 
+
 // STAGE 3
 void *combineBuffers(void *arg) {
  	time_t startTime = clock();
@@ -460,49 +463,84 @@ void *combineBuffers(void *arg) {
 		combinedBuffer[i] += mechanicalBuffer[i] * engine->mechanicalVolume;
 		i++;
 	}
-	i = 0;
 
-	// Get smallest 'n' that is a power of 2 and fits 'combinedBuffer'
-	uint64_t n = 2;
-	while (n < scene->sampleCount) {
-		n = 1 << i; // this = pow(2, n)
-		i++;
-	}
-	i = 0;
-
-	// Zero-pad 'combinedBuffer'
-	complex double *paddedCombinedBuffer = (complex double *) malloc(n * sizeof(complex double));
-	if (paddedCombinedBuffer == NULL) {
-		threadData->failed = true;
-		return NULL;
-	}
-
-	// Copy from 'combinedBuffer' into 'paddedCombinedBuffer'
-	while (i < scene->sampleCount) {
-		paddedCombinedBuffer[i] = combinedBuffer[i] + (0.0f * I); // Convert to complex number
-		i++;
-	} // Fill the rest with zeroes
-	while (i < n) {
-		paddedCombinedBuffer[i] = 0.0f + (0.0f * I);
-		i++;
-	}
-	i = 0;
-
-	complex double *fourierTemp = (complex double *) malloc(n * sizeof(complex double));
-
-	fastFourierTransform(paddedCombinedBuffer, n, fourierTemp);
-	inverseFastFourierTransform(paddedCombinedBuffer, n, fourierTemp);
-
-	free(fourierTemp);
-
-	while (i < scene->sampleCount) {
-		combinedBuffer[i] = crealf(paddedCombinedBuffer[i]); // Extract the real component
-		i++;
-	}
-
-	free(paddedCombinedBuffer);
-
-	if (false) printf("%p\n", arg);
 	d_print("%.2f ms - join finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
+
+	return NULL;
+}
+
+
+// STAGE 4
+void *postProcess(void *arg) {
+	time_t startTime = clock();
+
+	struct ThreadData *threadData = (struct ThreadData *) arg;
+
+	struct Scene *scene = threadData->scene;
+
+	uint64_t i = 0;
+
+	float *postProcessedBuffer = threadData->buffer0;
+	//float *combinedBuffer = threadData->buffer1;
+
+	int pitchCount = 8;
+
+	// Set up threads
+	pthread_t pitchThreads[pitchCount];
+
+	// Set up buffers for pitch shifts
+	while (i < (uint64_t) pitchCount) {
+		if (pthread_create(&pitchThreads[i], NULL, threadTest, (void *) i) != 0) {
+			threadData->failed = true;
+			return NULL;
+		}
+		i++;
+	}
+	i = 0;
+
+	// Join the threads
+	while (i < (uint64_t) pitchCount) {
+		if (pthread_join(pitchThreads[i], NULL) != 0) {
+			threadData->failed = true;
+			return NULL;
+		}
+		i++;
+	}
+	i = 0;
+
+	// Combine pitch shifted audios
+	while (i < scene->sampleCount) {
+		postProcessedBuffer[i] = 0;
+		i++;
+	}
+
+	d_print("%.2f ms - post processing finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
+
+	return NULL;
+}
+
+void *pitchShiftThread(void *arg) {
+	time_t startTime = clock();
+
+	struct PitchShiftData {
+		float *buffer;
+		struct Scene *scene;
+		uint8_t factor;
+	} *pitchShiftData = (struct PitchShiftData *) arg;
+
+	float *buffer = pitchShiftData->buffer;
+	struct Scene *scene = pitchShiftData->scene;
+	uint8_t factor = pitchShiftData->factor;
+
+	pitchShift(buffer, factor, scene);
+
+	d_print("\t%.2f ms - pitch shift [%i] finished\n", factor, (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
+	return NULL;
+}
+
+
+// TEST
+void *threadTest(void *arg) {
+	printf("number: %" PRIu64 "\n", (uint64_t) arg);
 	return NULL;
 }

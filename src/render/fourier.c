@@ -16,12 +16,12 @@
 
 
 // Math magic
-void fastFourierTransform(complex double *input, uint64_t n, complex double *temp) {
+void fastFourierTransform(complex float *input, uint64_t n, complex float *temp) {
 	if (n > 1) {
 		uint64_t k, m;
-		complex double w, z;
-		complex double *even = temp; 
-		complex double *odd = temp + (n / 2);
+		complex float w, z;
+		complex float *even = temp; 
+		complex float *odd = temp + (n / 2);
 
 		for (k = 0; k < (n / 2); k++) {
 			even[k] = input[2 * k];
@@ -32,7 +32,7 @@ void fastFourierTransform(complex double *input, uint64_t n, complex double *tem
 		fastFourierTransform(odd, n / 2, input);
 
 		for (m = 0; m < (n / 2); m++) {
-			w = cos(TAU * m / (double) n) - (sin(TAU * m / (double) n) * I);
+			w = cos(TAU * m / (float) n) - (sin(TAU * m / (float) n) * I);
 			z = w * odd[m];
 			input[m] = even[m] + z;
 			input[m + (n / 2)] = even[m] - z;
@@ -41,12 +41,12 @@ void fastFourierTransform(complex double *input, uint64_t n, complex double *tem
 }
 
 // Inverse math magic
-void inverseFastFourierTransform(complex double *input, uint64_t n, complex double *temp) {
+void inverseFastFourierTransform(complex float *input, uint64_t n, complex float *temp) {
 	if (n > 1) {
 		uint64_t k, m;
-		complex double w, z;
-		complex double *even = temp;
-		complex double *odd = temp + (n / 2);
+		complex float w, z;
+		complex float *even = temp;
+		complex float *odd = temp + (n / 2);
 
 		for (k = 0; k < (n / 2); k++) {
 			even[k] = input[2 * k];
@@ -57,7 +57,7 @@ void inverseFastFourierTransform(complex double *input, uint64_t n, complex doub
 		inverseFastFourierTransform(odd, n / 2, input);
 
 		for (m = 0; m < (n / 2); m++) {
-			w = cos(TAU * m / (double) n) + (sin(TAU * m / (double) n) * I);
+			w = cos(TAU * m / (float) n) + (sin(TAU * m / (float) n) * I);
 			z = w * odd[m];
 			input[m] = (even[m] + z) / 2.0f;
 			input[m + (n / 2)] = (even[m] - z) / 2.0f;

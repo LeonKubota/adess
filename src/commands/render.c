@@ -5,6 +5,7 @@
 #include <math.h>
 #include <inttypes.h>
 
+#include <complex.h> // For complex numbers
 #include <pthread.h> // For multithreading
 
 #include <time.h> // For debugging
@@ -113,7 +114,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	// STAGE 1
 	printf("\n");
-	d_print("rendering [1/4] - prepare\n");
+	d_print("rendering [1/5] - prepare\n");
 
 	// Interpolation: product: 'frequencyBuffer', 'phaseBuffer', 'loadBuffer'
 	float *frequencyBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
@@ -178,7 +179,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	// STAGE 2: compute
 	printf("\n");
-	d_print("rendering [2/4] - compute\n");
+	d_print("rendering [2/5] - compute\n");
 
 	// Render base frequencies
 	float *baseBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
@@ -237,20 +238,47 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	free(lowFrequencyNoiseMultiplierBuffer);
 
 	free(pinkNoiseBuffer);
-	free(stableBrownNoiseBuffer);
+	//free(stableBrownNoiseBuffer); // TEMP
 	free(lowFrequencyNoiseBuffer);
 
-	// Stage: join
+	// Stage: combine
 	printf("\n");
-	d_print("rendering [3/4] - join\n");
+	d_print("rendering [3/5] - join\n");
 
+	
+	// Combine the buffers
 	float *combinedBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
+	if (combinedBuffer == NULL) return 1;
 
 	struct ThreadData combineBuffersData = {combinedBuffer, baseBuffer, valvetrainBuffer, mechanicalBuffer, NULL, NULL, NULL, project, scene, engine, NULL, false};
 
+	// Run in main thread
 	combineBuffers((void *) &combineBuffersData);
 
+	// Check for errors
 	if (combineBuffersData.failed == true) return 1;
+
+
+	// Stage: post process
+	printf("\n");
+	d_print("rendering [4/5] - post process\n");
+
+
+	float *postProcessedBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
+	if (postProcessedBuffer == NULL) return 1;
+
+	struct ThreadData postProcessingData = {postProcessedBuffer, combinedBuffer, NULL, NULL, NULL, NULL, NULL, project, scene, engine, NULL, false};
+
+	// Run in main thread
+	postProcess((void *) &postProcessingData);
+
+	// Check for errors
+	if (postProcessingData.failed == true) return 1;
+
+
+	free(combinedBuffer);
+
+	printf("\n");
 
 	/*
 	free(baseBuffer);
@@ -260,11 +288,11 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	*/
 
 	// TEST
-	printMinMax(stableBrownNoiseBuffer, scene, project);
+	printMinMax(postProcessedBuffer, scene, project);
 
 	// Stage: write
 	printf("\n");
-	d_print("rendering [4/4] - write\n");
+	d_print("rendering [5/5] - write\n");
 
 	b_todo("writing to: '%s'\n", outputPath);
 
@@ -278,7 +306,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	makeWavHeader(file, project->sampleRate, project->bitDepth, (uint32_t) scene->sampleCount);
 
-	fwrite(combinedBuffer, 1, scene->sampleCount * (project->bitDepth / 8), file);
+	fwrite(postProcessedBuffer, 1, scene->sampleCount * (project->bitDepth / 8), file);
 
 	fclose(file);
 
@@ -736,4 +764,16 @@ void printMinMax(float *buffer, struct Scene *scene, struct Project *project) {
 
 	d_print("maximum: [%f at %.2f s]\n", maximum, maxTime / (float) project->sampleRate);
 	d_print("minimum: [%f at %.2f s]\n", minimum, minTime / (float) project->sampleRate);
+}
+
+uint64_t calculateSmallestPower(uint64_t x) {
+	uint64_t i = 0;
+	uint64_t n = 2;
+
+	while (n < x) {
+		n = 1 << i;
+		i++;
+	}
+
+	return n;
 }

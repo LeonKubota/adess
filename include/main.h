@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <inttypes.h>
 
 #ifndef MAIN_H
 #define MAIN_H

@@ -25,6 +25,7 @@ char *getThingPath(char *thingPath, char *thingName, char *thingType);
 // OtherHelpers
 int getProject(struct Project *project, char *projectFilePath);
 char *processName(char *inputName);
+uint64_t calculateSmallestPower(uint64_t x);
 
 // Printing functions
 void printKeys(struct Keyframe *keyframesPrint, int keyCount);

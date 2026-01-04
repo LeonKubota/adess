@@ -19,4 +19,5 @@ float generateNext(float previous, uint32_t *state);
 
 // Type is the same
 void printNthBuffer(void *voidBuffer, int8_t type, int n, uint64_t sampleCount);
+
 #endif

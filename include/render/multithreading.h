@@ -20,5 +20,13 @@ void *renderVibration(void *arg);
 
 // STAGE 3
 void *combineBuffers(void *arg);
+void *makeComplexBuffer(void *arg);
+
+// STAGE 4
+void *postProcess(void *arg);
+void *pitchShiftThread(void *arg);
+
+// TEST
+void *threadTest(void *arg);
 
 #endif
