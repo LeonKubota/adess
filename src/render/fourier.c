@@ -19,7 +19,8 @@
 void fastFourierTransform(complex float *input, uint64_t n, complex float *temp) {
 	if (n > 1) {
 		uint64_t k, m;
-		complex float w, z;
+		complex float w = 0.0f + (0.0f * I);
+		complex float z = 0.0f + (0.0f * I);
 		complex float *even = temp; 
 		complex float *odd = temp + (n / 2);
 

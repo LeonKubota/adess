@@ -32,22 +32,19 @@ struct Project {
 	int sampleRate;
 	int bitDepth;
 
-	char enginePath[1024];
-	char scenePath[1024];
-	char outputPath[1024];
+	char *enginePath;
+	char *scenePath;
+	char *outputPath;
 
 	int seed;
-
-	// Calculated
-	//char projectPath[1024];
 };
 
 struct Scene {
-	char engine[1024]; // The engine name
+	char *engine; // The engine name
 	float length; // Length of the scenes in seconds
 
 	// Calculated
-	char scenePath[1024];
+	char *scenePath;
 	uint64_t sampleCount;
 	int keyframeCount;
 };

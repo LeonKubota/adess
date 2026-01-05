@@ -20,11 +20,13 @@
 int render(char **args) {
 	d_showInput("render", args);
 	
+
 	// Check if inside adess project
 	if (!checkFileExistsIn(getCurDirectory(NULL), "*.adess")) {
 		e_fatal("command 'render' can only be ran inside an adess project directory\n");
 		return 1;
 	}
+
 
 	// Check if there is no argument or the -a flag
 	if (args[2] == NULL && g_opts[6] == false) {
@@ -32,8 +34,10 @@ int render(char **args) {
 		return 1;
 	}
 
+
 	static char name[1024];
 	name[0] = '\0';
+
 
 	// Check if the user specified a name
 	if (g_opts[1] == true) { // If -n
@@ -48,22 +52,41 @@ int render(char **args) {
 			return 1;
 		}
 	}
+
 	
 	// Generate the path to the project file
-	char projectFilePath[4096];
-	char *tempProjFile = findProjectFile(getCurDirectory(NULL));
-	if (tempProjFile == NULL) return 1;
+	char *projectFilePath = findProjectFile(getCurDirectory(NULL));
+	if (projectFilePath == NULL) return 1;
 
-	strcpy(projectFilePath, tempProjFile);
 
 	// Check if the adess DST file has valid syntax
-	if (checkValidity(projectFilePath) == false) return 1;
+	if (checkValidity(projectFilePath) == false) {
+		free(projectFilePath);
+		return 1;
+	}
+
 
 	// Put things into the project struct
 	struct Project *project = (struct Project *) malloc(sizeof(struct Project));
-	if (project == NULL) return 1;
+	if (project == NULL) {
+		free(projectFilePath);
+		return 1;
+	}
 
-	if (getProject(project, projectFilePath) == 1) return 1;
+
+	if (getProject(project, projectFilePath) == 1) {
+		free(projectFilePath);
+
+		// Things inside struct 'project'
+		free(project->enginePath);
+		free(project->scenePath);
+		free(project->outputPath);
+
+		free(project);
+		return 1;
+	}
+
+	free(projectFilePath);
 	
 	// If '-a' option is on, render every scene
 	if (g_opts[6] == true) {
@@ -79,18 +102,33 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
  	time_t startTime = clock();
 	// Create scene struct
 	struct Scene *scene = (struct Scene *) malloc(sizeof(struct Scene));
-	if (scene == NULL) return 1; // Verify creation of struct 'scene'
+	if (scene == NULL) { // Verify creation of struct 'scene'
+		free(project);
+		return 1;
+	}
 
 	// Get scene information into the struct
-	if (getScene(scene, sceneNameInput, project) == 1) return 1;
-
+	if (getScene(scene, sceneNameInput, project) == 1) {
+		free(project);
+		free(scene);
+		return 1;
+	}
 
 	// Get engine path and validate
 	struct Engine *engine = (struct Engine *) malloc(sizeof(struct Engine));
-	if (engine == NULL) return 1; // Verify creation of struct 'engine'
+	if (engine == NULL) { // Verify creation of struct 'engine'
+		free(project);
+		free(scene);
+		return 1;
+	}
 
 	// Get engine information into the struct
-	if (getEngine(scene, engine, project) == 1) return 1;
+	if (getEngine(scene, engine, project) == 1) {
+		free(project);
+		free(scene);
+		free(engine);
+		return 1;
+	}
 
 
 	// Get output path and validate
@@ -182,7 +220,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	d_print("rendering [2/5] - compute\n");
 
 	// Render base frequencies
-	float *baseBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
+	float *baseBuffer = (float *) calloc(scene->sampleCount, sizeof(float));
 	if (baseBuffer == NULL) return 1;
 
 	struct ThreadData baseRenderingData = {baseBuffer, (float *) phaseBuffer, loadBuffer, frequencyBuffer, lowFrequencyNoiseMultiplierBuffer, lowFrequencyNoiseBuffer, stableBrownNoiseBuffer, project, scene, engine, NULL, false};
@@ -247,7 +285,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	
 	// Combine the buffers
-	float *combinedBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
+	float *combinedBuffer = (float *) calloc(scene->sampleCount, sizeof(float));
 	if (combinedBuffer == NULL) return 1;
 
 	struct ThreadData combineBuffersData = {combinedBuffer, baseBuffer, valvetrainBuffer, mechanicalBuffer, NULL, NULL, NULL, project, scene, engine, NULL, false};
@@ -312,7 +350,10 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	d_print("%.2f ms - render finished\n\tspeed: [%.2f s/s]\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC, (scene->length / ((clock() - startTime) * 1000.0f / CLOCKS_PER_SEC)) * 1000.0f);
 
+	// Cleanup
+	// Project
 	free(project);
+
 	free(scene);
 	free(engine);
 
@@ -412,6 +453,8 @@ int getProject(struct Project *project, char *projectFilePath) {
 
 	strncpy(projectFilePath, tempProjFile, 1024);
 
+	free(tempProjFile);
+
 	if (checkValidity(projectFilePath) == false) return 1;
 
 	// Load things into project struct
@@ -422,18 +465,14 @@ int getProject(struct Project *project, char *projectFilePath) {
 	if (project->bitDepth == INT_FAIL) return 1;
 
 	// Paths
-	strcpy(project->scenePath, "\0");
-	strcpy(project->enginePath, "\0");
-	strcpy(project->outputPath, "\0");
+	project->scenePath = parseLineValueS("scene_path", projectFilePath);
+	if (project->scenePath == NULL) return 1;
 
-	strcpy(project->scenePath, parseLineValueS("scene_path", projectFilePath));
-	if (strcmp(project->scenePath, "\0") == 0) return 1;
+	project->enginePath = parseLineValueS("engine_path", projectFilePath);
+	if (project->enginePath == NULL) return 1;
 
-	strcpy(project->enginePath, parseLineValueS("engine_path", projectFilePath));
-	if (strcmp(project->enginePath, "\0") == 0) return 1;
-
-	strcpy(project->outputPath, parseLineValueS("output_path", projectFilePath));
-	if (strcmp(project->outputPath, "\0") == 0) return 1;
+	project->outputPath = parseLineValueS("output_path", projectFilePath);
+	if (project->outputPath == NULL) return 1;
 
 	// Seed
 	project->seed = parseLineValueI("seed", projectFilePath);
@@ -447,26 +486,51 @@ int getScene(struct Scene *scene, char *sceneNameInput, struct Project *project)
 	if (scenePathInput == NULL) return 1;
 
 	char *scenePath = getThingPath(scenePathInput, sceneNameInput, "scene");
-	if (scenePath == NULL) return 1;
+	if (scenePath == NULL) {
+		free(scenePath);
+		return 1;
+	}
 
 	// Check validity of scene file
-	if (checkValidity(scenePath) == false) return 1;
+	if (checkValidity(scenePath) == false) {
+		free(scenePath);
+		return 1;
+	}
 
 	// Load information into struct
-	strcpy(scene->engine, "\0");
-	strcpy(scene->engine, parseLineValueS("engine", scenePath));
-	if (strcmp(scene->engine, "\0") == 0) return 1;
+	scene->engine = parseLineValueS("engine", scenePath);
+	if (scene->engine == NULL) {
+		free(scenePath);
+		return 1;
+	}
 
+	scene->length = FLOAT_FAIL;
 	scene->length = parseLineValueF("length", scenePath);
-	if (scene->length == FLOAT_FAIL) return 1;
+	if (scene->length == FLOAT_FAIL) {
+		free(scene->engine);
+		free(scenePath);
+		return 1;
+	}
 
 	// Non-user defined things
+	scene->scenePath = (char *) malloc(1024 * sizeof(char));
+	if (scene->scenePath == NULL) {
+		free(scene->engine);
+		free(scenePath);
+		return 1;
+	}
+
 	strcpy(scene->scenePath, scenePath);
 
-	scene->sampleCount = (int) scene->length * project->sampleRate;
+	scene->sampleCount = (int) (scene->length * project->sampleRate);
 
 	scene->keyframeCount = countKeyframes(scenePath);
-	if (scene->keyframeCount == -1) return 1;
+	if (scene->keyframeCount == -1) {
+		free(scenePath);
+		return 1;
+	}
+
+	free(scenePath);
 
 	return 0;
 }
@@ -479,34 +543,54 @@ int getEngine(struct Scene *scene, struct Engine *engine, struct Project *projec
 	if (enginePath == NULL) return 1;
 
 	// Check validity of engine file
-	if (checkValidity(enginePath) == false) return 1;
-
+	if (checkValidity(enginePath) == false) {
+		free(enginePath);
+		return 1;
+	}
 
 	// Load information into struct
 	// Physical engine parameters
 	engine->stroke = parseLineValueI("stroke", enginePath);
-	if (engine->stroke == INT_FAIL) return 1;
+	if (engine->stroke == INT_FAIL) {
+		free(enginePath);
+		return 1;
+	}
 
 	if (engine->stroke != 4 && engine->stroke != 2) {
 		e_warning("non-standard stroke: [%i]\n", engine->stroke); // ;) a bit freaky
 	}
 
 	engine->cylinderCount = parseLineValueI("cylinder_count", enginePath);
-	if (engine->cylinderCount == INT_FAIL) return 1;
+	if (engine->cylinderCount == INT_FAIL) {
+		free(enginePath);
+		return 1;
+	}
 
 	engine->idleRpm = parseLineValueI("idle_rpm", enginePath);
-	if (engine->idleRpm == INT_FAIL) return 1;
+	if (engine->idleRpm == INT_FAIL) {
+		free(enginePath);
+		return 1;
+	}
 
 	engine->maxRpm = parseLineValueI("max_rpm", enginePath);
-	if (engine->maxRpm == INT_FAIL) return 1;
+	if (engine->maxRpm == INT_FAIL) {
+		free(enginePath);
+		return 1;
+	}
 
 	engine->valvetrainTimingOffset = parseLineValueF("valvetrain_timing_offset", enginePath);
-	if (engine->valvetrainTimingOffset == FLOAT_FAIL) return 1;
+	if (engine->valvetrainTimingOffset == FLOAT_FAIL) {
+		free(enginePath);
+		return 1;
+	}
 
 
 	// Harmonics
 	engine->harmonics = parseLineValueI("harmonics", enginePath);
-	if (engine->harmonics == INT_FAIL) return 1;
+	if (engine->harmonics == INT_FAIL) {
+		free(enginePath);
+		return 1;
+	}
 
 	if (engine->harmonics > 30) {
 		e_warning("harmonics rarely exceed 30 and are very computationally demanding\n");
@@ -514,6 +598,7 @@ int getEngine(struct Scene *scene, struct Engine *engine, struct Project *projec
 
 	if (engine->harmonics > 254) {
 		e_fatal("harmonics can not be over 254\n");
+		free(enginePath);
 		return 1;
 	}
 	
@@ -521,46 +606,84 @@ int getEngine(struct Scene *scene, struct Engine *engine, struct Project *projec
 	// Noise parameters
 	// 'lowFrequencyNoise' settings
 	engine->lowFrequencyNoiseFrequency = parseLineValueF("low_frequency_noise_frequency", enginePath);
-	if (engine->lowFrequencyNoiseFrequency == FLOAT_FAIL) return 1;
+	if (engine->lowFrequencyNoiseFrequency == FLOAT_FAIL) {
+		free(enginePath);
+		return 1;
+	}
 
 	engine->lowFrequencyNoiseFalloff = parseLineValueI("low_frequency_noise_falloff", enginePath);
-	if (engine->lowFrequencyNoiseFalloff == INT_FAIL) return 1;
+	if (engine->lowFrequencyNoiseFalloff == INT_FAIL) {
+		free(enginePath);
+		return 1;
+	}
 
 	engine->lowFrequencyNoiseStrength = parseLineValueF("low_frequency_noise_strength", enginePath);
-	if (engine->lowFrequencyNoiseStrength == FLOAT_FAIL) return 1;
+	if (engine->lowFrequencyNoiseStrength == FLOAT_FAIL) {
+		free(enginePath);
+		return 1;
+	}
 
 
 	// Volume parameters
 	engine->baseVolume = parseLineValueF("base_volume", enginePath);
-	if (engine->baseVolume == FLOAT_FAIL) return 1;
+	if (engine->baseVolume == FLOAT_FAIL) {
+		free(enginePath);
+		return 1;
+	}
 
 	engine->valvetrainVolume = parseLineValueF("valvetrain_volume", enginePath);
-	if (engine->valvetrainVolume == FLOAT_FAIL) return 1;
+	if (engine->valvetrainVolume == FLOAT_FAIL) {
+		free(enginePath);
+		return 1;
+	}
 
 	engine->mechanicalVolume = parseLineValueF("mechanical_volume", enginePath);
-	if (engine->mechanicalVolume == FLOAT_FAIL) return 1;
+	if (engine->mechanicalVolume == FLOAT_FAIL) {
+		free(enginePath);
+		return 1;
+	}
 
 	engine->vibrationVolume = parseLineValueF("vibration_volume", enginePath);
-	if (engine->vibrationVolume == FLOAT_FAIL) return 1;
+	if (engine->vibrationVolume == FLOAT_FAIL) {
+		free(enginePath);
+		return 1;
+	}
 
 	
 	// Volume stuff
 	engine->minimumVolume = parseLineValueF("minimum_volume", enginePath);
-	if (engine->minimumVolume == FLOAT_FAIL) return 1;
+	if (engine->minimumVolume == FLOAT_FAIL) {
+		free(enginePath);
+		return 1;
+	}
 
 	engine->loadVolumeMultiplier = parseLineValueF("load_volume_multiplier", enginePath);
-	if (engine->loadVolumeMultiplier == FLOAT_FAIL) return 1;
+	if (engine->loadVolumeMultiplier == FLOAT_FAIL) {
+		free(enginePath);
+		return 1;
+	}
 
 	engine->rpmVolumeMultiplier = parseLineValueF("rpm_volume_multiplier", enginePath);
-	if (engine->rpmVolumeMultiplier == FLOAT_FAIL) return 1;
+	if (engine->rpmVolumeMultiplier == FLOAT_FAIL) {
+		free(enginePath);
+		return 1;
+	}
 
 
 	// Noise amount
 	engine->minimumNoise = parseLineValueF("minimum_noise", enginePath);
-	if (engine->minimumNoise == FLOAT_FAIL) return 1;
+	if (engine->minimumNoise == FLOAT_FAIL) {
+		free(enginePath);
+		return 1;
+	}
 
 	engine->loadNoiseMultiplier = parseLineValueF("load_noise_multiplier", enginePath);
-	if (engine->loadNoiseMultiplier == FLOAT_FAIL) return 1;
+	if (engine->loadNoiseMultiplier == FLOAT_FAIL) {
+		free(enginePath);
+		return 1;
+	}
+
+	free(enginePath);
 
 	return 0;
 }
@@ -636,7 +759,11 @@ char *getThingPath(char *thingPath, char *thingName, char *thingType) {
 	}
 
 	// Make the complete path (path + name)
-	char *completePath = (char *)malloc(strlen(processedPath) + strlen(processedName) + 1); // +1 for terminator ("I'll be back" - Terminator)
+	char *completePath = (char *) malloc(strlen(processedPath) + strlen(processedName) + 1); // +1 for terminator ("I'll be back" - Terminator)
+	if (completePath == NULL) {
+		return NULL;
+	}
+
 	strcpy(completePath, processedPath);
 	strcat(completePath, processedName);
 

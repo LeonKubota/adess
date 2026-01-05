@@ -17,7 +17,7 @@ int pitchShift(float *input, float *noiseBuffer, uint8_t factor, struct Scene *s
 
 	if (false) printf("%f", noiseBuffer[0]);
 
-	float *outputBuffer = (float *) malloc(factor * scene->sampleCount * sizeof(float));
+	float *outputBuffer = (float *) calloc(factor * scene->sampleCount, sizeof(float));
 	if (outputBuffer == NULL) return 1;
 
 	// Calculate window count
@@ -28,7 +28,7 @@ int pitchShift(float *input, float *noiseBuffer, uint8_t factor, struct Scene *s
 
 	// Make a buffer for one window and for all the windows
 	complex float window[WINDOW_SIZE];
-	complex float fourierTemp[WINDOW_SIZE];
+	complex float fourierTemp[WINDOW_SIZE] = {0};
 
 	float absoluteMaximum = 0.0f;
 
@@ -41,7 +41,11 @@ int pitchShift(float *input, float *noiseBuffer, uint8_t factor, struct Scene *s
 
 		// Copy data into window and convert to complex numbers
 		while (n < WINDOW_SIZE) {
-			window[n] = input[offset + n] + (0.0f * I);
+			if (offset + n < scene->sampleCount) {
+				window[n] = input[offset + n] + (0.0f * I);
+			} else {
+				window[n] = 0 + (0.0f * I);
+			}
 			n++;
 		}
 		n = 0;
@@ -61,10 +65,14 @@ int pitchShift(float *input, float *noiseBuffer, uint8_t factor, struct Scene *s
 
 		// Put windows into 'outputBuffer'
 		while (n < WINDOW_SIZE) {
-			outputBuffer[factor * offset + n] += crealf(window[n]);
+			if (factor * offset + n < factor * scene->sampleCount) {
+				outputBuffer[factor * offset + n] += crealf(window[n]);
 
-			// Used later for normalization
-			if (fabs(outputBuffer[factor * offset + n]) > absoluteMaximum) absoluteMaximum = fabs(outputBuffer[factor * offset + n]);
+				// Used later for normalization
+				if (fabs(outputBuffer[factor * offset + n]) > absoluteMaximum) absoluteMaximum = fabs(outputBuffer[factor * offset + n]);
+			} else {
+				break;
+			}
 
 			n++;
 		}

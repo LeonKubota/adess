@@ -9,31 +9,28 @@
 #include "files/extract.h"
 
 char *parseLineValueS(char *variable, char *path) {
-	char *stringInput = parseLineValue(variable, path);
+	char *string = parseLineValue(variable, path);
 
 	// Check for empty strings
-	if (stringInput == NULL) {
-		return "\0";
+	if (string == NULL) {
+		return NULL;
 	}
 
-	char *string = (char *) malloc(1024 * sizeof(char)); 
-	strcpy(string, stringInput);
-	
 	// Remove the first character if it's "
 	if (string[0] == '\"') {
 		string++;
 	} else {
 		e_parse(path, getVariableLineNumber(variable, path) + 1, "incorrect type, string expected\n");
-		return "\0";
+		free(string);
+		return NULL;
 	}
 
 	if ((string[strlen(string) - 1]) == '\"') {
 		string[strlen(string) - 1] = '\0';
 	} else {
 		e_parse(path, getVariableLineNumber(variable, path) + 1, "incorrect type, string expected\n");
-		return "\0";
+		return NULL;
 	}
-
 
 	return string;
 }
@@ -57,6 +54,8 @@ int64_t parseLineValueI(char *variable, char *path) {
 			return INT_FAIL;
 		}
 	}
+
+	free(value);
 	
 	return output;
 }
@@ -69,7 +68,7 @@ float parseLineValueF(char *variable, char *path) {
 	}
 
 	// Prepare the stringNumber
-	char stringNumber[16];
+	char stringNumber[16] = "-69420.42069"; // Init with FLOAT_FAIL
 	bool wasDot = false;
 	int i = 0;
 
@@ -80,16 +79,20 @@ float parseLineValueF(char *variable, char *path) {
 		} else if (string[i] == '.') {
 			if (wasDot) {
 				e_parse(path, getVariableLineNumber(variable, path) + 1, "incorrect type, float expected\n");
+				free(string);
 				return FLOAT_FAIL;
 			}
 			wasDot = true;
 			stringNumber[i] = string[i];
 		} else {
 			e_parse(path, getVariableLineNumber(variable, path) + 1, "incorrect type, float expected\n");
+			free(string);
 			return FLOAT_FAIL;
 		}
 		i++;
 	}
+
+	free(string);
 
 	return atof(stringNumber);
 }
@@ -105,6 +108,8 @@ bool parseLineValueB(char *variable, char *path) {
 		e_parse(path, getVariableLineNumber(variable, path) + 1, "incorrect type, boolean expected\n");
 		return NULL;
 	}
+
+	free(string);
 }
 
 char *parseLineValue(char *variable, char *path) { // FIXME

@@ -61,7 +61,6 @@ char *findProjectFile(char *path) {
 	char *projectFilePath = NULL;
 	
 	while ((entry = readdir(dir)) != NULL) {
-
 		if (strstr(entry -> d_name, ".adess")) {
 			// Ignore hidden files
 			if (entry -> d_name[0] == '.') {
@@ -77,7 +76,13 @@ char *findProjectFile(char *path) {
 		}
 	}
 
-	return strcat(path, projectFilePath);
+	char *outputBuffer = (char *) malloc(1024 * sizeof(char));
+
+	strcat(path, projectFilePath);
+
+	strcpy(outputBuffer, path);
+
+	return outputBuffer;
 }
 
 char *getCurDirectory(char *userpath) {

@@ -247,7 +247,9 @@ void *generateStableBrownNoise(void *arg) {
 	int n = 0;
 	while (n < 8) {
 		while (i < scene->sampleCount) {
-			stableBrownNoiseBuffer[i] = (0.25f * stableBrownNoiseBuffer[i - 1]) + (0.5f * stableBrownNoiseBuffer[i]) + (0.25f * stableBrownNoiseBuffer[i + 1]);
+			if (i > 1 && i < scene->sampleCount - 1) {
+				stableBrownNoiseBuffer[i] = (0.25f * stableBrownNoiseBuffer[i - 1]) + (0.5f * stableBrownNoiseBuffer[i]) + (0.25f * stableBrownNoiseBuffer[i + 1]);
+			}
 			i++;
 		}
 		i = 0;
@@ -269,6 +271,9 @@ void *renderBase(void *arg) {
 
 	// Get data from threadData
 	float *baseBuffer = threadData->buffer0;
+
+	// Initialize 'baseBuffer'
+
 	double *phaseBuffer = (double *) threadData->buffer1; // Lying a little more
 	float *loadBuffer = threadData->buffer2;
 	float *frequencyBuffer = threadData->buffer3;
@@ -399,7 +404,14 @@ void *renderValvetrain(void *arg) {
 		// Divide by four so we only get the intake and divide by 2 because I use abs later
 		frequency = (rpmBuffer[i] / 120.0f) * engine->cylinderCount * 0.125f;
 		phase += TAU * frequency * timeStep;
-		intakeMultiplier = (fabs(sin(phase + 0.1f * pinkNoiseBuffer[i + 1])) - 0.9f) * 10.0f;
+
+		// So that I don't read out of bounds
+		if (i < scene->sampleCount - 1) {
+			intakeMultiplier = (fabs(sin(phase + 0.1f * pinkNoiseBuffer[i + 1])) - 0.9f) * 10.0f;
+		} else {
+			intakeMultiplier = (fabs(sin(phase + 0.1f * pinkNoiseBuffer[i])) - 0.9f) * 10.0f;
+		}
+
 		if (intakeMultiplier < 0.0f) intakeMultiplier = 0.0f;
 
 		exhaustMultiplier = (fabs(sin(phase + offset + 0.1f * pinkNoiseBuffer[i])) - 0.9f) * 10.0f;
@@ -453,14 +465,14 @@ void *combineBuffers(void *arg) {
 	float *combinedBuffer = threadData->buffer0;
 	float *baseBuffer = threadData->buffer1;
 	float *valvetrainBuffer = threadData->buffer2;
-	float *mechanicalBuffer = threadData->buffer3;
+	//float *mechanicalBuffer = threadData->buffer3;
 
 	uint64_t i = 0;
 
 	while (i < scene->sampleCount) {
 		combinedBuffer[i] += baseBuffer[i] * engine->baseVolume;
 		combinedBuffer[i] += valvetrainBuffer[i] * engine->valvetrainVolume;
-		combinedBuffer[i] += mechanicalBuffer[i] * engine->mechanicalVolume;
+		//combinedBuffer[i] += mechanicalBuffer[i] * engine->mechanicalVolume;
 		i++;
 	}
 
