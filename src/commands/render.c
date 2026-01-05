@@ -267,7 +267,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	float *postProcessedBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 	if (postProcessedBuffer == NULL) return 1;
 
-	struct ThreadData postProcessingData = {postProcessedBuffer, combinedBuffer, NULL, NULL, NULL, NULL, NULL, project, scene, engine, NULL, false};
+	struct ThreadData postProcessingData = {postProcessedBuffer, combinedBuffer, stableBrownNoiseBuffer, NULL, NULL, NULL, NULL, project, scene, engine, NULL, false};
 
 	// Run in main thread
 	postProcess((void *) &postProcessingData);

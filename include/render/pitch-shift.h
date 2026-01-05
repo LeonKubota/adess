@@ -5,6 +5,6 @@
 
 #include "main.h"
 
-int pitchShift(float *input, uint8_t factor, struct Scene *scene);
+int pitchShift(float *input, float *noiseBuffer, uint8_t factor, struct Scene *scene);
 
 #endif

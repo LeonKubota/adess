@@ -12,8 +12,10 @@
 #define WINDOW_SIZE 1024 // This MUST be 2^n
 #define HOP_SIZE 512
 
-int pitchShift(float *input, uint8_t factor, struct Scene *scene) {
+int pitchShift(float *input, float *noiseBuffer, uint8_t factor, struct Scene *scene) {
 	uint32_t windowCount = 0;
+
+	if (false) printf("%f", noiseBuffer[0]);
 
 	float *outputBuffer = (float *) malloc(factor * scene->sampleCount * sizeof(float));
 	if (outputBuffer == NULL) return 1;
@@ -48,7 +50,7 @@ int pitchShift(float *input, uint8_t factor, struct Scene *scene) {
 		fastFourierTransform(window, WINDOW_SIZE, fourierTemp);
 		
 		while (n < WINDOW_SIZE) {
-			window[n] *= 2.0f; // TODO support different pitch shift amounts
+			window[n] *= factor;
 
 			n++;
 		}
@@ -71,17 +73,16 @@ int pitchShift(float *input, uint8_t factor, struct Scene *scene) {
 		currentWindow++;
 	}
 
+	
 	uint64_t i = 0;
-
 
 	// Normalize the data and copy into the input buffer
 	while (i < scene->sampleCount) {
 		input[i] = outputBuffer[i * factor] / absoluteMaximum;
 		i++;
 	}
-	
-	printf("got here\n");
 
+	free(outputBuffer);
 
 	return 0;
 }

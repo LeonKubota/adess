@@ -479,18 +479,47 @@ void *postProcess(void *arg) {
 	struct Scene *scene = threadData->scene;
 
 	uint64_t i = 0;
+	uint64_t n = 0;
 
 	float *postProcessedBuffer = threadData->buffer0;
-	//float *combinedBuffer = threadData->buffer1;
+	float *combinedBuffer = threadData->buffer1;
+	float *stableBrownNoiseBuffer = threadData->buffer2;
 
-	int pitchCount = 8;
 
 	// Set up threads
+	int pitchCount = 7;
+
 	pthread_t pitchThreads[pitchCount];
+
+	struct PitchShiftData {
+		float *buffer;
+		float *noiseBuffer;
+		struct Scene *scene;
+		uint8_t factor;
+	} pitchShiftDataArray[pitchCount];
 
 	// Set up buffers for pitch shifts
 	while (i < (uint64_t) pitchCount) {
-		if (pthread_create(&pitchThreads[i], NULL, threadTest, (void *) i) != 0) {
+		// Put things into data struct
+		pitchShiftDataArray[i].buffer = (float *) malloc(scene->sampleCount * sizeof(float));
+		pitchShiftDataArray[i].noiseBuffer = stableBrownNoiseBuffer;
+		pitchShiftDataArray[i].scene = scene;
+		pitchShiftDataArray[i].factor = (6 * i + 2);	
+
+		// Handle error
+		if (pitchShiftDataArray[i].buffer == NULL) {
+			threadData->failed = true;
+			return NULL;
+		}
+
+		// Copy data into 'pitchShiftDataArray[i].buffer', add noise
+		while (n < scene->sampleCount) {
+			pitchShiftDataArray[i].buffer[n] = combinedBuffer[n] + (stableBrownNoiseBuffer[n] * i);
+			n++;
+		}
+		n = 0;
+
+		if (pthread_create(&pitchThreads[i], NULL, pitchShiftThread, (void *) &pitchShiftDataArray[i]) != 0) {
 			threadData->failed = true;
 			return NULL;
 		}
@@ -508,9 +537,47 @@ void *postProcess(void *arg) {
 	}
 	i = 0;
 
+	float absoluteMaximum = 0.0f;
+
+	float pitchAmplitude[pitchCount];
+	pitchAmplitude[0] = 0.5f;
+	pitchAmplitude[1] = 0.5f;
+	pitchAmplitude[2] = 0.5f;
+	pitchAmplitude[3] = 0.5f;
+	pitchAmplitude[4] = 0.5f;
+	pitchAmplitude[5] = 0.5f;
+	pitchAmplitude[6] = 0.5f;
+
 	// Combine pitch shifted audios
 	while (i < scene->sampleCount) {
-		postProcessedBuffer[i] = 0;
+		// Add the main base
+		postProcessedBuffer[i] = combinedBuffer[i];
+
+		while (n < (uint64_t) pitchCount) {
+			postProcessedBuffer[i] += pitchShiftDataArray[n].buffer[i] * pitchAmplitude[n];
+			n++;
+		}
+		n = 0;
+
+		// For normalization later
+		if (postProcessedBuffer[i] > absoluteMaximum) absoluteMaximum = postProcessedBuffer[i];
+
+		i++;
+	}
+	i = 0;
+
+
+	// Free 'pitchShiftDataArray[i].buffer'
+	while (i < (uint64_t) pitchCount) {
+		free(pitchShiftDataArray[i].buffer);
+		i++;
+	}
+	i = 0;
+
+
+	// Normalize
+	while (i < scene->sampleCount) {
+		postProcessedBuffer[i] /= absoluteMaximum;
 		i++;
 	}
 
@@ -520,21 +587,20 @@ void *postProcess(void *arg) {
 }
 
 void *pitchShiftThread(void *arg) {
-	time_t startTime = clock();
-
 	struct PitchShiftData {
 		float *buffer;
+		float *noiseBuffer;
 		struct Scene *scene;
 		uint8_t factor;
 	} *pitchShiftData = (struct PitchShiftData *) arg;
 
 	float *buffer = pitchShiftData->buffer;
+	float *noiseBuffer = pitchShiftData->noiseBuffer;
 	struct Scene *scene = pitchShiftData->scene;
 	uint8_t factor = pitchShiftData->factor;
 
-	pitchShift(buffer, factor, scene);
+	pitchShift(buffer, noiseBuffer, factor, scene);
 
-	d_print("\t%.2f ms - pitch shift [%i] finished\n", factor, (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 	return NULL;
 }
 
