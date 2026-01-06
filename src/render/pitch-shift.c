@@ -25,7 +25,7 @@ int pitchShift(float *input, float *noiseBuffer, uint8_t factor, struct Scene *s
 	windowCount++; // Add one for safety
 
 	// Precalculate Hanning window function
-	float *hanning = precalculateHanning();
+	float *hanning = precalculateHanning(NULL);
 
 	// Make a buffer for one window and for all the windows
 	complex float window[WINDOW_SIZE];
@@ -107,7 +107,8 @@ int pitchShift(float *input, float *noiseBuffer, uint8_t factor, struct Scene *s
 	return 0;
 }
 
-float *precalculateHanning() {
+float *precalculateHanning(void *shutUpCompiler) {
+	if (shutUpCompiler != NULL) printf("what??\n");
 	float *hanning = (float *) malloc(WINDOW_SIZE * sizeof(float));
 
 	uint16_t i = 0;
