@@ -6,5 +6,6 @@
 #include "main.h"
 
 int pitchShift(float *input, float *noiseBuffer, uint8_t factor, struct Scene *scene);
+float *precalculateHanning();
 
 #endif

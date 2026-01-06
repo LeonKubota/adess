@@ -43,6 +43,7 @@ bool checkFileExists(char *path) {
 	FILE *file = fopen(path, "r");
 	
 	if (file != NULL) {
+		fclose(file);
 		return true;
 	}
 
@@ -71,6 +72,7 @@ char *findProjectFile(char *path) {
 				projectFilePath = entry -> d_name;  
 			} else {
 				e_fatal("multiple project files found in '%s'\n", path); 
+				closedir(dir);
 				return NULL;
 			}
 		}
@@ -81,6 +83,8 @@ char *findProjectFile(char *path) {
 	strcat(path, projectFilePath);
 
 	strcpy(outputBuffer, path);
+
+	closedir(dir); // Free it later, because it's still used in 'outputBuffer'
 
 	return outputBuffer;
 }
@@ -355,6 +359,7 @@ int countKeyframes(char *scenePath) {
 
 	if (found == false) {
 		e_parse(scenePath, 0, "'keyframes' not found\n");
+		fclose(fileKeys);
 		return -1;
 	}
 
@@ -383,6 +388,8 @@ int countKeyframes(char *scenePath) {
 		}
 	}
 
+	fclose(fileKeys);
+
 	return count;
 }
 
@@ -407,6 +414,7 @@ bool isKeyframeValid(char *scenePath) {
 	}
 
 	if (found == false) {
+		fclose(fileKey);
 		return false;
 	}
 
@@ -429,6 +437,7 @@ bool isKeyframeValid(char *scenePath) {
 			} else if (lineKey[offset] == '/' && lineKey[offset + 1] == '/') {
 				continue;
 			} else {
+				fclose(fileKey);
 				e_parse(scenePath, n + 1, "keyframe lists must begin with '{'\n");
 				return false;
 			}
@@ -449,6 +458,7 @@ bool isKeyframeValid(char *scenePath) {
 	if (lineKey[offset] != '\n' && lineKey[offset] != '\0') {
 		if (lineKey[offset] != '/' || lineKey[offset + 1] != '/') {
 			e_parse(scenePath, n + 1, "unexpected value\n");
+			fclose(fileKey);
 			return false;
 		}
 	}
@@ -491,6 +501,7 @@ bool isKeyframeValid(char *scenePath) {
 			offset++;
 		} else {
 			e_parse(scenePath, n + 1, "incorrect type, float expected\n");
+			fclose(fileKey);
 			return false;
 		}
 
@@ -504,6 +515,7 @@ bool isKeyframeValid(char *scenePath) {
 			offset++;
 		} else {
 			e_parse(scenePath, n + 1, "incorrect type, float expected\n");
+			fclose(fileKey);
 			return false;
 		}
 
@@ -516,6 +528,7 @@ bool isKeyframeValid(char *scenePath) {
 			offset++;
 		} else {
 			e_parse(scenePath, n + 1, "incorrect value separator\n");
+			fclose(fileKey);
 			return false;
 		}
 
@@ -538,6 +551,7 @@ bool isKeyframeValid(char *scenePath) {
 			offset++;
 		} else {
 			e_parse(scenePath, n + 1, "incorrect value separator\n");
+			fclose(fileKey);
 			return false;
 		}
 
@@ -555,6 +569,7 @@ bool isKeyframeValid(char *scenePath) {
 			offset++;
 		} else {
 			e_parse(scenePath, n + 1, "incorrect type, float expected\n");
+			fclose(fileKey);
 			return false;
 		}
 
@@ -568,6 +583,7 @@ bool isKeyframeValid(char *scenePath) {
 			offset++;
 		} else {
 			e_parse(scenePath, n + 1, "incorrect type, float expected\n");
+			fclose(fileKey);
 			return false;
 		}
 
@@ -580,6 +596,7 @@ bool isKeyframeValid(char *scenePath) {
 			offset++;
 		} else {
 			e_parse(scenePath, n + 1, "incorrect keyframe terminator\n");
+			fclose(fileKey);
 			return false;
 		}
 
@@ -592,11 +609,14 @@ bool isKeyframeValid(char *scenePath) {
 			// If comment
 			if (lineKey[offset] != '/' || lineKey[offset + 1] != '/') {
 				e_parse(scenePath, n + 1, "incorrect keyframe terminator\n");
+				fclose(fileKey);
 				return false;
 			}
 		}
 		offset = 0;
 	}
+	
+	fclose(fileKey);
 
 	return true;
 }

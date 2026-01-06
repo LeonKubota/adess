@@ -499,7 +499,7 @@ void *postProcess(void *arg) {
 
 
 	// Set up threads
-	int pitchCount = 7;
+	int pitchCount = 3;
 
 	pthread_t pitchThreads[pitchCount];
 
@@ -516,7 +516,7 @@ void *postProcess(void *arg) {
 		pitchShiftDataArray[i].buffer = (float *) malloc(scene->sampleCount * sizeof(float));
 		pitchShiftDataArray[i].noiseBuffer = stableBrownNoiseBuffer;
 		pitchShiftDataArray[i].scene = scene;
-		pitchShiftDataArray[i].factor = (6 * i + 2);	
+		pitchShiftDataArray[i].factor = (2 * i + 2);	
 
 		// Handle error
 		if (pitchShiftDataArray[i].buffer == NULL) {
@@ -552,19 +552,17 @@ void *postProcess(void *arg) {
 	float absoluteMaximum = 0.0f;
 
 	float pitchAmplitude[pitchCount];
-	pitchAmplitude[0] = 0.5f;
-	pitchAmplitude[1] = 0.5f;
-	pitchAmplitude[2] = 0.5f;
-	pitchAmplitude[3] = 0.5f;
-	pitchAmplitude[4] = 0.5f;
-	pitchAmplitude[5] = 0.5f;
-	pitchAmplitude[6] = 0.5f;
+	pitchAmplitude[0] = 0.1f;
+	pitchAmplitude[1] = 0.05f;
+	pitchAmplitude[2] = 0.025f;
+	pitchAmplitude[3] = 0.01f;
 
 	// Combine pitch shifted audios
 	while (i < scene->sampleCount) {
 		// Add the main base
 		postProcessedBuffer[i] = combinedBuffer[i];
 
+		// Add harmonic frequencies (to fill up the top)
 		while (n < (uint64_t) pitchCount) {
 			postProcessedBuffer[i] += pitchShiftDataArray[n].buffer[i] * pitchAmplitude[n];
 			n++;
@@ -613,12 +611,5 @@ void *pitchShiftThread(void *arg) {
 
 	pitchShift(buffer, noiseBuffer, factor, scene);
 
-	return NULL;
-}
-
-
-// TEST
-void *threadTest(void *arg) {
-	printf("number: %" PRIu64 "\n", (uint64_t) arg);
 	return NULL;
 }

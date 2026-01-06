@@ -100,6 +100,7 @@ int render(char **args) {
 // TODO making it nice and clean (just hiding the ugliness with abstractions)
 int renderScene(char *sceneNameInput, struct Project *project, char *name) {
  	time_t startTime = clock();
+
 	// Create scene struct
 	struct Scene *scene = (struct Scene *) malloc(sizeof(struct Scene));
 	if (scene == NULL) { // Verify creation of struct 'scene'
@@ -293,6 +294,12 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	// Run in main thread
 	combineBuffers((void *) &combineBuffersData);
 
+	// Free buffers
+	free(baseBuffer);
+	free(valvetrainBuffer);
+	free(mechanicalBuffer);
+	free(vibrationBuffer);
+
 	// Check for errors
 	if (combineBuffersData.failed == true) return 1;
 
@@ -310,6 +317,8 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	// Run in main thread
 	postProcess((void *) &postProcessingData);
 
+	free(stableBrownNoiseBuffer);
+
 	// Check for errors
 	if (postProcessingData.failed == true) return 1;
 
@@ -318,15 +327,10 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	printf("\n");
 
-	/*
-	free(baseBuffer);
-	free(valvetrainBuffer);
-	free(mechanicalBuffer);
-	free(vibrationBuffer);
-	*/
 
 	// TEST
 	printMinMax(postProcessedBuffer, scene, project);
+
 
 	// Stage: write
 	printf("\n");
@@ -346,17 +350,31 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	fwrite(postProcessedBuffer, 1, scene->sampleCount * (project->bitDepth / 8), file);
 
+	// Cleanup
 	fclose(file);
+
+	// Misc
+	free(outputPath);
+
+	// Buffers
+	free(postProcessedBuffer);
+
+	// Engine
+	free(engine);
+
+	// Project
+	free(project->scenePath);
+	free(project->enginePath);
+	free(project->outputPath);
+	free(project);
 
 	d_print("%.2f ms - render finished\n\tspeed: [%.2f s/s]\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC, (scene->length / ((clock() - startTime) * 1000.0f / CLOCKS_PER_SEC)) * 1000.0f);
 
-	// Cleanup
-	// Project
-	free(project);
-
-	free(scene);
-	free(engine);
-
+	// Scene
+	free(scene->engine);
+	free(scene->scenePath);
+	free(scene); // Must be freed after because timer uses 'scene->length'
+	
 	/*
 	//
 	* TODO retire this code
@@ -541,6 +559,8 @@ int getEngine(struct Scene *scene, struct Engine *engine, struct Project *projec
 
 	char *enginePath = getThingPath(project->enginePath, engineNameInput, "engine");
 	if (enginePath == NULL) return 1;
+
+	free(engineNameInput);
 
 	// Check validity of engine file
 	if (checkValidity(enginePath) == false) {
@@ -772,6 +792,7 @@ char *getThingPath(char *thingPath, char *thingName, char *thingType) {
 		return completePath;
 	} else {
 		e_fatal("%s '%s' does not exist in '%s'\n", thingType, thingName, processedPath);
+		free(completePath);
 		return NULL;
 	}
 

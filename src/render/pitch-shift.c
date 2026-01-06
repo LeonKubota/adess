@@ -9,13 +9,11 @@
 #include "render/fourier.h"
 #include "render/pitch-shift.h"
 
-#define WINDOW_SIZE 1024 // This MUST be 2^n
+#define WINDOW_SIZE 2048 // This MUST be 2^n
 #define HOP_SIZE 512
 
 int pitchShift(float *input, float *noiseBuffer, uint8_t factor, struct Scene *scene) {
 	uint32_t windowCount = 0;
-
-	if (false) printf("%f", noiseBuffer[0]);
 
 	float *outputBuffer = (float *) calloc(factor * scene->sampleCount, sizeof(float));
 	if (outputBuffer == NULL) return 1;
@@ -25,6 +23,9 @@ int pitchShift(float *input, float *noiseBuffer, uint8_t factor, struct Scene *s
 		windowCount++;
 	}
 	windowCount++; // Add one for safety
+
+	// Precalculate Hanning window function
+	float *hanning = precalculateHanning();
 
 	// Make a buffer for one window and for all the windows
 	complex float window[WINDOW_SIZE];
@@ -37,7 +38,7 @@ int pitchShift(float *input, float *noiseBuffer, uint8_t factor, struct Scene *s
 	uint32_t offset = 0;
 
 	while (currentWindow < windowCount) {
-		offset = currentWindow * HOP_SIZE;
+		offset = currentWindow * HOP_SIZE + factor;
 
 		// Copy data into window and convert to complex numbers
 		while (n < WINDOW_SIZE) {
@@ -54,7 +55,8 @@ int pitchShift(float *input, float *noiseBuffer, uint8_t factor, struct Scene *s
 		fastFourierTransform(window, WINDOW_SIZE, fourierTemp);
 		
 		while (n < WINDOW_SIZE) {
-			window[n] *= factor;
+			//window[n] *= (factor * (1 + (0.1f * noiseBuffer[n])));
+			window[n] *= factor + (0.1f * noiseBuffer[n]);
 
 			n++;
 		}
@@ -62,6 +64,13 @@ int pitchShift(float *input, float *noiseBuffer, uint8_t factor, struct Scene *s
 
 		// Go back to samples
 		inverseFastFourierTransform(window, WINDOW_SIZE, fourierTemp);
+
+		// Multiply by the Hanning window function
+		while (n < WINDOW_SIZE) {
+			window[n] *= hanning[n];
+			n++;
+		}
+		n = 0;
 
 		// Put windows into 'outputBuffer'
 		while (n < WINDOW_SIZE) {
@@ -80,17 +89,33 @@ int pitchShift(float *input, float *noiseBuffer, uint8_t factor, struct Scene *s
 
 		currentWindow++;
 	}
-
+	free(hanning);
 	
 	uint64_t i = 0;
 
+	//float noiseMultiplier = 0.75f * (factor / 38.0f);
+	float noiseMultiplier = 0.0f;
+
 	// Normalize the data and copy into the input buffer
 	while (i < scene->sampleCount) {
-		input[i] = outputBuffer[i * factor] / absoluteMaximum;
+		input[i] = ((outputBuffer[i * factor] / absoluteMaximum) * (1.0f + (noiseMultiplier * noiseBuffer[i])));
 		i++;
 	}
 
 	free(outputBuffer);
 
 	return 0;
+}
+
+float *precalculateHanning() {
+	float *hanning = (float *) malloc(WINDOW_SIZE * sizeof(float));
+
+	uint16_t i = 0;
+
+	while (i < WINDOW_SIZE) {
+		hanning[i] = 0.5f * (1.0f - cos((TAU * (float) i) / ((float) WINDOW_SIZE - 1.0f)));
+		i++;
+	}
+
+	return hanning;
 }

@@ -11,6 +11,8 @@
 char *parseLineValueS(char *variable, char *path) {
 	char *string = parseLineValue(variable, path);
 
+	uint16_t offset = 0;
+
 	// Check for empty strings
 	if (string == NULL) {
 		return NULL;
@@ -19,6 +21,7 @@ char *parseLineValueS(char *variable, char *path) {
 	// Remove the first character if it's "
 	if (string[0] == '\"') {
 		string++;
+		offset++;
 	} else {
 		e_parse(path, getVariableLineNumber(variable, path) + 1, "incorrect type, string expected\n");
 		free(string);
@@ -29,10 +32,19 @@ char *parseLineValueS(char *variable, char *path) {
 		string[strlen(string) - 1] = '\0';
 	} else {
 		e_parse(path, getVariableLineNumber(variable, path) + 1, "incorrect type, string expected\n");
+		string -= offset;
+		free(string);
 		return NULL;
 	}
 
-	return string;
+	char *output = (char *) malloc(1024 * sizeof(char));
+	strcpy(output, string);
+
+	// Free string
+	string -= offset;
+	free(string);
+
+	return output;
 }
 
 int64_t parseLineValueI(char *variable, char *path) {
@@ -350,4 +362,6 @@ void loadKeyframes(struct Scene *scene, struct Keyframe *keyframes) {
 		offset = 0;
 		i++;
 	}
+
+	fclose(file);
 }
