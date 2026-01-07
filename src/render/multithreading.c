@@ -552,10 +552,10 @@ void *postProcess(void *arg) {
 	float absoluteMaximum = 0.0f;
 
 	float pitchAmplitude[pitchCount];
-	pitchAmplitude[0] = 0.1f;
-	pitchAmplitude[1] = 0.05f;
-	pitchAmplitude[2] = 0.025f;
-	pitchAmplitude[3] = 0.01f;
+	pitchAmplitude[0] = 0.0f;
+	pitchAmplitude[1] = 0.0f;
+	pitchAmplitude[2] = 0.0f;
+	pitchAmplitude[3] = 0.0f;
 
 	// Combine pitch shifted audios
 	while (i < scene->sampleCount) {
