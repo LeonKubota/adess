@@ -30,10 +30,9 @@ int help(char **args) {
 			showDescription("the make_engine command is used for creating an engine, setting the name by using [-n] is required.\nIf you want the created engine to be empty, use [-e].\n");
 		}
 		else if (strcmp(args[2], "render") == 0) {
-			showUsage("render", "[scene]" , "n.a");
-			showDescription("the render command is used for rendering a scene, you can set the name of the output file by using [-n].\nFor rendering all the scenes, use [-a].\n");
+			showUsage("render", "<scene>" , "n.af");
+			showDescription("the render command is used for rendering a scene, you can set the name of the output file by using [-n].\nFor rendering all the scenes, use [-a]. You can also use [-p] to preview a scene (skip expensive post processing)\n");
 		}
-		// help help
 		else if (strcmp(args[2], "help") == 0) {
 		
 		} else {
@@ -62,15 +61,15 @@ void showUsage(char *name, char *desc, char *opts) {
 		if (!((opts[i] == '.') || (opts[i] == ':'))) {
 			// Single value
 			if (opts[i + 1] == '.') {
-				printf("[-%c <val>] ", opts[i]);
+				printf("[-%c <val>]", opts[i]);
 			}
 			// Multiple values
 			else if (opts[i + 1] == ':') {
-				printf("[-%c [<vals>]] ", opts[i]);
+				printf("[-%c [<vals>]]", opts[i]);
 			}
 			// No values
 			else {
-				printf("[-%c] ", opts[i]);
+				printf("[-%c]", opts[i]);
 			}
 		}
 

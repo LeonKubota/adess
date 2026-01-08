@@ -66,7 +66,7 @@ int parseCommand(int argc, char **argv) {
 	}
 	// render
 	else if ((strcmp(argv[1], "render")) == 0) {
-		return execute(render, argv, args, argscount, "an");
+		return execute(render, argv, args, argscount, "anp");
 	}
 	// default (unknown command)
 	else {

@@ -306,24 +306,45 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	// Stage: post process
 	printf("\n");
-	d_print("rendering [4/5] - post process\n");
-
 
 	float *postProcessedBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 	if (postProcessedBuffer == NULL) return 1;
 
-	struct ThreadData postProcessingData = {postProcessedBuffer, combinedBuffer, stableBrownNoiseBuffer, NULL, NULL, NULL, NULL, project, scene, engine, NULL, false};
+	// Only do the post processing if '-p' is turned on
+	if (!g_opts[7]) {
+		d_print("rendering [4/5] - post process\n");
 
-	// Run in main thread
-	postProcess((void *) &postProcessingData);
+		struct ThreadData postProcessingData = {postProcessedBuffer, combinedBuffer, stableBrownNoiseBuffer, NULL, NULL, NULL, NULL, project, scene, engine, NULL, false};
 
-	free(stableBrownNoiseBuffer);
+		// Run in main thread
+		postProcess((void *) &postProcessingData);
 
-	// Check for errors
-	if (postProcessingData.failed == true) return 1;
+		// Check for errors
+		if (postProcessingData.failed == true) return 1;
+	} else {
+		d_print("rendering [4/5] - post processing skipped\n");
 
+		uint64_t i = 0;
+		float absoluteMaximum = 0.0f;
 
+		while (i < scene->sampleCount) {
+			postProcessedBuffer[i] = combinedBuffer[i];
+
+			// For normalization later
+			if (postProcessedBuffer[i] > absoluteMaximum) absoluteMaximum = postProcessedBuffer[i];
+
+			i++;
+		}
+		i = 0;
+
+		while (i < scene->sampleCount) {
+			postProcessedBuffer[i] /= absoluteMaximum;
+			i++;
+		}
+	}
+	
 	free(combinedBuffer);
+	free(stableBrownNoiseBuffer);
 
 	printf("\n");
 
