@@ -281,7 +281,7 @@ void *renderBase(void *arg) {
 	float *lowFrequencyNoiseBuffer = threadData->buffer5;
 	float *stableBrownNoiseBuffer = threadData->buffer6;
 
-	struct Project *project = threadData->project;
+	//struct Project *project = threadData->project;
 	struct Scene *scene = threadData->scene;
 	struct Engine *engine = threadData->engine;
 
@@ -351,15 +351,21 @@ void *renderBase(void *arg) {
 		// Multiply with rpm
 		baseBuffer[i] *= ((frequencyBuffer[i] / engine->maxRpm) * rpmVolumeMultiplier * inverseMinimumVolume) + engine->minimumVolume;
 
-
-		// Check values
-		if (baseBuffer[i] > 1.0f && baseBuffer[i] < -1.0f) {
-			e_fatal("base amplitude exceeded maximum value at time [%.2f s]\n", i / (float) project->sampleRate);
-			threadData->failed = true;
-			return NULL;
+		// Get absolute maximum value
+		if (absoluteMax < fabs(baseBuffer[i])) {
+			absoluteMax = fabs(baseBuffer[i]);
 		}
 
 		i++;
+	}
+	i = 0;
+
+	// Normalize to -1.0f to 1.0f
+	if (absoluteMax != 0.0f) {
+		while (i < scene->sampleCount) {
+			baseBuffer[i] /= absoluteMax;
+			i++;
+		}
 	}
 
 	d_print("%.2f ms - base renedering finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
@@ -423,6 +429,8 @@ void *renderValvetrain(void *arg) {
 		// Multiply (make it 'click')
 		valvetrainBuffer[i] *= 0.5f * (pow(intakeMultiplier, 2) + pow(exhaustMultiplier, 2));
 
+		if (valvetrainBuffer[i] > 1.0f) printf("err\n");
+		if (valvetrainBuffer[i] < -1.0f) printf("err\n");
 		i++;
 	}
 
@@ -469,11 +477,20 @@ void *combineBuffers(void *arg) {
 
 	uint64_t i = 0;
 
+	bool overflowed = false;
+
 	while (i < scene->sampleCount) {
 		combinedBuffer[i] += baseBuffer[i] * engine->baseVolume;
 		combinedBuffer[i] += valvetrainBuffer[i] * engine->valvetrainVolume;
 		//combinedBuffer[i] += mechanicalBuffer[i] * engine->mechanicalVolume;
+		//
+		if (fabs(combinedBuffer[i]) > 1.0f) overflowed = true;
+
 		i++;
+	}
+
+	if (overflowed) {
+		e_warning("maximum amplitude exceeded while combining buffers\n");
 	}
 
 	d_print("%.2f ms - join finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);

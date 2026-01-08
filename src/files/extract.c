@@ -80,7 +80,7 @@ float parseLineValueF(char *variable, char *path) {
 	}
 
 	// Prepare the stringNumber
-	char stringNumber[16] = "-69420.42069"; // Init with FLOAT_FAIL
+	char stringNumber[16] = "";
 	bool wasDot = false;
 	int i = 0;
 
