@@ -6,15 +6,8 @@
 #include <stdarg.h>
 
 // For reading files
-#ifdef _WIN32
-#include <windows.h>
-#include <direct.h> // for _getcwd
-#define PATH_SEPARATOR "\\" // Windows' weird things (idiot Bill Gates)
-#define getcwd _getcwd // so that its the same later
-#else
 #include <unistd.h> // for gecwd
-#define PATH_SEPARATOR "/" // for sane people
-#endif
+#define PATH_SEPARATOR "/"
 
 #include "commands/command.h"
 #include "commands/make_project.h"
@@ -23,7 +16,7 @@
 int make_project(char **args) {
 	d_showInput("make_project", args);
 	
-	// If there if an argument
+	// If there is an argument
 	if (args[2] != NULL) {
 		e_fatal("'make_project' command does not support arguments\n");
 		return 1;
@@ -37,7 +30,7 @@ int make_project(char **args) {
 
 	char *name = g_vals[1][0];
 
-	char *userpath= NULL;
+	char *userpath = NULL;
 	// Check if adess should use a path defined by the user
 	if (strcmp(g_vals[3][0], "") != 0) {
 		userpath = g_vals[3][0];
