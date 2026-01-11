@@ -11,6 +11,7 @@
 // Commands
 #include "commands/help.h"
 #include "commands/make_project.h"
+#include "commands/make_scene.h"
 #include "commands/render.h"
 
 int parse(int argc, char **argv) {
@@ -63,6 +64,10 @@ int parseCommand(int argc, char **argv) {
 	// make_project
 	else if ((strcmp(argv[1], "make_project")) == 0) {
 		return execute(make_project, argv, args, argscount, "hnde");
+	}
+	// make_scene
+	else if ((strcmp(argv[1], "make_scene")) == 0) {
+		return execute(make_scene, argv, args, argscount, "hne");
 	}
 	// render
 	else if ((strcmp(argv[1], "render")) == 0) {

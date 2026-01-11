@@ -9,7 +9,7 @@
 
 bool checkFileExistsIn(char *path, const char *filename) {
 	struct dirent *entry;
-	DIR *dir = opendir(path); // WTF this erases char *filename some of the time (when it doesn't exist???
+	DIR *dir = opendir(path);
 
 	if (dir == NULL) {
 		e_fatal("directory '%s' could not be read\n", path);
@@ -54,6 +54,7 @@ char *findProjectFile(char *path) {
 	// If there is no file ending in '.adess'
 	if (!checkFileExistsIn(path, "*.adess")) {
 		e_fatal("project file not found in '%s'\n", path);
+		free(path);
 		return NULL;
 	}
 
@@ -73,6 +74,7 @@ char *findProjectFile(char *path) {
 			} else {
 				e_fatal("multiple project files found in '%s'\n", path); 
 				closedir(dir);
+				free(path);
 				return NULL;
 			}
 		}
@@ -83,6 +85,7 @@ char *findProjectFile(char *path) {
 	strcat(path, projectFilePath);
 
 	strcpy(outputBuffer, path);
+	free(path);
 
 	closedir(dir); // Free it later, because it's still used in 'outputBuffer'
 
@@ -90,19 +93,37 @@ char *findProjectFile(char *path) {
 }
 
 char *getCurDirectory(char *userpath) {
-	static char currentWorkingDirectory[4096]; // TODO Static was changed, might mess something up
+	char *currentWorkingDirectory = (char *) malloc(1024 * sizeof(char));
+	char *outputDirectory = (char *) malloc(4096 * sizeof(char));
+
+	// Check if allocated
+	if (currentWorkingDirectory == NULL) return NULL;
+	if (outputDirectory == NULL) return NULL;
+
+	// Init
+	strcpy(currentWorkingDirectory, "");
+	strcpy(outputDirectory, "");
 	
-	if (getcwd(currentWorkingDirectory, sizeof(currentWorkingDirectory)) != NULL) {
+	if (getcwd(currentWorkingDirectory, 1024) != NULL) {
 		if (userpath == NULL) {
-			strcat(currentWorkingDirectory, PATH_SEPARATOR);
-			return currentWorkingDirectory;
+			strcat(outputDirectory, currentWorkingDirectory);
+			free(currentWorkingDirectory);
+			strcat(outputDirectory, PATH_SEPARATOR);
+
+			return outputDirectory;
 		} else {
-			strcat(strcat(strcat(currentWorkingDirectory, PATH_SEPARATOR), userpath), PATH_SEPARATOR);
-			return currentWorkingDirectory;
+			strcat(outputDirectory, currentWorkingDirectory);
+			free(currentWorkingDirectory);
+			strcat(outputDirectory, PATH_SEPARATOR);
+			strcat(outputDirectory, userpath);
+			strcat(outputDirectory, PATH_SEPARATOR);
+
+			return outputDirectory;
 		}
-	} else {
-		e_fatal("directory not found\n");
 	}
+
+	free(currentWorkingDirectory);
+	e_fatal("directory not found\n");
 
 	return NULL;
 }

@@ -39,7 +39,7 @@ int make_project(char **args) {
 	char *path = getCurDirectory(userpath);
 
 	// If inside an adess project
-	if (checkFileExistsIn(path, ".adess")) { // search for anything that contains '.adess', kind of like 'grep'
+	if (checkFileExistsIn(path, "*.adess")) { // search for anything that contains '.adess'
 		e_fatal("already inside adess project\n");
 		return 1;
 	}
@@ -53,7 +53,8 @@ int make_project(char **args) {
 
 	char projectFilePath[4096];
 	snprintf(projectFilePath, 4096, "%s%s%s%s", path, PATH_SEPARATOR, name, ".adess");
-	makeFile(projectFilePath);
+
+	if (makeFile(projectFilePath) == 1) return 1;
 	
 	// Exit if option -e (empty) is enabled
 	if (g_opts[5] == true) {
@@ -119,44 +120,3 @@ int makeDirectory(char *path) {
 	return 0;
 }
 
-int makeFile(char *path) {
-	// Check if the file already exists
-	if (access(path, F_OK) != -1) {
-		e_fatal("could not create file '%s', already exists\n", path);
-		return 1;
-	}
-
-	FILE *file;
-	file = fopen(path, "a");
-
-	if (file == NULL) {
-		e_fatal("could not create file at: '%s'\n", path);
-		return 1;
-	}
-	
-	fclose(file);
-
-	d_print("file created at '%s'\n", path);
-
-	return 0;
-}
-
-int appendLine(char *path, const char *format, ...) {
-	va_list args;
-	va_start(args, format);
-	
-	FILE *file;
-	
-	file = fopen(path, "a");
-	
-	if (file == NULL) {
-		e_fatal("failed to write into file '%s'\n", path);
-		return 1;
-	}
-
-	vfprintf(file, format, args);
-	
-	va_end(args);
-	fclose(file);
-	return 0;
-}

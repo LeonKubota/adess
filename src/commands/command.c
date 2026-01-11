@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdarg.h>
 
 #define DCOL "\x1b[1;35m"
 #define RCOL "\x1b[0m"
@@ -82,4 +83,46 @@ void d_listValues(void) {
 	if (empty) {
 		printf("(null)");
 	}
+}
+
+int makeFile(char *path) {
+	// Check if the file already exists
+	if (access(path, F_OK) != -1) {
+		e_fatal("could not create file at: '%s', already exists\n", path);
+		return 1;
+	}
+
+	FILE *file;
+	file = fopen(path, "a");
+
+	if (file == NULL) {
+		e_fatal("could not create file at: '%s'\n", path);
+		return 1;
+	}
+	
+	fclose(file);
+
+	//d_print("file created at '%s'\n", path);
+
+	return 0;
+}
+
+int appendLine(char *path, const char *format, ...) {
+	va_list args;
+	va_start(args, format);
+	
+	FILE *file;
+	
+	file = fopen(path, "a");
+	
+	if (file == NULL) {
+		e_fatal("failed to write into file '%s'\n", path);
+		return 1;
+	}
+
+	vfprintf(file, format, args);
+	
+	va_end(args);
+	fclose(file);
+	return 0;
 }

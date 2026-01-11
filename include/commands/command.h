@@ -9,6 +9,7 @@ void d_showInput(char *name, char **args);
 void d_listArgs(char **args);
 void d_listOptions(void);
 void d_listValues(void);
-char **getValue(char option);
+int makeFile(char *path);
+int appendLine(char *path, const char *format, ...);
 
 #endif
