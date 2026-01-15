@@ -19,24 +19,30 @@ int help(char **args) {
 		// make_project
 		if (strcmp(args[2], "make_project") == 0) {
 			showUsage("make_project", NULL, "hn.d:e");
-			showDescription("the make_project command is used for creating an adess project, setting the name by using [-n] is required.\nIf you want the created project to be empty, use [-e].\n");
+			showDescription("the make_project command is used for creating an adess project\n");
+			explainOptions("hn.d.e");
 		} 
 		else if (strcmp(args[2], "make_scene") == 0) {
 			showUsage("make_scene", NULL, "hn.d:e");
-			showDescription("the make_scene command is used for creating a scene, setting the name by using [-n] is required.\nIf you want the created scene to be empty, use [-e].\n");
+			showDescription("the make_scene command is used for creating a scene\n");
+			explainOptions("hn.d.e");
 		}
 		else if (strcmp(args[2], "make_engine") == 0) {
 			showUsage("make_engine", NULL, "hn.d:e");
-			showDescription("the make_engine command is used for creating an engine, setting the name by using [-n] is required.\nIf you want the created engine to be empty, use [-e].\n");
+			showDescription("the make_engine command is used for creating an engine\n");
+			explainOptions("hn.d.e");
 		}
 		else if (strcmp(args[2], "render") == 0) {
-			showUsage("render", "<scene>" , "n.af");
-			showDescription("the render command is used for rendering a scene, you can set the name of the output file by using [-n].\nFor rendering all the scenes, use [-a]. You can also use [-p] to preview a scene (skip expensive post processing)\n");
+			showUsage("render", "<scene>" , "n.ap");
+			showDescription("the render command is used for rendering a scene\n");
+			explainOptions("n.ap");
 		}
 		else if (strcmp(args[2], "help") == 0) {
-		
+			defaultHelp();
+			return 0;
 		} else {
-			e_fatal("no help available for argument '%s'\n", args[2]);
+			e_fatal("no help available for command '%s', no such command exists\n", args[2]);
+			return 1;
 		}
 	} else {
 		e_fatal("too many arguments for command 'help'\n");
@@ -47,7 +53,7 @@ int help(char **args) {
 
 void showUsage(char *name, char *desc, char *opts) {
 	// Print first part
-	printf("usage: adess %s ", name);	
+	printf("usage: adess %s ", name);
 	
 	// Print desc
 	if (desc != NULL) {
@@ -91,8 +97,40 @@ void showUsage(char *name, char *desc, char *opts) {
 	printf("\n\n");
 }
 
-// TODO
-void showOptions(void) {
+void explainOptions(char *options) {
+	printf("\nAvailable options:\n");
+
+	while (options[0] != '\0') {
+		printf("\t[-%c] ", options[0]);
+
+		// Description of the option
+		if (options[0] == 'h') {
+			printf("help -  prints a help message about the command");
+		} else if (options[0] == 'n') {
+			printf("name - adds a name");
+		} else if (options[0] == 'd') {
+			printf("directory - specifies a directory");
+		} else if (options[0] == 'e') {
+			printf("empty - creates without default values");
+		} else if (options[0] == 'a') {
+			printf("all - renders every scene");
+		} else if (options[0] == 'p') {
+			printf("preview - renders in preview mode (quicker)");
+		}
+
+		if (options[1] == '.') {
+			printf(", this option accepts a single value\n");
+			options += 2;
+			continue;
+		} else if (options[1] == ':') {
+			printf(", this option accepts multiple values\n");
+			options += 2;
+			continue;
+		}
+
+		printf("\n");
+		options++;
+	}
 }
 
 void showDescription(char *description) {

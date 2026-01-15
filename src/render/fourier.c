@@ -29,6 +29,7 @@ void fastFourierTransform(complex float *input, uint64_t n, complex float *temp)
 			odd[k] = input[2 * k + 1];
 		}
 
+		// Recursion magic
 		fastFourierTransform(even, n / 2, input);
 		fastFourierTransform(odd, n / 2, input);
 
@@ -54,6 +55,7 @@ void inverseFastFourierTransform(complex float *input, uint64_t n, complex float
 			odd[k] = input[2 * k + 1];
 		}
 
+		// Recursion magic
 		inverseFastFourierTransform(even, n / 2, input);
 		inverseFastFourierTransform(odd, n / 2, input);
 

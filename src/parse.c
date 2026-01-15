@@ -11,6 +11,7 @@
 // Commands
 #include "commands/help.h"
 #include "commands/make_project.h"
+#include "commands/make_engine.h"
 #include "commands/make_scene.h"
 #include "commands/render.h"
 
@@ -65,13 +66,17 @@ int parseCommand(int argc, char **argv) {
 	else if ((strcmp(argv[1], "make_project")) == 0) {
 		return execute(make_project, argv, args, argscount, "hnde");
 	}
+	// make_engine
+	else if ((strcmp(argv[1], "make_engine")) == 0) {
+		return execute(make_engine, argv, args, argscount, "hne");
+	}
 	// make_scene
 	else if ((strcmp(argv[1], "make_scene")) == 0) {
 		return execute(make_scene, argv, args, argscount, "hne");
 	}
 	// render
 	else if ((strcmp(argv[1], "render")) == 0) {
-		return execute(render, argv, args, argscount, "anp");
+		return execute(render, argv, args, argscount, "hanp");
 	}
 	// default (unknown command)
 	else {
@@ -225,6 +230,16 @@ int optIndex(char opt) {
 
 int execute(int (*command)(char **args), char **argv, char **args, int argscount, char *accepted) {
 	if (parseOptions(argv + argscount) == 0) {
+		// Check if user requested help using 'h' option
+		if (g_opts[0] == true) {
+			char *helpArgs[4];
+			helpArgs[2] = args[1];
+			helpArgs[3] = NULL; // Used as a terminator (very janky old code)
+
+			help(helpArgs);
+			return 0;
+		}
+
 		if ((unacceptedOptions(accepted)) == -1) {
 			command(args);
 			return 0;
