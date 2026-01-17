@@ -15,6 +15,7 @@
 #include "commands/render.h"
 #include "utils.h"
 #include "render/multithreading.h"
+#include "render/convert.h"
 #include "files/export.h"
 
 int render(char **args) {
@@ -357,6 +358,14 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	printf("\n");
 	d_print("rendering [5/5] - write\n");
 
+
+	// Create the output buffer
+	void *outputBuffer = (void *) malloc(scene->sampleCount * project->bitDepth / 8);
+	if (outputBuffer == NULL) return 1;
+
+	convert(outputBuffer, postProcessedBuffer, scene->sampleCount, project->bitDepth);
+	free(postProcessedBuffer); // No longer useful
+
 	b_todo("writing to: '%s'\n", outputPath);
 
 	FILE *file = fopen(outputPath, "wb");
@@ -365,11 +374,9 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 		return 1;
 	}
 
-	project->bitDepth = 32;
+	makeWavHeader(file, project->sampleRate, project->bitDepth, scene->sampleCount);
 
-	makeWavHeader(file, project->sampleRate, project->bitDepth, (uint32_t) scene->sampleCount);
-
-	fwrite(postProcessedBuffer, 1, scene->sampleCount * (project->bitDepth / 8), file);
+	fwrite(outputBuffer, 1, scene->sampleCount * (project->bitDepth / 8), file);
 
 	// Cleanup
 	fclose(file);
@@ -378,7 +385,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	free(outputPath);
 
 	// Buffers
-	free(postProcessedBuffer);
+	free(outputBuffer);
 
 	// Engine
 	free(engine);

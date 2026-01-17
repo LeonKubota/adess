@@ -3,8 +3,8 @@
 
 #include "utils.h"
 
-int makeWavHeader(FILE *file, uint32_t sampleRate, uint16_t bitDepth, uint32_t sampleCount) {
-	uint16_t numChannels = 1; // TEMP this could change (it won't)
+int makeWavHeader(FILE *file, uint32_t sampleRate, uint16_t bitDepth, uint64_t sampleCount) {
+	uint16_t numChannels = 1; // this could change (it won't)
 	uint32_t chunkSize = 36 + (sampleCount * numChannels * (bitDepth / 8));
 
 	// RIFF chunk descriptor
