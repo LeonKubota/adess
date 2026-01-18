@@ -16,6 +16,7 @@
 #include "utils.h"
 #include "render/multithreading.h"
 #include "render/convert.h"
+#include "render/modify-amplitudes.h"
 #include "files/export.h"
 
 int render(char **args) {
@@ -273,12 +274,10 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	// Free data from prepare stage
 	free(frequencyBuffer);
 	free(phaseBuffer);
-	free(loadBuffer);
 	free(rpmBuffer);
 	free(lowFrequencyNoiseMultiplierBuffer);
 
 	free(pinkNoiseBuffer);
-	//free(stableBrownNoiseBuffer); // TEMP
 	free(lowFrequencyNoiseBuffer);
 
 	// Stage: combine
@@ -315,7 +314,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	if (!g_opts[7]) {
 		d_print("rendering [4/5] - post process\n");
 
-		struct ThreadData postProcessingData = {postProcessedBuffer, combinedBuffer, stableBrownNoiseBuffer, NULL, NULL, NULL, NULL, project, scene, engine, NULL, false};
+		struct ThreadData postProcessingData = {postProcessedBuffer, combinedBuffer, stableBrownNoiseBuffer, loadBuffer, NULL, NULL, NULL, project, scene, engine, NULL, false};
 
 		// Run in main thread
 		postProcess((void *) &postProcessingData);
@@ -326,17 +325,26 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 		d_print("rendering [4/5] - post processing skipped\n");
 
 		uint64_t i = 0;
+
 		float absoluteMaximum = 0.0f;
 
 		while (i < scene->sampleCount) {
 			postProcessedBuffer[i] = combinedBuffer[i];
 
-			// For normalization later
-			if (postProcessedBuffer[i] > absoluteMaximum) absoluteMaximum = postProcessedBuffer[i];
-
 			i++;
-		}
-		i = 0;
+		} i = 0;
+
+		// Low pass filter
+		modifyAmplitudes(postProcessedBuffer, 10000.0f, project, scene);
+		modifyAmplitudes(postProcessedBuffer, 8000.0f, project, scene);
+		modifyAmplitudes(postProcessedBuffer, 5000.0f, project, scene);
+
+		absoluteMaximum = 0.0f;
+		// For normalization
+		while (i < scene->sampleCount) {
+			if (fabs(postProcessedBuffer[i]) > absoluteMaximum) absoluteMaximum = fabs(postProcessedBuffer[i]);
+			i++;
+		} i = 0;
 
 		while (i < scene->sampleCount) {
 			postProcessedBuffer[i] /= absoluteMaximum;
@@ -345,6 +353,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	}
 	
 	free(combinedBuffer);
+	free(loadBuffer);
 	free(stableBrownNoiseBuffer);
 
 	printf("\n");

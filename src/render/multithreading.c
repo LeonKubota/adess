@@ -13,6 +13,7 @@
 #include "commands/render.h"
 #include "render/multithreading.h"
 #include "render/pitch-shift.h"
+#include "render/modify-amplitudes.h"
 
 // STAGE 1
 // Interpolate keyframes, output 'frequencyBuffer' and 'loadBuffer'
@@ -382,8 +383,8 @@ void *renderValvetrain(void *arg) {
 	struct Scene *scene = threadData->scene;
 	struct Engine *engine = threadData->engine;
 
-	// Don't calculate valvetrain for 2 stroke engines
-	if (engine->stroke == 2) {
+	// Don't calculate valvetrain for 2 stroke engines and when it's volume is 0
+	if (engine->stroke == 2 || engine->valvetrainVolume < 0.0f) {
 		d_print("%.2f ms - valvetrain rendering finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 		return NULL;
 	}
@@ -505,6 +506,7 @@ void *postProcess(void *arg) {
 
 	struct ThreadData *threadData = (struct ThreadData *) arg;
 
+	struct Project *project = threadData->project;
 	struct Scene *scene = threadData->scene;
 
 	uint64_t i = 0;
@@ -513,16 +515,18 @@ void *postProcess(void *arg) {
 	float *postProcessedBuffer = threadData->buffer0;
 	float *combinedBuffer = threadData->buffer1;
 	float *stableBrownNoiseBuffer = threadData->buffer2;
+	float *loadBuffer = threadData->buffer3;
 
 
 	// Set up threads
-	int pitchCount = 3;
+	int pitchCount = 4;
 
 	pthread_t pitchThreads[pitchCount];
 
 	struct PitchShiftData {
 		float *buffer;
 		float *noiseBuffer;
+		struct Project *project;
 		struct Scene *scene;
 		uint8_t factor;
 	} pitchShiftDataArray[pitchCount];
@@ -532,8 +536,9 @@ void *postProcess(void *arg) {
 		// Put things into data struct
 		pitchShiftDataArray[i].buffer = (float *) malloc(scene->sampleCount * sizeof(float));
 		pitchShiftDataArray[i].noiseBuffer = stableBrownNoiseBuffer;
+		pitchShiftDataArray[i].project = project;
 		pitchShiftDataArray[i].scene = scene;
-		pitchShiftDataArray[i].factor = (2 * i + 2);	
+		pitchShiftDataArray[i].factor = (3 * i + 2);	
 
 		// Handle error
 		if (pitchShiftDataArray[i].buffer == NULL) {
@@ -543,7 +548,8 @@ void *postProcess(void *arg) {
 
 		// Copy data into 'pitchShiftDataArray[i].buffer', add noise
 		while (n < scene->sampleCount) {
-			pitchShiftDataArray[i].buffer[n] = combinedBuffer[n] + (stableBrownNoiseBuffer[n] * i);
+			pitchShiftDataArray[i].buffer[n] = combinedBuffer[n] + (loadBuffer[i] * 0.1f * stableBrownNoiseBuffer[n] * i);
+			//pitchShiftDataArray[i].buffer[n] = combinedBuffer[n];
 			n++;
 		}
 		n = 0;
@@ -566,47 +572,75 @@ void *postProcess(void *arg) {
 	}
 	i = 0;
 
-	float absoluteMaximum = 0.0f;
-
 	float pitchAmplitude[pitchCount];
-	pitchAmplitude[0] = 0.0f;
-	pitchAmplitude[1] = 0.0f;
-	pitchAmplitude[2] = 0.0f;
-	pitchAmplitude[3] = 0.0f;
+	pitchAmplitude[0] = 0.01f;
+	pitchAmplitude[1] = 0.01f;
+	pitchAmplitude[2] = 0.005f;
+	pitchAmplitude[3] = 0.001f;
+
+	int16_t temporalOffset = 0;
+	int16_t temporalOffsetStep = (int16_t) (project->sampleRate * 0.1f);
+	int16_t maxOffset = 0;
+
+	printf("load: %f\n", loadBuffer[0]);
 
 	// Combine pitch shifted audios
 	while (i < scene->sampleCount) {
 		// Add the main base
-		postProcessedBuffer[i] = combinedBuffer[i];
+		// TEST disable this for testing
+		postProcessedBuffer[i] = -combinedBuffer[i]; // Invert phase to maybe help with phase cancellation
 
 		// Add harmonic frequencies (to fill up the top)
 		while (n < (uint64_t) pitchCount) {
-			postProcessedBuffer[i] += pitchShiftDataArray[n].buffer[i] * pitchAmplitude[n];
+			// Add temporal offset
+			temporalOffset = temporalOffsetStep * (n + 1) + stableBrownNoiseBuffer[n * i] * loadBuffer[i];
+			temporalOffset = 0;
+
+			// TEST
+			if (abs(temporalOffset) > maxOffset) maxOffset = abs(temporalOffset);
+
+			if (i + temporalOffset < scene->sampleCount) {
+				postProcessedBuffer[i] += pitchShiftDataArray[n].buffer[i + temporalOffset] * pitchAmplitude[n] + ((n + 1) * 0.003f * stableBrownNoiseBuffer[i]);
+			}
+
 			n++;
 		}
 		n = 0;
 
-		// For normalization later
-		if (postProcessedBuffer[i] > absoluteMaximum) absoluteMaximum = postProcessedBuffer[i];
 
 		i++;
-	}
-	i = 0;
+	} i = 0;
 
+	// Add noise
+	while (i < scene->sampleCount) {
+		postProcessedBuffer[i] += 0.2f * stableBrownNoiseBuffer[i];
+		i++;
+	} i = 0;
 
 	// Free 'pitchShiftDataArray[i].buffer'
 	while (i < (uint64_t) pitchCount) {
 		free(pitchShiftDataArray[i].buffer);
 		i++;
-	}
-	i = 0;
+	} i = 0;
 
+	// Basic low frequency pass (3x to make it stronger for some reason)
+	modifyAmplitudes(postProcessedBuffer, 10000.0f, project, scene);
+	modifyAmplitudes(postProcessedBuffer, 8000.0f, project, scene);
+	modifyAmplitudes(postProcessedBuffer, 5000.0f, project, scene);
+
+	float absoluteMaximum = 0.0f;
+
+	// Calculate maximum for normalization
+	while (i < scene->sampleCount) {
+		if (fabs(postProcessedBuffer[i]) > absoluteMaximum) absoluteMaximum = fabs(postProcessedBuffer[i]);
+		i++;
+	} i = 0;
 
 	// Normalize
 	while (i < scene->sampleCount) {
 		postProcessedBuffer[i] /= absoluteMaximum;
 		i++;
-	}
+	} i = 0;
 
 	d_print("%.2f ms - post processing finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 
@@ -617,16 +651,20 @@ void *pitchShiftThread(void *arg) {
 	struct PitchShiftData {
 		float *buffer;
 		float *noiseBuffer;
+		struct Project *project;
 		struct Scene *scene;
 		uint8_t factor;
 	} *pitchShiftData = (struct PitchShiftData *) arg;
 
 	float *buffer = pitchShiftData->buffer;
 	float *noiseBuffer = pitchShiftData->noiseBuffer;
+	struct Project *project = pitchShiftData->project;
 	struct Scene *scene = pitchShiftData->scene;
 	uint8_t factor = pitchShiftData->factor;
 
 	pitchShift(buffer, noiseBuffer, factor, scene);
+
+	modifyAmplitudes(buffer, 10000.0f, project, scene);
 
 	return NULL;
 }
