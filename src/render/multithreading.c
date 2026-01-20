@@ -148,7 +148,7 @@ void *generatePinkNoise(void *arg) {
 
 	uint8_t n = 0;
 	float sum = 0.0f;
-	float pinkBuffer[8] = {0};
+	float pinkBuffer[32] = {0};
 
 	float randomFloat = 0.0f;
 
@@ -161,13 +161,12 @@ void *generatePinkNoise(void *arg) {
 		randomFloat = (*state / (float) UINT32_MAX);
 
 		// Generate pink noise using the Voss-McCartney algorithm, only use 4 samples
-		n = 0;
 		sum = 0.0f;
-		for (n = 0; n < 8; n++) {
+		for (n = 0; n < 31; n++) {
 			pinkBuffer[n] = (pinkBuffer[n] + randomFloat) * 0.5f;
 			sum += pinkBuffer[n];
 		}
-		pinkNoiseBuffer[i] = sum * 0.125f;
+		pinkNoiseBuffer[i] = sum * 0.03125;
 
 		i++;
 	}

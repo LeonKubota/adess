@@ -22,7 +22,6 @@ void e_warning(const char *format, ...) {
     printf(COLOR_BOLD "warning: " COLOR_RESET "");
     vprintf(format, args);
     va_end(args);
-	sleep(1); // Punish user for causing a warning, let him read it and think about it
 }
 
 void e_parse(char *path, int linenr, const char *format, ...) {
