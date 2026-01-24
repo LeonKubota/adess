@@ -5,5 +5,7 @@
 
 /build
 
+.cache
+
 CMakeCache.txt
 cmake_install.cmake
