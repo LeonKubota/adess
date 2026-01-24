@@ -5,7 +5,8 @@
 
 /build
 
-.cache
+.cache/
+*.idx
 
 CMakeCache.txt
 cmake_install.cmake

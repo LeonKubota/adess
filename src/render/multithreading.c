@@ -311,12 +311,6 @@ void *renderBase(void *arg) {
 		n = 0;
 		// Add harmonics
 		while (n < harmonics) {
-			// This sounds stupid (like wind)
-			//baseBuffer[i] += sin(phaseBuffer[i] * (n + 1 + ((n + 1) * (stableBrownNoiseBuffer[i] * 0.001f * loadBuffer[i])))) * (1.0f / (n + 1) * (1 + (stableBrownNoiseBuffer[i] * 0.01f)));
-			
-			// This doesn't have noise (sounds like a sine wave, because it is one)
-// 			baseBuffer[i] += sin(phaseBuffer[i] * (n + 1)) * (1.0f / (n + 1));
-			
 			// This sounds GREAT! Just like a real engine
 			baseBuffer[i] += sin(phaseBuffer[i] * (n + 1)) * (1.0f / (n + 1));
 			n++;
