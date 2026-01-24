@@ -1,7 +1,6 @@
 #include <stdbool.h>
 
 #include "files/extract.h"
-#include "files/check.h"
 #include "main.h"
 
 #ifndef MAKE_PROJECT_H

@@ -39,7 +39,7 @@ void *interpolate(void *arg) {
 
 	// For low frequency noise multiplier buffer
 	uint32_t lowFrequencyNoiseFalloff = engine->lowFrequencyNoiseFalloff * 16100;
-	float lowFrequencyNoiseConstant = (engine->idleRpm * engine->idleRpm) / lowFrequencyNoiseFalloff;
+	float lowFrequencyNoiseConstant = ((float) engine->idleRpm * engine->idleRpm) / lowFrequencyNoiseFalloff;
 
 	uint64_t i = 0;
 

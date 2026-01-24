@@ -4,10 +4,8 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-#include <math.h>
 #include <stdio.h>
 
-#include "utils.h"
 #include "main.h"
 #include "render/convert.h"
 

@@ -4,7 +4,7 @@
 #ifndef EXTRACT_H
 #define EXTRACT_H
 
-#include "extract.h"
+#include "main.h"
 
 char *parseLineValueS(char *variable, char *path);
 int64_t parseLineValueI(char *variable, char *path);

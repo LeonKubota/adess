@@ -1,7 +1,7 @@
+#include<stdbool.h>
+
 #ifndef CHECK_H
 #define CHECK_H
-
-#include "utils.h"
 
 bool checkFileExistsIn(char *path, const char *filename);
 bool checkFileExists(char *path);

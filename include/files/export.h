@@ -1,7 +1,9 @@
 #include "files/extract.h"
 #include "files/check.h"
 #include "main.h"
+
 #include <stdint.h>
+#include <stdio.h>
 
 #ifndef EXPORT_H
 #define EXPORT_H

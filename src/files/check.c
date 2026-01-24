@@ -206,13 +206,9 @@ bool checkValidity(char *path) {
 			if (typestring[n] == 'f') {
 				// Check if it really is a float
 				type = 'f';
-			}
-			// Check if it's a validatable int
-		   	else if (!isDigit(typestring[n])) {
+			} else if (!isDigit(typestring[n])) { // Check if it's a validatable int
 				type = 'u';
-			}
-			// Int
-		   	else {
+			} else { // Int
 				type = 'i';
 			}
 		// Boolean
