@@ -16,8 +16,12 @@ int help(char **args) {
 
 	// If there is an argument, print argument specific help
 	if (args[2]) {
+        if (strcmp(args[2], "guide") == 0) {
+            showUsage("guide", "<topic>", "");
+            showDescription("see the guide for a better understanding of adess\n");
+        }
 		// make_project
-		if (strcmp(args[2], "make_project") == 0) {
+        else if (strcmp(args[2], "make_project") == 0) {
 			showUsage("make_project", NULL, "hn.d:e");
 			showDescription("the make_project command is used for creating an adess project\n");
 			explainOptions("hn.d.e");
@@ -161,7 +165,7 @@ void defaultHelp(void) {
 	printf("\tmake_project\tMake a new project\n");
 	printf("\tmake_scene\tMake a new scene\n");
 	printf("\tmake_engine\tMake a new engine\n");
-	printf("\trender\t\tRender a scene\n");
 	
 	// Ending, suggest other info
+	printf("To see an in depth guide of Adess, see 'adess guide'\n");
 }

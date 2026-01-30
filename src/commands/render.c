@@ -117,6 +117,8 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 		return 1;
 	}
 
+    printf("got here\n");
+
 	// Get engine path and validate
 	struct Engine *engine = (struct Engine *) malloc(sizeof(struct Engine));
 	if (engine == NULL) { // Verify creation of struct 'engine'

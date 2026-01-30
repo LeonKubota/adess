@@ -28,6 +28,19 @@ char *parseLineValueS(char *variable, char *path) {
 		return NULL;
 	}
 
+    printf("%s\n", string);
+    printf("%d\n", string[strlen(string) - 1]);
+    printf("%d\n", 'A');
+
+    // Skip trailing whitespace
+    while ((string[strlen(string) - 1]) == ' ' || string[strlen(string) - 1] == '\t') {
+        string[strlen(string) - 1] = '\0';
+    }
+
+    printf("%s\n", string);
+    printf("%d\n", string[strlen(string) - 1]);
+    printf("%d\n", 'A');
+
 	if ((string[strlen(string) - 1]) == '\"') {
 		string[strlen(string) - 1] = '\0';
 	} else {
@@ -36,6 +49,7 @@ char *parseLineValueS(char *variable, char *path) {
 		free(string);
 		return NULL;
 	}
+    printf("here\n");
 
 	char *output = (char *) malloc(1024 * sizeof(char));
 	strcpy(output, string);

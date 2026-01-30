@@ -5,6 +5,7 @@
 #include "commands/command.h"
 #include "commands/make_engine.h"
 #include "utils.h"
+#include "files/check.h"
 
 #define PATH_SEPARATOR "/"
 

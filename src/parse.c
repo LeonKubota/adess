@@ -10,6 +10,7 @@
 
 // Commands
 #include "commands/help.h"
+#include "commands/guide.h"
 #include "commands/make_project.h"
 #include "commands/make_engine.h"
 #include "commands/make_scene.h"
@@ -62,6 +63,10 @@ int parseCommand(int argc, char **argv) {
 	if (strcmp(argv[1], "help") == 0) {
 		return execute(help, argv, args, argscount, "");
 	}
+    // guide
+    if (strcmp(argv[1], "guide") == 0) {
+        return execute(guide, argv, args, argscount, "");
+    }
 	// make_project
 	else if ((strcmp(argv[1], "make_project")) == 0) {
 		return execute(make_project, argv, args, argscount, "hnde");
@@ -283,6 +288,7 @@ int countArgs(int argc, char **argv) {
 			return i;
 		}
 	}
+
 	return argc;
 }
 

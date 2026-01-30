@@ -12,6 +12,7 @@
 #include "commands/command.h"
 #include "commands/make_project.h"
 #include "utils.h"
+#include "files/check.h"
 
 int make_project(char **args) {
 	d_showInput("make_project", args);
@@ -86,19 +87,18 @@ int make_project(char **args) {
 void appendProjectDefault(char *path) {
 	// Define audio signal parameters
 	if (appendLine(path, "// Audio signal parameters\n") == 1) return;
-	if (appendLine(path, "sample_rate = int: sample rate in Hz (usually 44100 or 96000)\n") == 1) return;
-	if (appendLine(path, "bit_depth = int: bit depth of audio: 8, 16, 24 or 32\n") == 1) return;
+	if (appendLine(path, "sample_rate = 44100\t\t// int: sample rate in Hz (usually 44100 or 96000)\n") == 1) return;
+	if (appendLine(path, "bit_depth = 16\t\t\t//int: bit depth of audio: 8, 16, 24 or 32\n") == 1) return;
 
 	// Define adess parameters
 	if (appendLine(path, "\n// Paths to files\n") == 1) return;
-	if (appendLine(path, "engine_path = string: path to engine files\n") == 1) return;
-	if (appendLine(path, "scene_path = string: path to scene files\n") == 1) return;
-	if (appendLine(path, "output_path = string: path to output\n") == 1) return;
-	if (appendLine(path, "output_path = string: path to output\n") == 1) return;
+	if (appendLine(path, "engine_path = \"engines\"\t//string: path to engine files\n") == 1) return;
+	if (appendLine(path, "scene_path = \"scenes\"\t//string: path to scene files\n") == 1) return;
+	if (appendLine(path, "output_path = \"output\"\t//string: path to output\n") == 1) return;
 
 	if (appendLine(path, "\n") == 1) return;
 
-	if (appendLine(path, "seed = unsigned 32-bit int: seed for random number generation\n") == 1) return;
+	if (appendLine(path, "seed = 69420\t\t\t//int: seed for random number generation\n") == 1) return;
 }
 
 int makeDirectory(char *path) {

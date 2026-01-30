@@ -484,7 +484,7 @@ void *combineBuffers(void *arg) {
 	}
 
 	if (overflowed) {
-		e_warning("maximum amplitude exceeded while combining buffers\n");
+		e_warning("maximum amplitude exceeded while combining buffers, expect reduced quality\n");
 	}
 
 	d_print("%.2f ms - join finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);

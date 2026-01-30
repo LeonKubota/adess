@@ -214,7 +214,7 @@ bool checkValidity(char *path) {
 		// Boolean
 		} else if (strcmp(typestring, "true") == 0 || strcmp(typestring, "false") == 0) {
 			type = 'b';
-		// Keyframe or curve
+		// Keyframe
 		} else {
 			strtok(varname, " =");
 			if (strcmp(varname, "keyframes") == 0) {
@@ -223,9 +223,6 @@ bool checkValidity(char *path) {
 				}
 				type = 'k';
 				break;
-			} else {
-				printf("its a curve\n\n\n");
-				return false;
 			}
 		}
 
