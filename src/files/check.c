@@ -141,7 +141,8 @@ bool checkValidity(char *path) {
 	char varname[1024] = "";
 	char type = ' '; // a = any; s = string; i = int; f = float; b = boolean; 
 	char *typestring;
-	int i = 0;
+    uint32_t i = 0;
+    uint32_t comOff = 0;
 	
 	while (fgets(line, sizeof(line), file)) {
 		// Reset 'type'
@@ -172,7 +173,6 @@ bool checkValidity(char *path) {
 			e_parse(path, i + 1, "variables have to be defined with '='\n");
 			return false;
 		}
-
 		typestring++;
 
 		// Skip leading whitespace
@@ -180,13 +180,21 @@ bool checkValidity(char *path) {
 			typestring++;
 		}
 
+        // check for comment
+        while (comOff < strlen(typestring)) {
+            if (typestring[comOff] == '/' && typestring[comOff + 1] == '/') {
+                typestring[comOff] = '\0';
+                break;
+            }
+            comOff++;
+        } comOff = 0;
+
 		// Skip trailing whitespace
 		char *end = typestring + strlen(typestring) - 1;
 		while (end > typestring &&  (*end == '\t' || *end == ' ' || *end == '\n')) {
 			*end-- = '\0';
 		}
 
-		
 		// Picking 'type'
 		// String
 		if (typestring[0] == '\"') {
@@ -255,10 +263,11 @@ bool checkValidity(char *path) {
 			} else {
 				typename = NULL;
 				printf("Something is horribly broken (this is not your fault)\n");
-				return false;
+			    return false;
 			}
 
 			e_parse(path, i + 1, "incorrect type, %s expected\n", typename);
+
 			return false;
 		}
 
@@ -310,8 +319,6 @@ char checkVar(char type, char *variable) {
 
 		"f base_volume",
 		"f valvetrain_volume",
-		"f mechanical_volume",
-		"f vibration_volume",
 
 		"f minimum_volume",
 		"f load_volume_multiplier",

@@ -95,44 +95,42 @@ int make_engine(char **args) {
 	} else {
 		// Physical engine parameters
 		if (appendLine(completePath, "// Physical engine parameters\n") == 1) return 1;
-		if (appendLine(completePath, "stroke = int: stroke\n") == 1) return 1;
-		if (appendLine(completePath, "cylinder_count = int: number of cylinders\n") == 1) return 1;
-		if (appendLine(completePath, "idle_rpm = int: rpm at idle\n") == 1) return 1;
-		if (appendLine(completePath, "max_rpm = int: maximum rpm\n") == 1) return 1;
-		if (appendLine(completePath, "valvetrain_timing_offset = float: offset of exhaust exhaust valves\n") == 1) return 1;
+		if (appendLine(completePath, "stroke = 4\t\t\t\t\t\t\t\t//int: stroke\n") == 1) return 1;
+		if (appendLine(completePath, "cylinder_count = 4\t\t\t\t\t\t//int: number of cylinders\n") == 1) return 1;
+		if (appendLine(completePath, "idle_rpm = 1000\t\t\t\t\t\t\t//int: rpm at idle\n") == 1) return 1;
+		if (appendLine(completePath, "max_rpm = 6000\t\t\t\t\t\t\t//int: maximum rpm\n") == 1) return 1;
+		if (appendLine(completePath, "valvetrain_timing_offset = 1.5f\t\t\t//float: offset of exhaust exhaust valves\n") == 1) return 1;
 
 		if (appendLine(completePath, "\n") == 1) return 1;
 
 		if (appendLine(completePath, "// Low frequency noise parameters\n") == 1) return 1;
-		if (appendLine(completePath, "low_frequency_noise_frequency = float: frequency of low frequency noise\n") == 1) return 1;
-		if (appendLine(completePath, "low_frequency_noise_falloff = int: falloff of low frequency noise in rpm\n") == 1) return 1;
-		if (appendLine(completePath, "low_frequency_noise_strength = float: strength of low frequency noise\n") == 1) return 1;
+		if (appendLine(completePath, "low_frequency_noise_frequency = 15.0f\t//float: frequency of low frequency noise\n") == 1) return 1;
+		if (appendLine(completePath, "low_frequency_noise_falloff = 100\t\t//int: falloff of low frequency noise in rpm\n") == 1) return 1;
+		if (appendLine(completePath, "low_frequency_noise_strength = 0.5f\t\t//float: strength of low frequency noise\n") == 1) return 1;
 
 		if (appendLine(completePath, "\n") == 1) return 1;
 
 		if (appendLine(completePath, "// Harmonics\n") == 1) return 1;
-		if (appendLine(completePath, "harmonics = int: number of harmonics\n") == 1) return 1;
+		if (appendLine(completePath, "harmonics = 3\t\t\t\t\t\t\t//int: number of harmonics\n") == 1) return 1;
 
 		if (appendLine(completePath, "\n") == 1) return 1;
 
 		if (appendLine(completePath, "// Volume parameters\n") == 1) return 1;
-		if (appendLine(completePath, "base_volume = float: volume of the base layer\n") == 1) return 1;
-		if (appendLine(completePath, "valvetrain_volume = float: volume of the valvetrain layer\n") == 1) return 1;
-		if (appendLine(completePath, "mechanical_volume = float: volume of the mechanical layer\n") == 1) return 1;
-		if (appendLine(completePath, "vibration_volume = float: volume of the vibration layer\n") == 1) return 1;
+		if (appendLine(completePath, "base_volume = 1.0f\t\t\t\t\t\t//float: volume of the base layer\n") == 1) return 1;
+		if (appendLine(completePath, "valvetrain_volume = 0.05f\t\t\t\t//float: volume of the valvetrain layer\n") == 1) return 1;
 
 		if (appendLine(completePath, "\n") == 1) return 1;
 
 		if (appendLine(completePath, "// Volume modification parameters\n") == 1) return 1;
-		if (appendLine(completePath, "minimum_volume = float: minimum volume (at idle rpm and no load)\n") == 1) return 1;
-		if (appendLine(completePath, "rpm_volume_multiplier = float: rpm volume multiplication factor\n") == 1) return 1;
-		if (appendLine(completePath, "load_volume_multiplier = float: load volume multiplication factor\n") == 1) return 1;
+		if (appendLine(completePath, "minimum_volume = 0.3f\t\t\t\t\t//float: minimum volume (at idle rpm and no load)\n") == 1) return 1;
+		if (appendLine(completePath, "rpm_volume_multiplier = 0.4f\t\t\t//float: rpm volume multiplication factor\n") == 1) return 1;
+		if (appendLine(completePath, "load_volume_multiplier = 0.1f\t\t\t//float: load volume multiplication factor\n") == 1) return 1;
 
 		if (appendLine(completePath, "\n") == 1) return 1;
 
 		if (appendLine(completePath, "// Noise modification parameters\n") == 1) return 1;
-		if (appendLine(completePath, "minimum_noise = float: minimum noise (at idle rpm and no load)\n") == 1) return 1;
-		if (appendLine(completePath, "load_noise_multiplier = float: load noise multiplication factor\n") == 1) return 1;
+		if (appendLine(completePath, "minimum_noise = 0.3f\t\t\t\t\t//float: minimum noise (at idle rpm and no load)\n") == 1) return 1;
+		if (appendLine(completePath, "load_noise_multiplier = 0.5f\t\t\t//float: load noise multiplication factor\n") == 1) return 1;
 
 		n_print("created engine at '%s'\n", completePath);
 	}

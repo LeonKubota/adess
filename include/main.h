@@ -71,8 +71,6 @@ struct Engine {
 	// Volume characteristics
 	float baseVolume; // The base volume
 	float valvetrainVolume; // The volume of the valvetrain
-	float mechanicalVolume; // THe volume of mechanical parts
-	float vibrationVolume; // The volume of secondary vibrations
 
 	float minimumVolume; // The minimum volume
 	float loadVolumeMultiplier; // Maximum volume (with 1.0f load)

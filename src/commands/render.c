@@ -117,8 +117,6 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 		return 1;
 	}
 
-    printf("got here\n");
-
 	// Get engine path and validate
 	struct Engine *engine = (struct Engine *) malloc(sizeof(struct Engine));
 	if (engine == NULL) { // Verify creation of struct 'engine'
@@ -413,89 +411,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	free(scene->engine);
 	free(scene->scenePath);
 	free(scene); // Must be freed after because timer uses 'scene->length'
-	
-	/*
-	//
-	* TODO retire this code
-	// Create main buffer
-	float lengthSeconds = parseLineValueF("length", scenePath);
-	if (lengthSeconds == FLOAT_FAIL) {
-		return 1;
-	}
-	
-	uint32_t sampleRate = parseLineValueI("sample_rate", projectPath);
-	if (sampleRate == (uint32_t) INT_FAIL) {
-		return 1;
-	}
 
-	int64_t sampleCount = lengthSeconds * sampleRate;
-
-	uint16_t bitDepth = parseLineValueI("bit_depth", projectPath);
-	if (bitDepth == (uint16_t) INT_FAIL) {
-		return 1;
-	} else if (bitDepth%8 != 0 || bitDepth > 32 || bitDepth == 0) {
-		e_parse(projectPath, getVariableLineNumber("bit_depth", projectPath) + 1, "incorrect value for 'bit_depth'\n");
-		return 1;
-	}
-
-	//uint64_t bufferSize = (uint64_t) sampleCount * (uint64_t) bitDepth; // So that it can hold it
-
-	// Creating the buffer
-	uint8_t sampleSize = 0;
-
-	// Set the type to the correct value
-	switch (bitDepth) {
-	case 8:
-		sampleSize = sizeof(uint8_t);
-		break;
-	case 16:
-		sampleSize = sizeof(int16_t);
-		break;
-	case 24:
-		sampleSize = 3 * sizeof(uint8_t); // 24 bit is really weirddd...
-		break;
-	case 32:
-		sampleSize = sizeof(float);
-		break;
-	}
-
-	void *buffer = (void *) malloc(sampleCount * sampleSize);
-
-	if (buffer == NULL) {
-		e_fatal("failed to allocate memory for render buffer of size [%.2f MB]", (sampleCount * sampleSize) / 8000000.0f);
-		return 1;
-	}
-
-	d_print("Created rpm buffer with [%" PRId64 "] samples of size [%.2f MB] with sample size of [%i bits]\n", sampleCount, (sampleCount *  sampleSize)/ 8000000.0f, bitDepth);
-
-	uint32_t seed = 456123789;
-
-	// Convert the keys to sine
-	keysToSine(buffer, bitDepth, keyframes, keyframeCount, sampleCount, sampleRate, &seed);
-
-	free(engine);
-	free(keyframes);
-	
-	b_todo("writing to: '%s'\n", outputPath);
-
-	FILE *file = fopen(outputPath, "wb");
-
-	if (file == NULL) {
-		e_fatal("failed to write into file '%s'\n", outputPath);
-		return 1;
-	}
-
-	makeWavHeader(file, sampleRate, bitDepth, (uint32_t) sampleCount);
-
-	fwrite(buffer, 1, sampleCount * (bitDepth / 8), file);
-
-	free(buffer);
-	fclose(file);
-
-	printf("rendered succesfully\n");
-
-	return 0;
-	*/
 	return 0;
 }
 
@@ -692,18 +608,6 @@ int getEngine(struct Scene *scene, struct Engine *engine, struct Project *projec
 
 	engine->valvetrainVolume = parseLineValueF("valvetrain_volume", enginePath);
 	if (engine->valvetrainVolume == FLOAT_FAIL) {
-		free(enginePath);
-		return 1;
-	}
-
-	engine->mechanicalVolume = parseLineValueF("mechanical_volume", enginePath);
-	if (engine->mechanicalVolume == FLOAT_FAIL) {
-		free(enginePath);
-		return 1;
-	}
-
-	engine->vibrationVolume = parseLineValueF("vibration_volume", enginePath);
-	if (engine->vibrationVolume == FLOAT_FAIL) {
 		free(enginePath);
 		return 1;
 	}

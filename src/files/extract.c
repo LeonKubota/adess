@@ -28,18 +28,10 @@ char *parseLineValueS(char *variable, char *path) {
 		return NULL;
 	}
 
-    printf("%s\n", string);
-    printf("%d\n", string[strlen(string) - 1]);
-    printf("%d\n", 'A');
-
     // Skip trailing whitespace
     while ((string[strlen(string) - 1]) == ' ' || string[strlen(string) - 1] == '\t') {
         string[strlen(string) - 1] = '\0';
     }
-
-    printf("%s\n", string);
-    printf("%d\n", string[strlen(string) - 1]);
-    printf("%d\n", 'A');
 
 	if ((string[strlen(string) - 1]) == '\"') {
 		string[strlen(string) - 1] = '\0';
@@ -49,7 +41,6 @@ char *parseLineValueS(char *variable, char *path) {
 		free(string);
 		return NULL;
 	}
-    printf("here\n");
 
 	char *output = (char *) malloc(1024 * sizeof(char));
 	strcpy(output, string);
@@ -68,7 +59,14 @@ int64_t parseLineValueI(char *variable, char *path) {
 		return INT_FAIL;
 	}
 
-	int64_t output = atoll(value);
+    //printf("'%s'\n", value);
+
+    // Skip trailing whitespace
+    while ((value[strlen(value) - 1]) == ' ' || value[strlen(value) - 1] == '\t') {
+        value[strlen(value) - 1] = '\0';
+    }
+
+    int64_t output = atoll(value);
 
 	// atoll returns 0 if input isn't an integer string (64 bit int)
 	if (output == 0) {
@@ -92,6 +90,11 @@ float parseLineValueF(char *variable, char *path) {
 	if (string == NULL) {
 		return FLOAT_FAIL;
 	}
+
+    // Skip trailing whitespace
+    while ((string[strlen(string) - 1]) == ' ' || string[strlen(string) - 1] == '\t') {
+        string[strlen(string) - 1] = '\0';
+    }
 
 	// Prepare the stringNumber
 	char stringNumber[16] = "";
@@ -195,6 +198,7 @@ char *parseLineValue(char *variable, char *path) { // FIXME
 		// WTF pointer things
 		int i = 0;
 		bool instring = false;
+
 		while (curchar < (cursor + strlen(cursor) - 1)) {
 			// Flip 'instring' if " detected
 			if (curchar[0] == '\"') {
@@ -202,7 +206,7 @@ char *parseLineValue(char *variable, char *path) { // FIXME
 			}
 			
 			if (instring == false && curchar[0] == '/' && curchar[1] == '/') {
-				cursor[i - 1] = '\0';
+				cursor[i] = '\0';
 			}
 			i++;
 			curchar++;

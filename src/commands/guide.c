@@ -9,20 +9,20 @@
 int guide(char **args) {
     d_showInput("guide", args);
 
-    // Show how to use the guide when no argument is passed
     if (args[2]) {
-        // List
+        // Step by step
         if (strcmp(args[2], "1") == 0) overviewGuide(true);
-        // 1
-        // 2
-        // 3
-        // 4
-        // 5
+        if (strcmp(args[2], "2") == 0) projectGuide(true);
+        if (strcmp(args[2], "3") == 0) sceneGuide(true);
+        if (strcmp(args[2], "4") == 0) engineGuide(true);
+        if (strcmp(args[2], "5") == 0) renderGuide(true);
         // ...
+        // Show guide by topic
+        if (strcmp(args[2], "overview") == 0) overviewGuide(false);
         // Project
         // Scene
         // Render
-    } else {
+    } else { // If unexpected input
         howToUse();
     }
 
@@ -47,36 +47,80 @@ void overviewGuide(bool step) {
 
     printf("\nYou use .adess files to controll the sound. There are three types:\n");
 
-    printf("\tproject files\t- contain information about the project, such as export information and paths to other files.\n");
-    printf("\tscene files\t- contains information about scenes (length and the used engine) and keyframes.\n");
-    printf("\tengine files\t- contains information about engine parameters, both physical (cylinder count) and arbitrary (noise multiplier).\n");
+    printf("\tproject files\t\t\t- contain information about the project, such as export\n\t\t\t\t\t  information and paths to other files.\n");
+    printf("\tscene files\t\t\t- contains information about scenes (length and the used engine)\n\t\t\t\t\t  and keyframes.\n");
+    printf("\tengine files\t\t\t- contains information about engine parameters, both physical\n\t\t\t\t\t  (cylinder count) and arbitrary (noise multiplier).\n");
 
     printf("\nYou can see more info about these files with 'adess guide <filename>'.\n");
 
-    if (step) printf("\nUp next: step 2 - seting up a project\n");
+    if (step) printf("\nUp next: step 2 - projects\n");
 }
+
 void projectGuide(bool step) {
-    if (step) printf("Step 1 - overview of adess\n\n");
+    if (step) printf("Step 2 - projects\n\n");
 
     printf("The project files contain important information about the output files properties and the paths to other files. Here are the expected values:\n");
-    printf("\tsample_rate\t- the sample rate of the resulting file, common values include 44100 and 96000.\n");
-    printf("\tbit-depth\t- the bit depth of the resulting file, accepted values are 8, 16, 24 and 32.\n");
-    printf("\tengine_path\t- path to the directory with engine files.\n");
-    printf("\tscene_path\t- path to the directory with scenes.\n");
-    printf("\toutput_path\t- path to the output directory.\n");
-    printf("\tseed\t- seed used for random number generation.\n");
+    printf("\tsample_rate\t\t\t- the sample rate of the resulting file, common values include\n\t\t\t\t\t  44100 and 96000.\n");
+    printf("\tbit-depth\t\t\t- the bit depth of the resulting file, accepted values are\n\t\t\t\t\t  8, 16, 24 and 32.\n");
+    printf("\tengine_path\t\t\t- path to the directory with engine files.\n");
+    printf("\tscene_path\t\t\t- path to the directory with scenes.\n");
+    printf("\toutput_path\t\t\t- path to the output directory.\n");
+    printf("\tseed\t\t\t\t- seed used for random number generation.\n");
 
-    if (step) printf("\nNext step: 2 - seting up a project\n");
+    if (step) printf("\nNext step: 3 - scenes\n");
 }
+
 void sceneGuide(bool step) {
-    if (step) printf("Step 1 - overview of adess\n\n");
-    if (step) printf("\nNext step: 2 - seting up a project\n");
+    if (step) printf("Step 3 - scenes\n\n");
+
+    printf("The scene files contain important information about the scene as well as a sequence of keyframes containing information about time, rpm and load. Here are the expected values:\n");
+    printf("\tlength\t\t\t\t- the length of the scene, in seconds.\n");
+    printf("\tengine\t\t\t\t- the the name of the used engine.\n");
+    printf("\tkeyframes\t\t\t- list of keyframes.\n");
+
+    printf("\nThe keyframes list is formatted as follows:\n");
+    printf("\t0.0f, 1000, 0.5f;");
+    printf("\tThis sets a keyframe at 0.0 seconds at 1000 rmp and 0.5 load.\n");
+
+    if (step) printf("\nNext step: 4 - engines\n");
 }
+
 void engineGuide(bool step) {
-    if (step) printf("Step 1 - overview of adess\n\n");
-    if (step) printf("\nNext step: 2 - seting up a project\n");
+    if (step) printf("Step 4 - engines\n\n");
+
+    printf("The engine files contain important variables about engines. Here are the expected values:\n");
+    printf("\tstroke\t\t\t\t- the stroke of an engine (usually 4 or 2).\n");
+    printf("\tcylinder_count\t\t\t- the number of cylinders.\n");
+    printf("\tidle_rpm\t\t\t- the idle rpm of the engine.\n");
+    printf("\tmax_rpm\t\t\t\t- the maximum rpm of the engine.\n");
+    printf("\tvalvetrain_timing_offset\t- offset of the exhaust valve compared to the intake valve.\n");
+
+    printf("\tlow_frequency_noise_frequency\t- frequency of low frequency noise, used for idle sound.\n");
+    printf("\tlow_frequency_noise_falloff\t- falloff of low frequency noise,\n\t\t\t\t\t  it's strongest at idle rpm and is zero at idle rpm + falloff value.\n");
+    printf("\tlow_frequency_noise_strength\t- strength of low frequency noise.\n");
+
+    printf("\tharmonics\t\t\t- how many harmonic frequencies the engine has. This setting is\n\t\t\t\t\t  very expensive, values above 10 are strongly discouraged.\n");
+
+    printf("\tbase_volume\t\t\t- the volume of the base sound.\n");
+    printf("\tvalvetrain_volume\t\t- the volume of the valvetrain sound, very low values are suggested.\n");
+
+    printf("\tminimum_volume\t\t\t- minimum volume (at idle rpm with no load).\n");
+    printf("\trpm_volume_multiplier\t\t- volume multiplication factor for rpm.\n");
+    printf("\tload_volume_multiplier\t\t- volume multiplication factor for load.\n");
+
+    printf("\tminimum_noise\t\t\t- minimum noise (at ide woth no load).\n");
+    printf("\tload_noise_multipler\t\t- noise multiplication factor for load.\n");
+
+    if (step) printf("\nNext step: 5 - rendering\n");
 }
+
 void renderGuide(bool step) {
-    if (step) printf("Step 1 - overview of adess\n\n");
-    if (step) printf("\nNext step: 2 - seting up a project\n");
+    if (step) printf("Step 5 - rendering\n\n");
+
+    printf("After setting up your project, scene and engine, you can render your project.\n");
+    printf("Use: adess render <scene-name> to render, you can use -p for preview -n to specify the outputs name and -a to render all.\n");
+    printf("Now you can find the output in the output directory!\n");
+}
+
+void syntax(void) {
 }

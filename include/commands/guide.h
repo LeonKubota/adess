@@ -13,3 +13,5 @@ void projectGuide(bool step);
 void sceneGuide(bool step);
 void engineGuide(bool step);
 void renderGuide(bool step);
+
+void syntax(void);

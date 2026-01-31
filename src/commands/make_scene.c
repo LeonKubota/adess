@@ -93,12 +93,11 @@ int make_scene(char **args) {
 	if (g_opts[5] == true) {
 		n_print("created empty scene at '%s'\n", completePath);
 	} else {
-		if (appendLine(completePath, "length = 10\t\t//float: length in seconds\n") == 1) return 1;
+		if (appendLine(completePath, "length = 10.0f\t\t\t//float: length in seconds\n") == 1) return 1;
 		if (appendLine(completePath, "engine = \"engineName\"\t//string: engine_name\n") == 1) return 1;
 
 		if (appendLine(completePath, "\nkeyframes = {\n") == 1) return 1;
-		if (appendLine(completePath, "\t0.0f, 1000, 0.0f\n") == 1) return 1;
-		if (appendLine(completePath, "\t//float: time in seconds, int: rpm, float: load (0 to 1)\n") == 1) return 1;
+		if (appendLine(completePath, "\t0.0f, 1000, 0.0f;\t//float: time in seconds, int: rpm, float: load (0 to 1)\n") == 1) return 1;
 		if (appendLine(completePath, "}\n") == 1) return 1;
 
 		n_print("created scene at '%s'\n", completePath);
