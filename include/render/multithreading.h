@@ -15,8 +15,6 @@ void *generateLowFrequencyNoise(void *arg);
 // STAGE 2
 void *renderBase(void *arg);
 void *renderValvetrain(void *arg);
-void *renderMechanical(void *arg);
-void *renderVibration(void *arg);
 
 // STAGE 3
 void *combineBuffers(void *arg);

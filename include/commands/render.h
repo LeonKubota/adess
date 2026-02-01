@@ -27,7 +27,9 @@ char *processName(char *inputName);
 uint64_t calculateSmallestPower(uint64_t x);
 
 // Printing functions
+/*
 void printKeys(struct Keyframe *keyframesPrint, int keyCount);
 void printMinMax(float *buffer, struct Scene *scene, struct Project *project);
+*/
 
 #endif

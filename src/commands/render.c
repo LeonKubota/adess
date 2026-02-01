@@ -98,10 +98,8 @@ int render(char **args) {
 	}
 }
 
-// This function is extremly chaotic
-// TODO making it nice and clean (just hiding the ugliness with abstractions)
 int renderScene(char *sceneNameInput, struct Project *project, char *name) {
- 	time_t startTime = clock();
+ 	//time_t startTime = clock();
 
 	// Create scene struct
 	struct Scene *scene = (struct Scene *) malloc(sizeof(struct Scene));
@@ -146,7 +144,8 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	// Get the keyframes
 	if (getKeyframes(keyframes, scene, engine) == 1) return 1;
 
-	d_print("Files for rendering found and loaded\n");
+	// d_print("Files for rendering found and loaded\n");
+	n_print("Files found and loaded\n");
 
 
 	// Create threads for rendering process
@@ -154,8 +153,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 
 	// STAGE 1
-	printf("\n");
-	d_print("rendering [1/5] - prepare\n");
+	printf("rendering: stage [1/5]");
 
 	// Interpolation: product: 'frequencyBuffer', 'phaseBuffer', 'loadBuffer'
 	float *frequencyBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
@@ -219,8 +217,8 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	free(keyframes); // No longer needed after interpolation
 
 	// STAGE 2: compute
-	printf("\n");
-	d_print("rendering [2/5] - compute\n");
+	//d_print("rendering [2/5] - compute\n");
+	printf("\rrendering: stage [2/5]");
 
 	// Render base frequencies
 	float *baseBuffer = (float *) calloc(scene->sampleCount, sizeof(float));
@@ -240,35 +238,13 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	if (pthread_create(&thread2, NULL, renderValvetrain, (void *) &valvetrainRenderingData) != 0) return 1;
 
 
-	// Render mechanical
-	float *mechanicalBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
-	if (mechanicalBuffer == NULL) return 1;
-
-	struct ThreadData mechanicalRenderingData = {mechanicalBuffer, frequencyBuffer, loadBuffer, pinkNoiseBuffer, stableBrownNoiseBuffer, lowFrequencyNoiseBuffer, rpmBuffer, project, scene, engine, NULL, false};
-
-	if (pthread_create(&thread3, NULL, renderMechanical, (void *) &mechanicalRenderingData) != 0) return 1;
-
-
-	// Render vibration
-	float *vibrationBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
-	if (vibrationBuffer == NULL) return 1;
-
-	struct ThreadData vibrationRenderingData = {vibrationBuffer, frequencyBuffer, loadBuffer, pinkNoiseBuffer, stableBrownNoiseBuffer, lowFrequencyNoiseBuffer, rpmBuffer, project, scene, engine, NULL, false};
-
-	if (pthread_create(&thread4, NULL, renderVibration, (void *) &vibrationRenderingData) != 0) return 1;
-
-
 	// Join the threads
 	if (pthread_join(thread1, NULL) != 0) return 1;
 	if (pthread_join(thread2, NULL) != 0) return 1;
-	if (pthread_join(thread3, NULL) != 0) return 1;
-	if (pthread_join(thread4, NULL) != 0) return 1;
 
 	// Test if any failed
 	if (baseRenderingData.failed == true) return 1;
 	if (valvetrainRenderingData.failed == true) return 1;
-	if (mechanicalRenderingData.failed == true) return 1;
-	if (vibrationRenderingData.failed == true) return 1;
 
 
 	// Free data from prepare stage
@@ -281,15 +257,15 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	free(lowFrequencyNoiseBuffer);
 
 	// Stage: combine
-	printf("\n");
-	d_print("rendering [3/5] - join\n");
+	//d_print("rendering [3/5] - join\n");
+	printf("\rrendering: stage [3/5]");
 
 	
 	// Combine the buffers
 	float *combinedBuffer = (float *) calloc(scene->sampleCount, sizeof(float));
 	if (combinedBuffer == NULL) return 1;
 
-	struct ThreadData combineBuffersData = {combinedBuffer, baseBuffer, valvetrainBuffer, mechanicalBuffer, NULL, NULL, NULL, project, scene, engine, NULL, false};
+	struct ThreadData combineBuffersData = {combinedBuffer, baseBuffer, valvetrainBuffer, NULL, NULL, NULL, NULL, project, scene, engine, NULL, false};
 
 	// Run in main thread
 	combineBuffers((void *) &combineBuffersData);
@@ -297,22 +273,19 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	// Free buffers
 	free(baseBuffer);
 	free(valvetrainBuffer);
-	free(mechanicalBuffer);
-	free(vibrationBuffer);
 
 	// Check for errors
 	if (combineBuffersData.failed == true) return 1;
 
 
 	// Stage: post process
-	printf("\n");
-
 	float *postProcessedBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 	if (postProcessedBuffer == NULL) return 1;
 
 	// Only do the post processing if '-p' is turned on
 	if (!g_opts[7]) {
-		d_print("rendering [4/5] - post process\n");
+		// d_print("rendering [4/5] - post process\n");
+	    printf("\rrendering: stage [4/5]");
 
 		struct ThreadData postProcessingData = {postProcessedBuffer, combinedBuffer, stableBrownNoiseBuffer, loadBuffer, NULL, NULL, NULL, project, scene, engine, NULL, false};
 
@@ -322,7 +295,8 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 		// Check for errors
 		if (postProcessingData.failed == true) return 1;
 	} else {
-		d_print("rendering [4/5] - post processing skipped\n");
+		//d_print("rendering [4/5] - post processing skipped\n");
+	    printf("\rrendering: stage [4/5]");
 
 		uint64_t i = 0;
 
@@ -356,16 +330,13 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	free(loadBuffer);
 	free(stableBrownNoiseBuffer);
 
-	printf("\n");
-
-
 	// TEST
-	printMinMax(postProcessedBuffer, scene, project);
+	// printMinMax(postProcessedBuffer, scene, project);
 
 
 	// Stage: write
-	printf("\n");
-	d_print("rendering [5/5] - write\n");
+	//d_print("rendering [5/5] - write\n");
+	printf("\rrendering: stage [5/5]\n");
 
 
 	// Create the output buffer
@@ -374,8 +345,6 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	convert(outputBuffer, postProcessedBuffer, scene->sampleCount, project->bitDepth);
 	free(postProcessedBuffer); // No longer useful
-
-	b_todo("writing to: '%s'\n", outputPath);
 
 	FILE *file = fopen(outputPath, "wb");
 	if (file == NULL) {
@@ -405,7 +374,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	free(project->outputPath);
 	free(project);
 
-	d_print("%.2f ms - render finished\n\tspeed: [%.2f s/s]\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC, (scene->length / ((clock() - startTime) * 1000.0f / CLOCKS_PER_SEC)) * 1000.0f);
+	//d_print("%.2f ms - render finished\n\tspeed: [%.2f s/s]\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC, (scene->length / ((clock() - startTime) * 1000.0f / CLOCKS_PER_SEC)) * 1000.0f);
 
 	// Scene
 	free(scene->engine);
@@ -416,7 +385,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 }
 
 int renderAll(struct Project *project) {
-	printf("rendering all, %s\n", project->scenePath);
+	n_print("rendering all, %s\n", project->scenePath);
 	return 1;
 }
 
@@ -795,7 +764,6 @@ char *processName(char *inputName) {
 	if (strchr(inputName, '.') != NULL) {
 		char *wavString = ".wav";
 		for (int i = 3; i > -1; i--) {
-			printf("%i\n", i);
 			if (inputName[strlen(inputName) - i - 1] != wavString[3 - i]) {
 				// Doesn't end in ".wav", add the ".wav"
 				if (strlen(inputName) > 1020) { // Check if there is space
@@ -818,6 +786,7 @@ char *processName(char *inputName) {
 	return inputName;
 }
 
+/*
 void printKeys(struct Keyframe *keyframesPrint, int keyCount) {
 	int i = 0;
 	if (g_debug == false) {
@@ -829,7 +798,9 @@ void printKeys(struct Keyframe *keyframesPrint, int keyCount) {
 		i++;
 	}
 }
+*/
 
+/*
 void printMinMax(float *buffer, struct Scene *scene, struct Project *project) {
 	float maximum = 0.0f;
 	float minimum = 0.0f;
@@ -856,6 +827,7 @@ void printMinMax(float *buffer, struct Scene *scene, struct Project *project) {
 	d_print("maximum: [%f at %.2f s]\n", maximum, maxTime / (float) project->sampleRate);
 	d_print("minimum: [%f at %.2f s]\n", minimum, minTime / (float) project->sampleRate);
 }
+*/
 
 uint64_t calculateSmallestPower(uint64_t x) {
 	uint64_t i = 0;

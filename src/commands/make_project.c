@@ -114,7 +114,7 @@ int makeDirectory(char *path) {
 		return 1;
 	}
 
-	d_print("directory created at '%s'\n", path);
+	// d_print("directory created at '%s'\n", path);
 	
 	return 0;
 }

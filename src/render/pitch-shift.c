@@ -99,7 +99,6 @@ int pitchShift(float *input, float *noiseBuffer, uint8_t factor, struct Scene *s
 
 	//float noiseMultiplier = 0.75f * (factor / 38.0f);
 	//float noiseMultiplier = 0.0f;
-	printf("done %i; ", factor);
 
 	// Normalize the data and copy into the input buffer
 	while (i < scene->sampleCount) {

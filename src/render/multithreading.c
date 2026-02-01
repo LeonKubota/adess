@@ -18,7 +18,7 @@
 // STAGE 1
 // Interpolate keyframes, output 'frequencyBuffer' and 'loadBuffer'
 void *interpolate(void *arg) {
- 	time_t startTime = clock();
+ 	// time_t startTime = clock();
 
 	struct ThreadData *threadData = (struct ThreadData *) arg;
 
@@ -127,13 +127,13 @@ void *interpolate(void *arg) {
 		}
 	}
 
-	d_print("%.2f ms - interpolation finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
+	// d_print("%.2f ms - interpolation finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 
 	return NULL;
 }
 
 void *generatePinkNoise(void *arg) {
- 	time_t startTime = clock();
+ 	// time_t startTime = clock();
 
 	struct ThreadData *threadData = (struct ThreadData *) arg;
 
@@ -170,13 +170,13 @@ void *generatePinkNoise(void *arg) {
 
 		i++;
 	}
-	d_print("%.2f ms - pink noise generation finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
+	// d_print("%.2f ms - pink noise generation finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 
 	return NULL;
 }
 
 void *generateLowFrequencyNoise(void *arg) {
- 	time_t startTime = clock();
+ 	// time_t startTime = clock();
 
 	struct ThreadData *threadData = (struct ThreadData *) arg;
 
@@ -206,13 +206,13 @@ void *generateLowFrequencyNoise(void *arg) {
 		i++;
 	}
 
-	d_print("%.2f ms - low frequency noise generation finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
+	// d_print("%.2f ms - low frequency noise generation finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 
 	return NULL;
 }
 
 void *generateStableBrownNoise(void *arg) {
-	time_t startTime = clock();
+	// time_t startTime = clock();
 
 	struct ThreadData *threadData = (struct ThreadData *) arg;
 
@@ -256,7 +256,7 @@ void *generateStableBrownNoise(void *arg) {
 		n++;
 	}
 
-	d_print("%.2f ms - stable brown noise generation finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
+	// d_print("%.2f ms - stable brown noise generation finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 
 	return NULL;
 }
@@ -265,7 +265,7 @@ void *generateStableBrownNoise(void *arg) {
 // STAGE 2
 // Render the base frequencies
 void *renderBase(void *arg) {
- 	time_t startTime = clock();
+ 	// time_t startTime = clock();
 
 	struct ThreadData *threadData = (struct ThreadData *) arg;
 
@@ -362,13 +362,13 @@ void *renderBase(void *arg) {
 		}
 	}
 
-	d_print("%.2f ms - base renedering finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
+	// d_print("%.2f ms - base renedering finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 
 	return NULL;
 }
 
 void *renderValvetrain(void *arg) {
- 	time_t startTime = clock();
+ 	// time_t startTime = clock();
 
 	struct ThreadData *threadData = (struct ThreadData *) arg;
 
@@ -378,7 +378,7 @@ void *renderValvetrain(void *arg) {
 
 	// Don't calculate valvetrain for 2 stroke engines and when it's volume is 0
 	if (engine->stroke == 2 || engine->valvetrainVolume < 0.0f) {
-		d_print("%.2f ms - valvetrain rendering finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
+		// d_print("%.2f ms - valvetrain rendering finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 		return NULL;
 	}
 
@@ -423,40 +423,18 @@ void *renderValvetrain(void *arg) {
 		// Multiply (make it 'click')
 		valvetrainBuffer[i] *= 0.5f * (pow(intakeMultiplier, 2) + pow(exhaustMultiplier, 2));
 
-		if (valvetrainBuffer[i] > 1.0f) printf("err\n");
-		if (valvetrainBuffer[i] < -1.0f) printf("err\n");
 		i++;
 	}
 
-	d_print("%.2f ms - valvetrain rendering finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
+	// d_print("%.2f ms - valvetrain rendering finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 
-	return NULL;
-}
-
-void *renderMechanical(void *arg) {
- 	time_t startTime = clock();
-
-	//struct ThreadData *threadData = (struct ThreadData *) arg;
-
-	if (false) printf("%p\n", arg);
-	d_print("%.2f ms - mechanical rendering finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
-	return NULL;
-}
-
-void *renderVibration(void *arg) {
- 	time_t startTime = clock();
-
-	//struct ThreadData *threadData = (struct ThreadData *) arg;
-
-	if (false) printf("%p\n", arg);
-	d_print("%.2f ms - vibration rendering finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 	return NULL;
 }
 
 
 // STAGE 3
 void *combineBuffers(void *arg) {
- 	time_t startTime = clock();
+ 	// time_t startTime = clock();
 
 	struct ThreadData *threadData = (struct ThreadData *) arg;
 
@@ -487,7 +465,7 @@ void *combineBuffers(void *arg) {
 		e_warning("maximum amplitude exceeded while combining buffers, expect reduced quality\n");
 	}
 
-	d_print("%.2f ms - join finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
+	// d_print("%.2f ms - join finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 
 	return NULL;
 }
@@ -495,7 +473,7 @@ void *combineBuffers(void *arg) {
 
 // STAGE 4
 void *postProcess(void *arg) {
-	time_t startTime = clock();
+	// time_t startTime = clock();
 
 	struct ThreadData *threadData = (struct ThreadData *) arg;
 
@@ -575,8 +553,6 @@ void *postProcess(void *arg) {
 	int16_t temporalOffsetStep = (int16_t) (project->sampleRate * 0.1f);
 	int16_t maxOffset = 0;
 
-	printf("load: %f\n", loadBuffer[0]);
-
 	// Combine pitch shifted audios
 	while (i < scene->sampleCount) {
 		// Add the main base
@@ -635,7 +611,7 @@ void *postProcess(void *arg) {
 		i++;
 	} i = 0;
 
-	d_print("%.2f ms - post processing finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
+	//d_print("%.2f ms - post processing finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
 
 	return NULL;
 }
