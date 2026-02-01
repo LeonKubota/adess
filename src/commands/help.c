@@ -25,23 +25,19 @@ int help(char **args) {
 			showUsage("make_project", NULL, "hn.d:e");
 			showDescription("the make_project command is used for creating an adess project\n");
 			explainOptions("hn.d.e");
-		} 
-		else if (strcmp(args[2], "make_scene") == 0) {
+		} else if (strcmp(args[2], "make_scene") == 0) {
 			showUsage("make_scene", NULL, "hn.d:e");
 			showDescription("the make_scene command is used for creating a scene\n");
 			explainOptions("hn.d.e");
-		}
-		else if (strcmp(args[2], "make_engine") == 0) {
+		} else if (strcmp(args[2], "make_engine") == 0) {
 			showUsage("make_engine", NULL, "hn.d:e");
 			showDescription("the make_engine command is used for creating an engine\n");
 			explainOptions("hn.d.e");
-		}
-		else if (strcmp(args[2], "render") == 0) {
+		} else if (strcmp(args[2], "render") == 0) {
 			showUsage("render", "<scene>" , "n.ap");
 			showDescription("the render command is used for rendering a scene\n");
 			explainOptions("n.ap");
-		}
-		else if (strcmp(args[2], "help") == 0) {
+		} else if (strcmp(args[2], "help") == 0) {
 			defaultHelp();
 			return 0;
 		} else {
@@ -167,5 +163,5 @@ void defaultHelp(void) {
 	printf("\tmake_engine\tMake a new engine\n");
 	
 	// Ending, suggest other info
-	printf("To see an in depth guide of Adess, see 'adess guide'\n");
+	printf("\nTo see an in depth guide of Adess, see 'adess guide'\n");
 }

@@ -5,13 +5,13 @@
 
 int guide(char **args);
 
-void howToUse(void);
+int howToUse(void);
 
 // Set by step
-void overviewGuide(bool step);
-void projectGuide(bool step);
-void sceneGuide(bool step);
-void engineGuide(bool step);
-void renderGuide(bool step);
+int overviewGuide(bool step);
+int projectGuide(bool step);
+int sceneGuide(bool step);
+int engineGuide(bool step);
+int renderGuide(bool step);
 
-void syntax(void);
+int syntaxGuide(void);
