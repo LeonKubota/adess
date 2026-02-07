@@ -348,13 +348,16 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	FILE *file = fopen(outputPath, "wb");
 	if (file == NULL) {
-		e_fatal("failed to write into file '%s'\n", outputPath);
+        e_fatal("opening '%s' failed\n", outputPath);
 		return 1;
 	}
 
 	makeWavHeader(file, project->sampleRate, project->bitDepth, scene->sampleCount);
 
-	fwrite(outputBuffer, 1, scene->sampleCount * (project->bitDepth / 8), file);
+	if (fwrite(outputBuffer, 1, scene->sampleCount * (project->bitDepth / 8), file) != scene->sampleCount * (project->bitDepth / 8)) {
+        e_fatal("writing to '%s' failed\n", outputPath);
+        return 1;
+    }
 
 	// Cleanup
 	fclose(file);
