@@ -1,4 +1,4 @@
-#include <stdio.h>
+//#include <stdio.h>
 #include <stdlib.h>
 
 #include "main.h"
@@ -9,6 +9,7 @@
 #define WINDOW_SIZE 4096
 #define HOP_SIZE 1300
 
+// WTF?
 void modifyAmplitudes(float *buffer, float cutoff, struct Project *project, struct Scene *scene) {
 	float dt = 1.0f / project->sampleRate;
 	float RC = 1.0f / (TAU * cutoff);
@@ -17,12 +18,16 @@ void modifyAmplitudes(float *buffer, float cutoff, struct Project *project, stru
 	float *output = (float *) malloc(scene->sampleCount * sizeof(float));
 
 	output[0] = buffer[0];
-	uint64_t i = 0;
+	uint64_t i = 1;
+
+    // Avoid reading from index [-1] (undefined behaviour)
+	output[i] = output[0] + alpha * (buffer[i] - output[0]);
 
 	while (i < scene->sampleCount) {
 		output[i] = output[i - 1] + alpha * (buffer[i] - output[i - 1]);
 		i++;
 	} i = 0;
+
 
 	while (i < scene->sampleCount) {
 		buffer[i] = output[i];

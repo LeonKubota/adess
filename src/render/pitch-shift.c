@@ -40,7 +40,7 @@ int pitchShift(float *input, float *noiseBuffer, uint8_t factor, struct Scene *s
         float floatFactor = (float) factor;
 
         while (currentWindow < windowCount) {
-                offset = currentWindow * HOP_SIZE;
+                offset = currentWindow * HOP_SIZE + 1;
 
                 // Change factor slightly for each window to add more noise
                 floatFactor *= 1.0f - (noiseBuffer[offset] * 0.0008f * factor);

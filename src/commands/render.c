@@ -22,12 +22,13 @@
 int render(char **args) {
 	d_showInput("render", args);
 	
-
+    char *curDirectory = getCurDirectory(NULL);
 	// Check if inside adess project
-	if (!checkFileExistsIn(getCurDirectory(NULL), "*.adess")) {
+	if (!checkFileExistsIn(curDirectory, "*.adess")) {
 		e_fatal("command 'render' can only be ran inside an adess project directory\n");
 		return 1;
 	}
+    free(curDirectory);
 
 
 	// Check if there is no argument or the -a flag
@@ -77,12 +78,12 @@ int render(char **args) {
 
 
 	if (getProject(project, projectFilePath) == 1) {
-		free(projectFilePath);
-
 		// Things inside struct 'project'
-		free(project->enginePath);
 		free(project->scenePath);
+		free(project->enginePath);
 		free(project->outputPath);
+
+		free(projectFilePath);
 
 		free(project);
 		return 1;
@@ -110,10 +111,14 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	// Get scene information into the struct
 	if (getScene(scene, sceneNameInput, project) == 1) {
+		free(project->scenePath);
+		free(project->enginePath);
+		free(project->outputPath);
 		free(project);
 		free(scene);
 		return 1;
 	}
+
 
 	// Get engine path and validate
 	struct Engine *engine = (struct Engine *) malloc(sizeof(struct Engine));
@@ -283,7 +288,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	if (postProcessedBuffer == NULL) return 1;
 
 	// Only do the post processing if '-p' is turned on
-	if (!g_opts[7]) {
+	if (!g_opts[7]) { // Do post processing
 		// d_print("rendering [4/5] - post process\n");
 	    printf("\rrendering: stage [4/5]");
 
@@ -294,7 +299,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 		// Check for errors
 		if (postProcessingData.failed == true) return 1;
-	} else {
+	} else { // Skip post processing
 		//d_print("rendering [4/5] - post processing skipped\n");
 	    printf("\rrendering: stage [4/5]");
 
@@ -338,10 +343,22 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	//d_print("rendering [5/5] - write\n");
 	printf("\rrendering: stage [5/5]\n");
 
-
 	// Create the output buffer
 	void *outputBuffer = (void *) malloc(scene->sampleCount * project->bitDepth / 8);
-	if (outputBuffer == NULL) return 1;
+	if (outputBuffer == NULL) {
+	    // Cleanup
+	    free(postProcessedBuffer);
+	    free(outputPath);
+	    free(engine);
+	    free(project->scenePath);
+	    free(project->enginePath);
+	    free(project->outputPath);
+	    free(project);
+	    free(scene->engine);
+	    free(scene->scenePath);
+	    free(scene);
+        return 1;
+    }
 
 	convert(outputBuffer, postProcessedBuffer, scene->sampleCount, project->bitDepth);
 	free(postProcessedBuffer); // No longer useful
@@ -349,6 +366,18 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	FILE *file = fopen(outputPath, "wb");
 	if (file == NULL) {
         e_fatal("opening '%s' failed\n", outputPath);
+
+	    // Cleanup
+	    free(outputPath);
+        free(outputBuffer);
+	    free(engine);
+	    free(project->scenePath);
+	    free(project->enginePath);
+	    free(project->outputPath);
+	    free(project);
+	    free(scene->engine);
+	    free(scene->scenePath);
+	    free(scene);
 		return 1;
 	}
 
@@ -356,6 +385,19 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	if (fwrite(outputBuffer, 1, scene->sampleCount * (project->bitDepth / 8), file) != scene->sampleCount * (project->bitDepth / 8)) {
         e_fatal("writing to '%s' failed\n", outputPath);
+
+	    // Cleanup
+	    fclose(file);
+	    free(outputPath);
+        free(outputBuffer);
+	    free(engine);
+	    free(project->scenePath);
+	    free(project->enginePath);
+	    free(project->outputPath);
+	    free(project);
+	    free(scene->engine);
+	    free(scene->scenePath);
+	    free(scene);
         return 1;
     }
 
@@ -365,7 +407,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	// Misc
 	free(outputPath);
 
-	// Buffers
+    // Buffers
 	free(outputBuffer);
 
 	// Engine
@@ -643,6 +685,8 @@ char *getOutputPath(char *name, char *sceneNameInput, struct Project *project) {
 		outputPathFinal[strlen(outputPathFinal) - 2] = '\0';
 	}
 
+    free(outputPath);
+
 	return outputPathFinal;
 }
 
@@ -704,13 +748,16 @@ char *getThingPath(char *thingPath, char *thingName, char *thingType) {
 
 	// Check if the scene exists in the directory
 	if (checkFileExists(completePath) == true) {
+        free(processedPath);
 		return completePath;
 	} else {
 		e_fatal("%s '%s' does not exist in '%s'\n", thingType, thingName, processedPath);
+        free(processedPath);
 		free(completePath);
 		return NULL;
 	}
 
+    free(processedPath);
 	free(completePath);
 	return NULL;
 }

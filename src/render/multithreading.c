@@ -475,6 +475,8 @@ void *combineBuffers(void *arg) {
 void *postProcess(void *arg) {
 	// time_t startTime = clock();
 
+    printf("POST PROCESSING!!\n\n");
+
 	struct ThreadData *threadData = (struct ThreadData *) arg;
 
 	struct Project *project = threadData->project;
@@ -511,7 +513,7 @@ void *postProcess(void *arg) {
 		pitchShiftDataArray[i].scene = scene;
 		pitchShiftDataArray[i].factor = (3 * i + 2);	
 
-		// Handle error
+		// Send error
 		if (pitchShiftDataArray[i].buffer == NULL) {
 			threadData->failed = true;
 			return NULL;
@@ -551,22 +553,21 @@ void *postProcess(void *arg) {
 
 	int16_t temporalOffset = 0;
 	int16_t temporalOffsetStep = (int16_t) (project->sampleRate * 0.1f);
-	int16_t maxOffset = 0;
 
 	// Combine pitch shifted audios
 	while (i < scene->sampleCount) {
 		// Add the main base
-		// TEST disable this for testing
+
 		postProcessedBuffer[i] = -combinedBuffer[i]; // Invert phase to maybe help with phase cancellation
 
 		// Add harmonic frequencies (to fill up the top)
 		while (n < (uint64_t) pitchCount) {
 			// Add temporal offset
-			temporalOffset = temporalOffsetStep * (n + 1) + stableBrownNoiseBuffer[n * i] * loadBuffer[i];
-			temporalOffset = 0;
-
-			// TEST
-			if (abs(temporalOffset) > maxOffset) maxOffset = abs(temporalOffset);
+            if (n * i < scene->sampleCount) {
+		        temporalOffset = temporalOffsetStep * (n + 1) + stableBrownNoiseBuffer[n * i] * loadBuffer[i];
+            } else {
+		        temporalOffset = temporalOffsetStep * (n + 1) + stableBrownNoiseBuffer[i] * loadBuffer[i];
+            }
 
 			if (i + temporalOffset < scene->sampleCount) {
 				postProcessedBuffer[i] += pitchShiftDataArray[n].buffer[i + temporalOffset] * pitchAmplitude[n] + ((n + 1) * 0.003f * stableBrownNoiseBuffer[i]);

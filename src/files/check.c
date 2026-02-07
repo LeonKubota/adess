@@ -107,13 +107,17 @@ char *getCurDirectory(char *userpath) {
 	if (getcwd(currentWorkingDirectory, 1024) != NULL) {
 		if (userpath == NULL) {
 			strcat(outputDirectory, currentWorkingDirectory);
+
 			free(currentWorkingDirectory);
+
 			strcat(outputDirectory, PATH_SEPARATOR);
 
 			return outputDirectory;
 		} else {
 			strcat(outputDirectory, currentWorkingDirectory);
+
 			free(currentWorkingDirectory);
+
 			strcat(outputDirectory, PATH_SEPARATOR);
 			strcat(outputDirectory, userpath);
 			strcat(outputDirectory, PATH_SEPARATOR);
@@ -123,6 +127,7 @@ char *getCurDirectory(char *userpath) {
 	}
 
 	free(currentWorkingDirectory);
+
 	e_fatal("directory not found\n");
 
 	return NULL;
