@@ -5,10 +5,11 @@
 #include <math.h>
 #include <inttypes.h>
 
+// For timers
+#include <sys/time.h>
+
 #include <complex.h> // For complex numbers
 #include <pthread.h> // For multithreading
-
-#include <time.h> // For debugging
 
 #include "main.h"
 #include "commands/command.h"
@@ -156,10 +157,11 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	// Create threads for rendering process
 	pthread_t thread1, thread2, thread3, thread4;
 
+    // Set up timer vars
+    struct timeval start, end;
 
 	// STAGE 1
-    if (SLOW) sleep(1);
-	printf("rendering: stage [1/5] - precalculation\n");
+    gettimeofday(&start, NULL);
     if (SLOW) sleep(1);
 
 	// Interpolation: product: 'frequencyBuffer', 'phaseBuffer', 'loadBuffer'
@@ -223,9 +225,13 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	free(keyframes); // No longer needed after interpolation
 
+    // End timer
+    gettimeofday(&end, NULL);
+    endPrint(11, "%8.f ms", (end.tv_sec - start.tv_sec) * 1000.0f + (end.tv_usec - start.tv_usec) / 1000.0f);
+	printf("\rrendering: stage [1/5] - precalculation\n");
+
 	// STAGE 2: compute
-	//d_print("rendering [2/5] - compute\n");
-	printf("rendering: stage [2/5] - calculation\n");
+    gettimeofday(&start, NULL);
     if (SLOW) sleep(2);
 
 	// Render base frequencies
@@ -263,12 +269,15 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	free(pinkNoiseBuffer);
 	free(lowFrequencyNoiseBuffer);
+    
+    // End timer
+    gettimeofday(&end, NULL);
+    endPrint(11, "%8.f ms", (end.tv_sec - start.tv_sec) * 1000.0f + (end.tv_usec - start.tv_usec) / 1000.0f);
+	printf("\rrendering: stage [2/5] - calculation\n");
 
 	// Stage: combine
-	//d_print("rendering [3/5] - join\n");
-	printf("rendering: stage [3/5] - combination\n");
+    gettimeofday(&start, NULL);
     if (SLOW) sleep(1);
-
 	
 	// Combine the buffers
 	float *combinedBuffer = (float *) calloc(scene->sampleCount, sizeof(float));
@@ -286,15 +295,20 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	// Check for errors
 	if (combineBuffersData.failed == true) return 1;
 
+    // End timer
+    gettimeofday(&end, NULL);
+    endPrint(11, "%8.f ms", (end.tv_sec - start.tv_sec) * 1000.0f + (end.tv_usec - start.tv_usec) / 1000.0f);
+	printf("\rrendering: stage [3/5] - combination\n");
+
 
 	// Stage: post process
+    gettimeofday(&start, NULL);
+
 	float *postProcessedBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
 	if (postProcessedBuffer == NULL) return 1;
 
 	// Only do the post processing if '-p' is turned on
 	if (!g_opts[7]) { // Do post processing
-		// d_print("rendering [4/5] - post process\n");
-	    printf("rendering: stage [4/5] - post-processing\n");
         if (SLOW) sleep(3);
 
 		struct ThreadData postProcessingData = {postProcessedBuffer, combinedBuffer, stableBrownNoiseBuffer, loadBuffer, NULL, NULL, NULL, project, scene, engine, NULL, false};
@@ -304,10 +318,12 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 		// Check for errors
 		if (postProcessingData.failed == true) return 1;
-	} else { // Skip post processing
-		//d_print("rendering [4/5] - post processing skipped\n");
-	    printf("rendering: stage [4/5] - post-processing (skipped)\n");
 
+        // End timer
+        gettimeofday(&end, NULL);
+        endPrint(11, "%8.f ms", (end.tv_sec - start.tv_sec) * 1000.0f + (end.tv_usec - start.tv_usec) / 1000.0f);
+	    printf("\rrendering: stage [4/5] - post-processing\n");
+	} else { // Skip post processing
 		uint64_t i = 0;
 
 		float absoluteMaximum = 0.0f;
@@ -334,6 +350,11 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 			postProcessedBuffer[i] /= absoluteMaximum;
 			i++;
 		}
+
+        // End timer
+        gettimeofday(&end, NULL);
+        endPrint(11, "%8.f ms", (end.tv_sec - start.tv_sec) * 1000.0f + (end.tv_usec - start.tv_usec) / 1000.0f);
+	    printf("\rrendering: stage [4/5] - post-processing (skipped)\n");
 	}
 	
 	free(combinedBuffer);
@@ -343,10 +364,8 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	// TEST
 	// printMinMax(postProcessedBuffer, scene, project);
 
-
 	// Stage: write
-	//d_print("rendering [5/5] - write\n");
-	printf("rendering: stage [5/5] - write\n");
+    gettimeofday(&start, NULL);
     if (SLOW) sleep(1);
 
 	// Create the output buffer
@@ -371,7 +390,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	FILE *file = fopen(outputPath, "wb");
 	if (file == NULL) {
-        e_fatal("opening '%s' failed\n", outputPath);
+        e_fatal("opening '%s' failed\n", onlyFile(outputPath));
 
 	    // Cleanup
 	    free(outputPath);
@@ -390,7 +409,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	makeWavHeader(file, project->sampleRate, project->bitDepth, scene->sampleCount);
 
 	if (fwrite(outputBuffer, 1, scene->sampleCount * (project->bitDepth / 8), file) != scene->sampleCount * (project->bitDepth / 8)) {
-        e_fatal("writing to '%s' failed\n", outputPath);
+        e_fatal("writing to '%s' failed\n", onlyFile(outputPath));
 
 	    // Cleanup
 	    fclose(file);
@@ -410,9 +429,6 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	// Cleanup
 	fclose(file);
 
-	// Misc
-	free(outputPath);
-
     // Buffers
 	free(outputBuffer);
 
@@ -431,6 +447,16 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	free(scene->engine);
 	free(scene->scenePath);
 	free(scene); // Must be freed after because timer uses 'scene->length'
+
+    // End timer
+    gettimeofday(&end, NULL);
+    endPrint(11, "%8.f ms", (end.tv_sec - start.tv_sec) * 1000.0f + (end.tv_usec - start.tv_usec) / 1000.0f);
+	printf("\rrendering: stage [5/5] - write\n");
+
+    n_print("successfully rendered into \'%s\'\n", onlyFile(outputPath));
+
+	// Misc
+	free(outputPath);
 
 	return 0;
 }

@@ -1,6 +1,10 @@
 #include <stdio.h>
-#include <string.h>
+//#include <string.h>
+#include <stdlib.h>
 #include <stdarg.h>
+#include <sys/ioctl.h>
+#include <termios.h>
+#include <fcntl.h>
 
 #define DCOL "\x1b[1;35m" // Debug color
 #define COLOR_BOLD "\033[1m"
@@ -45,6 +49,46 @@ void n_print(const char *format, ...) {
 	printf("adess: ");
 	vprintf(format, args);
 	va_end(args);
+}
+
+void endPrint(uint16_t length, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+
+    uint16_t i = 0;
+    uint16_t width = getWidth() - length;
+
+    printf("\r");
+
+    while (i < width) {
+        printf(" ");
+        i++;
+    }
+
+    vprintf(format, args);
+    va_end(args);
+}
+
+uint16_t getWidth(void) {
+    struct winsize w;
+    ioctl(0, TIOCGWINSZ, &w); // WTF?!
+    return w.ws_col;
+}
+
+char *onlyFile(char *input) {
+    char *cursor = input;
+    char *output = cursor;
+
+    while (cursor[0] != '\0') {
+        if (cursor[0] == '/') {
+            output = cursor;
+        }
+        cursor++;
+    }
+
+    output++;
+
+    return output;
 }
 
 /*

@@ -14,15 +14,7 @@
 #define FLOAT_FAIL -69420.42069f // Hopefully no user enters 69420.42069f as their float
 #define INT_FAIL -676967 // I hope noone uses this
 
-#ifdef _WIN32
-#include <windows.h>
-#include <direct.h> // for _getcwd
-#define PATH_SEPARATOR "\\" // Windows' weird things (idiot Bill Gates)
-#define getcwd _getcwd // so that its the same later
-#else
 #include <unistd.h> // for gecwd
-#define PATH_SEPARATOR "/" // for sane people
-#endif
 
 // Make some constants (from my handy 'CASIO fx-85CE X CLASSWIZ')
 #define PI 3.141592654f

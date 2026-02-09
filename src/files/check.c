@@ -110,7 +110,7 @@ char *getCurDirectory(char *userpath) {
 
 			free(currentWorkingDirectory);
 
-			strcat(outputDirectory, PATH_SEPARATOR);
+			strcat(outputDirectory, "/");
 
 			return outputDirectory;
 		} else {
@@ -118,9 +118,9 @@ char *getCurDirectory(char *userpath) {
 
 			free(currentWorkingDirectory);
 
-			strcat(outputDirectory, PATH_SEPARATOR);
+			strcat(outputDirectory, "/");
 			strcat(outputDirectory, userpath);
-			strcat(outputDirectory, PATH_SEPARATOR);
+			strcat(outputDirectory, "/");
 
 			return outputDirectory;
 		}
