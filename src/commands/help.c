@@ -115,7 +115,7 @@ void explainOptions(char *options) {
 		} else if (options[0] == 'a') {
 			printf("all - renders every scene");
 		} else if (options[0] == 'p') {
-			printf("preview - renders in preview mode (quicker)");
+			printf("preview - renders in preview mode (quicker), may lead to better results in current version");
 		}
 
 		if (options[1] == '.') {
@@ -158,9 +158,10 @@ void defaultHelp(void) {
 	printf("These are some Adess commands (see 'adess help <command>' for more)\n");
 
 	// Commands
-	printf("\tmake_project\tMake a new project\n");
-	printf("\tmake_scene\tMake a new scene\n");
-	printf("\tmake_engine\tMake a new engine\n");
+	printf("\tmake_project\tmake a new project\n");
+	printf("\tmake_scene\tmake a new scene\n");
+	printf("\tmake_engine\tmake a new engine\n");
+	printf("\trender\t\trender a scene\n");
 	
 	// Ending, suggest other info
 	printf("\nTo see an in depth guide of Adess, see 'adess guide'\n");
