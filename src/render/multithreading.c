@@ -9,7 +9,7 @@
 #include <pthread.h>
 
 #include "main.h"
-#include "utils.h"
+//#include "utils.h"
 #include "commands/render.h"
 #include "render/multithreading.h"
 #include "render/pitch-shift.h"
@@ -449,20 +449,12 @@ void *combineBuffers(void *arg) {
 
 	uint64_t i = 0;
 
-	bool overflowed = false;
-
 	while (i < scene->sampleCount) {
 		combinedBuffer[i] += baseBuffer[i] * engine->baseVolume;
 		combinedBuffer[i] += valvetrainBuffer[i] * engine->valvetrainVolume;
 		//combinedBuffer[i] += mechanicalBuffer[i] * engine->mechanicalVolume;
-		//
-		if (fabs(combinedBuffer[i]) > 1.0f) overflowed = true;
 
 		i++;
-	}
-
-	if (overflowed) {
-		e_warning("maximum amplitude exceeded while combining buffers, expect reduced quality\n");
 	}
 
 	// d_print("%.2f ms - join finished\n", (clock() - startTime) * 1000.0f / CLOCKS_PER_SEC);
@@ -474,8 +466,6 @@ void *combineBuffers(void *arg) {
 // STAGE 4
 void *postProcess(void *arg) {
 	// time_t startTime = clock();
-
-    printf("POST PROCESSING!!\n\n");
 
 	struct ThreadData *threadData = (struct ThreadData *) arg;
 

@@ -5,6 +5,7 @@
 #define MAIN_H
 
 #define VERSION "1.0.0"
+#define SLOW 0
 
 #define MAX_ARG_COUNT 16 // This is based on the user
 #define MAX_OPT_COUNT 8

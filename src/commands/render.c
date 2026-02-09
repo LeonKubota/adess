@@ -158,7 +158,9 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 
 	// STAGE 1
-	printf("rendering: stage [1/5]");
+    if (SLOW) sleep(1);
+	printf("rendering: stage [1/5] - precalculation\n");
+    if (SLOW) sleep(1);
 
 	// Interpolation: product: 'frequencyBuffer', 'phaseBuffer', 'loadBuffer'
 	float *frequencyBuffer = (float *) malloc(scene->sampleCount * sizeof(float));
@@ -223,7 +225,8 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	// STAGE 2: compute
 	//d_print("rendering [2/5] - compute\n");
-	printf("\rrendering: stage [2/5]");
+	printf("rendering: stage [2/5] - calculation\n");
+    if (SLOW) sleep(2);
 
 	// Render base frequencies
 	float *baseBuffer = (float *) calloc(scene->sampleCount, sizeof(float));
@@ -263,7 +266,8 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	// Stage: combine
 	//d_print("rendering [3/5] - join\n");
-	printf("\rrendering: stage [3/5]");
+	printf("rendering: stage [3/5] - combination\n");
+    if (SLOW) sleep(1);
 
 	
 	// Combine the buffers
@@ -290,7 +294,8 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	// Only do the post processing if '-p' is turned on
 	if (!g_opts[7]) { // Do post processing
 		// d_print("rendering [4/5] - post process\n");
-	    printf("\rrendering: stage [4/5]");
+	    printf("rendering: stage [4/5] - post-processing\n");
+        if (SLOW) sleep(3);
 
 		struct ThreadData postProcessingData = {postProcessedBuffer, combinedBuffer, stableBrownNoiseBuffer, loadBuffer, NULL, NULL, NULL, project, scene, engine, NULL, false};
 
@@ -301,7 +306,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 		if (postProcessingData.failed == true) return 1;
 	} else { // Skip post processing
 		//d_print("rendering [4/5] - post processing skipped\n");
-	    printf("\rrendering: stage [4/5]");
+	    printf("rendering: stage [4/5] - post-processing (skipped)\n");
 
 		uint64_t i = 0;
 
@@ -341,7 +346,8 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 
 	// Stage: write
 	//d_print("rendering [5/5] - write\n");
-	printf("\rrendering: stage [5/5]\n");
+	printf("rendering: stage [5/5] - write\n");
+    if (SLOW) sleep(1);
 
 	// Create the output buffer
 	void *outputBuffer = (void *) malloc(scene->sampleCount * project->bitDepth / 8);
