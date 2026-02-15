@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <math.h>
 #include <inttypes.h>
+#include <dirent.h>
 
 // For timers
 #include <sys/time.h>
@@ -38,10 +39,8 @@ int render(char **args) {
 		return 1;
 	}
 
-
 	static char name[1024];
-	name[0] = '\0';
-
+	name[0] = '\0'; // Terminate at the start
 
 	// Check if the user specified a name
 	if (g_opts[1] == true) { // If -n
@@ -101,8 +100,6 @@ int render(char **args) {
 }
 
 int renderScene(char *sceneNameInput, struct Project *project, char *name) {
- 	//time_t startTime = clock();
-
 	// Create scene struct
 	struct Scene *scene = (struct Scene *) malloc(sizeof(struct Scene));
 	if (scene == NULL) { // Verify creation of struct 'scene'
@@ -462,8 +459,40 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 }
 
 int renderAll(struct Project *project) {
-	n_print("rendering all, %s\n", project->scenePath);
-	return 1;
+    DIR *dir = opendir(project->scenePath);
+    if (dir == NULL) {
+        e_fatal("directory '%s' could not be opened\n", project->scenePath);
+        return 1;
+    }
+
+    struct dirent *dirStruct;
+    char currInputName[1024];
+    char *cursor;
+
+    while ((dirStruct = readdir(dir)) != NULL) {
+        strcpy(currInputName, dirStruct->d_name);
+
+        // Test if it's an adess file (it has '.adess' at the end)
+        cursor = &currInputName[strlen(currInputName)];
+
+        if (cursor[-1] == 's') {
+            // Disgusting code, but it gets the job done
+            if (cursor[-2] != 's') continue;
+            if (cursor[-3] != 'e') continue;
+            if (cursor[-4] != 'd') continue;
+            if (cursor[-5] != 'a') continue;
+            if (cursor[-6] != '.') continue;
+        } else continue;
+
+        // Remove '.adess'
+        currInputName[strlen(currInputName) - 6] = '\0';
+
+        if (renderScene(currInputName, project, "") == 1) {
+            return 1;
+        }
+    }
+
+    return 0;
 }
 
 int getProject(struct Project *project, char *projectFilePath) {
@@ -505,6 +534,7 @@ int getScene(struct Scene *scene, char *sceneNameInput, struct Project *project)
 	if (scenePathInput == NULL) return 1;
 
 	char *scenePath = getThingPath(scenePathInput, sceneNameInput, "scene");
+
 	if (scenePath == NULL) {
 		free(scenePath);
 		return 1;
@@ -757,7 +787,7 @@ int getKeyframes(struct Keyframe *keyframes, struct Scene *scene, struct Engine 
 // Helper functions for render function, in execution order
 char *getThingPath(char *thingPath, char *thingName, char *thingType) {
 	// Prepare the sceneName
-	char *processedName = strcat(thingName, ".adess");
+    char *processedName = strcat(thingName, ".adess");
 
 	// Get the directory path
 	char *processedPath;
