@@ -91,6 +91,10 @@ int render(char **args) {
 }
 
 int renderScene(char *sceneNameInput, struct Project *project, char *name) {
+    // Start the global timer for the whole render
+    struct timeval totalStart, totalEnd;
+    gettimeofday(&totalStart, NULL);
+
 	// Create scene struct
 	struct Scene *scene = (struct Scene *) malloc(sizeof(struct Scene));
 	if (scene == NULL) { // Verify creation of struct 'scene'
@@ -441,7 +445,9 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
     endPrint(11, "%8.f ms", (end.tv_sec - start.tv_sec) * 1000.0f + (end.tv_usec - start.tv_usec) / 1000.0f);
 	printf("\rrendering: stage [5/5] - write\n");
 
-    n_print("successfully rendered into \'%s\'\n", onlyFile(outputPath));
+    gettimeofday(&totalEnd, NULL);
+    endPrint(11, "%8.f ms", (totalEnd.tv_sec - totalStart.tv_sec) * 1000.0f + (totalEnd.tv_usec - totalStart.tv_usec) / 1000.0f);
+	printf("\rrendering: finished successfully into \'%s\'\n", onlyFile(outputPath));
 
 	// Misc
 	free(outputPath);
