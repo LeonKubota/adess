@@ -126,21 +126,6 @@ float parseLineValueF(char *variable, char *path) {
 	return atof(stringNumber);
 }
 
-bool parseLineValueB(char *variable, char *path) {
-	char *string = parseLineValue(variable, path);
-
-	if ((strcmp(string, "true") == 0) || (string[0] == '1' && string[1] == '\0')) {
-		return true;
-	} else if ((strcmp(string, "false") == 0) || (string[0] == '0' && string[1] == '\0')) {
-		return false;
-	} else {
-		e_parse(path, getVariableLineNumber(variable, path) + 1, "incorrect type, boolean expected\n");
-		return NULL;
-	}
-
-	free(string);
-}
-
 char *parseLineValue(char *variable, char *path) { // FIXME
 	FILE *file = fopen(path, "r");
 

@@ -42,7 +42,7 @@ int howToUse(void) {
 
     printf("List of available guides:\n");
     printf("\tStep by step guide [1 - 5]\n");
-    printf("\n\toverview\n");
+    printf("\toverview\n");
     printf("\tproject\n");
     printf("\tscene\n");
     printf("\tengine\n");
@@ -146,5 +146,22 @@ int renderGuide(bool step) {
 }
 
 int syntaxGuide(void) {
+    printf("You have to use 'adess' files to configure sound generation. These files contain key-value pairs with three acceptable data types:\n");
+    printf("\tint: 0\n");
+    printf("\tfloat: 0.0f\n");
+    printf("\tstring: \"string\"\n");
+
+    printf("\nInteger example - setting \"max_rpm\" to 6000:\n");
+    printf("\tmax_rpm = 6000\n");
+
+    printf("\nFloat example - setting \"base_volume\" to 0.9:\n");
+    printf("\tbase_volume = 0.9f\n");
+
+    printf("\nString example - setting \"engine\" to \"engine_name\":\n");
+    printf("\tengine = \"engine_name\"\n");
+
+    printf("\nTo set keyframes, follow this syntax:\n");
+    printf("\tkeyframes = {\n\t\tfloat: time, int: rpm, float: load;\n\t}\n");
+
     return 0;
 }

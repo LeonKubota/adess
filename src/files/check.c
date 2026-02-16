@@ -144,7 +144,7 @@ bool checkValidity(char *path) {
 
 	char line[1024];
 	char varname[1024] = "";
-	char type = ' '; // a = any; s = string; i = int; f = float; b = boolean; 
+	char type = ' '; // a = any; s = string; i = int; f = float
 	char *typestring;
     uint32_t i = 0;
     uint32_t comOff = 0;
@@ -224,9 +224,6 @@ bool checkValidity(char *path) {
 			} else { // Int
 				type = 'i';
 			}
-		// Boolean
-		} else if (strcmp(typestring, "true") == 0 || strcmp(typestring, "false") == 0) {
-			type = 'b';
 		// Keyframe
 		} else {
 			strtok(varname, " =");
@@ -261,8 +258,6 @@ bool checkValidity(char *path) {
 				typename = "integer";
 			} else if (requiredType == 'f') {
 				typename = "float";
-			} else if (requiredType == 'b') {
-				typename = "boolean";
 			} else if (requiredType == 'k') {
 				typename = "keyframe";
 			} else {
