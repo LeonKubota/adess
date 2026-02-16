@@ -30,7 +30,7 @@ int parse(int argc, char **argv) {
 			return 0;
 		}
 		// default (unknown option)	
-		 else {
+		else {
         	e_fatal("unknown option '%s'\n", argv[1]);
 			return 1;
 		}
@@ -68,23 +68,23 @@ int parseCommand(int argc, char **argv) {
         return execute(guide, argv, args, argscount, "");
     }
 	// make_project
-	else if ((strcmp(argv[1], "make_project")) == 0) {
+    else if ((strcmp(argv[1], "make_project")) == 0) {
 		return execute(make_project, argv, args, argscount, "hnde");
 	}
 	// make_engine
-	else if ((strcmp(argv[1], "make_engine")) == 0) {
+    else if ((strcmp(argv[1], "make_engine")) == 0) {
 		return execute(make_engine, argv, args, argscount, "hne");
 	}
 	// make_scene
-	else if ((strcmp(argv[1], "make_scene")) == 0) {
+    else if ((strcmp(argv[1], "make_scene")) == 0) {
 		return execute(make_scene, argv, args, argscount, "hne");
 	}
 	// render
-	else if ((strcmp(argv[1], "render")) == 0) {
-		return execute(render, argv, args, argscount, "hanp");
+    else if ((strcmp(argv[1], "render")) == 0) {
+		return execute(render, argv, args, argscount, "hnp");
 	}
 	// default (unknown command)
-	else {
+    else {
 		e_fatal("'%s' is not an adess command. See 'adess --help'\n", argv[1]);
 		return 1;
 	}

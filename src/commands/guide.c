@@ -139,7 +139,7 @@ int renderGuide(bool step) {
     if (step) printf("Step 5 - rendering\n\n");
 
     printf("After setting up your project, scene and engine, you can render your project.\n");
-    printf("Use: adess render <scene-name> to render, you can use -p for preview -n to specify the outputs name and -a to render all.\n");
+    printf("Use: adess render <scene-name> to render, you can use -p for preview -n to specify the outputs name.\n");
     printf("Now you can find the output in the output directory!\n");
 
     return 0;

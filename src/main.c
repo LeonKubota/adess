@@ -25,8 +25,7 @@ char *g_optslist = "hn.d.eap"; // Options
 1	n	name
 3	d	directory
 5	e	empty
-6	a	all
-7	p	preview
+6	p	preview
 */
 
 int g_maxoptcount = MAX_OPT_COUNT;

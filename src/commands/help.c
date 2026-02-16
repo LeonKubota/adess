@@ -34,9 +34,9 @@ int help(char **args) {
 			showDescription("the make_engine command is used for creating an engine\n");
 			explainOptions("hn.d.e");
 		} else if (strcmp(args[2], "render") == 0) {
-			showUsage("render", "<scene>" , "n.ap");
+			showUsage("render", "<scene>" , "hn.p");
 			showDescription("the render command is used for rendering a scene\n");
-			explainOptions("n.ap");
+			explainOptions("n.p");
 		} else if (strcmp(args[2], "help") == 0) {
 			defaultHelp();
 			return 0;
@@ -112,8 +112,6 @@ void explainOptions(char *options) {
 			printf("directory - specifies a directory");
 		} else if (options[0] == 'e') {
 			printf("empty - creates without default values");
-		} else if (options[0] == 'a') {
-			printf("all - renders every scene");
 		} else if (options[0] == 'p') {
 			printf("preview - renders in preview mode (quicker), may lead to better results in current version");
 		}

@@ -6,7 +6,6 @@
 
 int render(char **args);
 
-int renderAll(struct Project *project);
 int renderScene(char *rawscenename, struct Project *project, char *name);
 
 // Helper functions in execution order

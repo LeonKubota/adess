@@ -33,9 +33,9 @@ int render(char **args) {
     free(curDirectory);
 
 
-	// Check if there is no argument or the -a flag
-	if (args[2] == NULL && g_opts[6] == false) {
-		e_fatal("no scene to render, add it's name as an argument or use '-a' to render all\n");
+	// Check if there is no argument
+	if (args[2] == NULL) {
+		e_fatal("no scene to render, add it's name as an argument\n");
 		return 1;
 	}
 
@@ -44,11 +44,6 @@ int render(char **args) {
 
 	// Check if the user specified a name
 	if (g_opts[1] == true) { // If -n
-		if (g_opts[6] == true) {
-			e_fatal("can not specify name for multiple scenes\n");
-			return 1;
-		}
-
 		strcpy(name, processName(g_vals[1][0]));
 
 		if (name[0] == '\0') {
@@ -91,12 +86,8 @@ int render(char **args) {
 
 	free(projectFilePath);
 	
-	// If '-a' option is on, render every scene
-	if (g_opts[6] == true) {
-		return renderAll(project);
-	} else {
-		return renderScene(args[2], project, name);
-	}
+    // Render scene
+	return renderScene(args[2], project, name);
 }
 
 int renderScene(char *sceneNameInput, struct Project *project, char *name) {
@@ -305,7 +296,7 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	if (postProcessedBuffer == NULL) return 1;
 
 	// Only do the post processing if '-p' is turned on
-	if (!g_opts[7]) { // Do post processing
+	if (!g_opts[6]) { // Do post processing
         if (SLOW) sleep(3);
 
 		struct ThreadData postProcessingData = {postProcessedBuffer, combinedBuffer, stableBrownNoiseBuffer, loadBuffer, NULL, NULL, NULL, project, scene, engine, NULL, false};
@@ -458,42 +449,6 @@ int renderScene(char *sceneNameInput, struct Project *project, char *name) {
 	return 0;
 }
 
-int renderAll(struct Project *project) {
-    DIR *dir = opendir(project->scenePath);
-    if (dir == NULL) {
-        e_fatal("directory '%s' could not be opened\n", project->scenePath);
-        return 1;
-    }
-
-    struct dirent *dirStruct;
-    char currInputName[1024];
-    char *cursor;
-
-    while ((dirStruct = readdir(dir)) != NULL) {
-        strcpy(currInputName, dirStruct->d_name);
-
-        // Test if it's an adess file (it has '.adess' at the end)
-        cursor = &currInputName[strlen(currInputName)];
-
-        if (cursor[-1] == 's') {
-            // Disgusting code, but it gets the job done
-            if (cursor[-2] != 's') continue;
-            if (cursor[-3] != 'e') continue;
-            if (cursor[-4] != 'd') continue;
-            if (cursor[-5] != 'a') continue;
-            if (cursor[-6] != '.') continue;
-        } else continue;
-
-        // Remove '.adess'
-        currInputName[strlen(currInputName) - 6] = '\0';
-
-        if (renderScene(currInputName, project, "") == 1) {
-            return 1;
-        }
-    }
-
-    return 0;
-}
 
 int getProject(struct Project *project, char *projectFilePath) {
 	char *tempProjFile = findProjectFile(getCurDirectory(NULL));
