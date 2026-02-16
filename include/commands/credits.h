@@ -3,6 +3,6 @@
 #ifndef CREDITS_H
 #define CREDITS_H
 
-int credits(void);
+int credits(char **args);
 
 #endif

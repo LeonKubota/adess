@@ -15,6 +15,7 @@
 #include "commands/make_engine.h"
 #include "commands/make_scene.h"
 #include "commands/render.h"
+#include "commands/credits.h"
 
 int parse(int argc, char **argv) {
 	// If there is no argument (the input is nothing or a flag)
@@ -83,6 +84,10 @@ int parseCommand(int argc, char **argv) {
     else if ((strcmp(argv[1], "render")) == 0) {
 		return execute(render, argv, args, argscount, "hnp");
 	}
+    // credits
+    else if ((strcmp(argv[1], "credits")) == 0) {
+        return execute(credits, argv, args, argscount, "");
+    }
 	// default (unknown command)
     else {
 		e_fatal("'%s' is not an adess command. See 'adess --help'\n", argv[1]);
