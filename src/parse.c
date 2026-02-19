@@ -164,12 +164,12 @@ int parseOptions(char **argv) {
 			if (argv[i + 1] != NULL) {
 				// Check if trying to use option as a value
 				if (argv[i + 1][0] == '-') {
-					e_fatal("option '%s' cannot be used as value for option '%s'\n", argv[i + 1], argv[i]);
+					e_fatal("option '%s' may not be used as value for option '%s'\n", argv[i + 1], argv[i]);
 					return 1;
 				}
 				if (argv[i + 2] != NULL) {
 					if (argv[i + 2][0] != '-') {
-						e_fatal("only one value can be used with option '%s'\n", argv[i]);
+						e_fatal("only a single value can be used with option '%s'\n", argv[i]);
 						return 1;
 					}
 				}

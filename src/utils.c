@@ -1,6 +1,5 @@
 #include <stdio.h>
 //#include <string.h>
-#include <stdlib.h>
 #include <stdarg.h>
 #include <sys/ioctl.h>
 #include <termios.h>
@@ -34,9 +33,9 @@ void e_parse(char *path, int linenr, const char *format, ...) {
 
 	// If 'linenr' is 0, don't print the line number
 	if (linenr == 0) {
-		fprintf(stderr, COLOR_BOLD "fatal: " COLOR_RESET "[error while parsing %s] ", path);
+		fprintf(stderr, COLOR_BOLD "fatal: " COLOR_RESET "[%s]: ", path);
 	} else {
-		fprintf(stderr, COLOR_BOLD "fatal: " COLOR_RESET "[error while parsing %s:%i] ", path, linenr);
+		fprintf(stderr, COLOR_BOLD "fatal: " COLOR_RESET "[%s:%i]: ", path, linenr);
 	}
 
 	vprintf(format, args);

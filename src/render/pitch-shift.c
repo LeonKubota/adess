@@ -78,7 +78,7 @@ int pitchShift(float *input, float *noiseBuffer, uint8_t factor, struct Scene *s
 
         // Put windows into 'outputBuffer'
         while (n < WINDOW_SIZE) {
-            if (floatFactor * offset + n < 2 * floatFactor * scene->sampleCount) {
+            if (floatFactor * offset + n < 2 * factor * scene->sampleCount) {
                 outputBuffer[(uint64_t) (floatFactor * offset + n)] += crealf(window[n]);
 
                 // Used later for normalization
