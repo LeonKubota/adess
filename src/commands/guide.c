@@ -61,7 +61,7 @@ int overviewGuide(bool step) {
     printf("\nYou use .adess files to controll the sound. There are three types:\n");
 
     printf("\tproject files\t\t\t- contain information about the project, such as export\n\t\t\t\t\t  information and paths to other files.\n");
-    printf("\tscene files\t\t\t- contains information about scenes (length and the used engine)\n\t\t\t\t\t  and keyframes.\n");
+    printf("\tscene files\t\t\t- contains information about scenes: their length, the used engine\n\t\t\t\t\t  and keyframes.\n");
     printf("\tengine files\t\t\t- contains information about engine parameters, both physical\n\t\t\t\t\t  (cylinder count) and arbitrary (noise multiplier).\n");
 
     printf("\nYou can see more info about these files with 'adess guide <filename>'.\n");
