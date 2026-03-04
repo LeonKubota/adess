@@ -2,12 +2,8 @@
 
 *Adess* (artist directed engine sound synthetizer) is a CLI application for generating engine sounds. *Adess* doesn't generate the sound in real-time, rather using keyframes for animating the engine behaviour.
 
-## Requirements:
-
-- _CMake_ (`https://github.com/Kitware/CMake`)
-
 ## Installation:
-- On _Linux_ / _MacOS_
+- On _Linux_ / _MacOS_ / _BSD_ (untested)
 	- 1. clone the repository:
 	```bash
 	git clone https://github.com/LeonKubota/adess.git
@@ -15,15 +11,12 @@
 	- 2. compile:
 	```bash
 	cd build
-	cmake ..
+	cmake -DCMAKE_BUILD_TYPE=Release ..
 	make
 	```
 	I suggest adding *adess* to your `$PATH` for convenience.
-- On _Windows_:
-    - a) Use _WSL_
-    - b) 
-        - 1. Choose a _Linux_ distro and download it
-        - 2. Create bootable installation media
-        - 3. Boot your _Linux_ installation media
-        - 4. Install _Linux_
-        - 5. Install *adess* on _Linux_
+- On _Microslop_ _Windows_:
+    - a) Use _WSL_ and follow the guide of respectable operating systems
+
+## Guide
+You can find the guide [here](https://adess.svs-node.kristn.co.uk/)
